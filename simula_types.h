@@ -13,6 +13,7 @@
 
 // Forward declarations
 struct sensor;
+typedef struct sensor sensor_t;
 
 typedef struct _dirt{
   int x, y;
@@ -37,7 +38,8 @@ typedef struct _config{
 } config_t;
 
 typedef struct _robot{
-  struct sensor *s;
+  //sensor must be in the first position to allow casting to sensor_t
+  sensor_t s;
   float x, y;
 } robot_t;
 

@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "simula.h"
+#include "simula_core.h"
+#include "simula_robot.h"
+#include "simula_map.h"
 
 struct coor{
   int x, y;
@@ -49,6 +51,9 @@ void on_stop(){
   visualize();
 }
 
+
+// Use the new modular interface for all simulation logic
+// All function calls remain the same, as the interface is preserved
 
 int main(int argc, char *argv[]){
   if(argc > 1)
