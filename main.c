@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "simula_core.h"
-#include "simula_robot.h"
-#include "simula_map.h"
+#include "simula.h"
 
 struct coor{
   int x, y;

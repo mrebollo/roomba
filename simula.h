@@ -1,6 +1,10 @@
 #ifndef _SIMULA_H
 #define _SIMULA_H
 
+#include "simula_core.h"
+#include "simula_robot.h"
+#include "simula_map.h"
+
 /**
  * @brief Estructura con las lecturas de los sensores en el instante actual 
  * 
