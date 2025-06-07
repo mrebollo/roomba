@@ -1,9 +1,19 @@
 #include "simula_map.h"
+#include "simula_core.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "simula_types.h"
+
+// accessor functions for former global variables
+#define map (*get_map())
+#define r (*get_robot())
+#define hist (get_hist())
+#define config (*get_config())
+#define timer (*get_timer())
+#define stats (*get_stats())
+#define rob (*get_rob())
 
 // Map generation and maintenance
 int generate_map(int nrow, int ncol, int num_dirty, float nobs) {

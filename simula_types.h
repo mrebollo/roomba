@@ -11,9 +11,15 @@
 #define MAXBAT 1000
 #define PROGBARLEN 50
 
-// Forward declarations
-struct sensor;
-typedef struct sensor sensor_t;
+// Move the full definition of struct sensor here to resolve incomplete type errors
+
+typedef struct sensor{
+    int x, y;       // posición del robot en horizontal (x) y vertical (y)
+    float head;     // dirección en la que apunta actualmente el robot
+    int bumper;     // bumper presionado o libre (detección de obstáculos)
+    int infrarred;  // valor del sensor de infrarrojos (detección de suciedad)
+    float battery;  // capacidad de batería disponible
+} sensor_t;
 
 typedef struct _dirt{
   int x, y;

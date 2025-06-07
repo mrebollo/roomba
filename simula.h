@@ -5,10 +5,11 @@
 #include "simula_robot.h"
 #include "simula_map.h"
 
+
 /**
  * @brief Estructura con las lecturas de los sensores en el instante actual 
  * 
- */
+
 typedef struct sensor{
     int x, y;       ///< posición del robot en horizontal (x) y vertical (y)
     float head;     ///< dirección en la que apunta actualmente el robot
@@ -16,6 +17,8 @@ typedef struct sensor{
     int infrarred;  ///< valor del sensor de infrarrojos (detección de suciedad)
     float battery;  ///< capacidad de batería disponible
 } sensor_t;
+*/
+
 
 /**
  * @brief Función que ejecuta el comportamiento principal del robot.

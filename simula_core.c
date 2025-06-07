@@ -6,6 +6,15 @@
 #include "simula_stats.h"
 #include "simula_map.h"
 
+// Provide accessors for global variables
+map_t *get_map() { return &map; }
+robot_t *get_robot() { return &r; }
+sensor_t *get_hist() { return hist; }
+config_t *get_config() { return &config; }
+int *get_timer() { return &timer; }
+struct _stat *get_stats() { return &stats; }
+struct sensor **get_rob() { return &rob; }
+
 // Forward declaration for sensor_t
 typedef struct sensor sensor_t;
 
@@ -63,3 +72,5 @@ struct _stat{
   float bat_mean;
   int moves[5]; // forward, turn, bump, clean, load
 } stats = {0};
+
+

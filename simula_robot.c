@@ -2,6 +2,16 @@
 #include <math.h>
 #include <stdio.h>
 #include "simula_types.h"
+#include "simula_core.h"
+
+// accessor functions for former global variables
+#define map (*get_map())
+#define r (*get_robot())
+#define hist (get_hist())
+#define config (*get_config())
+#define timer (*get_timer())
+#define stats (*get_stats())
+#define rob (*get_rob())
 
 // Robot interface and state
 int rmb_awake(int *x, int *y){
