@@ -188,7 +188,7 @@ int at_base(){
 void save_state(sensor_t *state){
   state->x = rob->x;
   state->y = rob->y;
-  state->head = rob->head;
+  state->heading = rob->heading;
   state->bumper = rob->bumper;
   state->infrarred = rob->infrarred;
   state->battery = rob->battery;
@@ -200,7 +200,7 @@ void tick(int action){
   //update_sensors(); 
   save_state(&hist[timer]);
   /*
-  printf("%d, %d, %.1f, %d, %d, %.1f\n", rob->x, rob->y, rob->head * 180.0 / M_PI, 
+  printf("%d, %d, %.1f, %d, %d, %.1f\n", rob->x, rob->y, rob->heading * 180.0 / M_PI, 
         rob->bumper, rob->infrarred, rob->battery);  
         */
   if(rob->battery < 0.1 || (action != -1 && ++timer >= config.exec_time))
@@ -215,7 +215,7 @@ void save_log(){
     return;
   fprintf(fd, "y, x, head, bump, ifr, batt\n");
   for(i = 0; i < timer; i++){ //config.exec_time; i++){
-    fprintf(fd, "%d, %d, %.1f, %d, %d, %.1f\n", hist[i].y, hist[i].x, hist[i].head * 180.0 / M_PI, 
+    fprintf(fd, "%d, %d, %.1f, %d, %d, %.1f\n", hist[i].y, hist[i].x, hist[i].heading * 180.0 / M_PI, 
         hist[i].bumper, hist[i].infrarred, hist[i].battery);  
   }
   fclose(fd);
@@ -481,8 +481,8 @@ void print_path(sensor_t hist[], int len){
   printf("\n");
   printf("\nPOS (y:%2d,x:%2d)\t\tHEAD: %s (%d)\n",
     hist[len].y, hist[len].x, 
-    compass(hist[len].head),
-    (int)(hist[len].head * 180.0 / M_PI));
+    compass(hist[len].heading),
+    (int)(hist[len].heading * 180.0 / M_PI));
   printf("\nBUMPER: %c\t\t IFR: %c%s\n",
     hist[len].bumper ? 'D' : ' ', 
     hist[len].infrarred > 0 ? hist[len].infrarred + '0' : ' ',
@@ -514,13 +514,13 @@ int rmb_awake(int *x, int *y){
   DEBUG_PRINT("Awaking...\n");
   DEBUG_PRINT("Map: %s\n", map.name);
   if(map.name != NULL){
-    rob->head = put_base_at(map.bx, map.by);
+    rob->heading = put_base_at(map.bx, map.by);
     *x = map.bx;
     *y = map.by;
   }   
   else{
     DEBUG_PRINT("No map loaded\n");
-    set_base_at_origin(x, y, &rob->head);
+    set_base_at_origin(x, y, &rob->heading);
     save_map();
   } 
   //robot reset
@@ -534,10 +534,10 @@ int rmb_awake(int *x, int *y){
 }
 
 void rmb_turn(float alpha){
-  rob->head += alpha;
-  if(rob->head < 0)
-    rob->head += 2 * M_PI;
-  rob->head = fmod(rob->head, 2 * M_PI);
+  rob->heading += alpha;
+  if(rob->heading < 0)
+    rob->heading += 2 * M_PI;
+  rob->heading = fmod(rob->heading, 2 * M_PI);
   rob->bumper = 0;
   rob->battery -= 0.1;
 }
@@ -547,8 +547,8 @@ void rmb_forward(){
     float dy, dx;
     int rx, ry;
     float batt;
-    dy = rounda(sin(rob->head));
-    dx = rounda(cos(rob->head));
+    dy = rounda(sin(rob->heading));
+    dx = rounda(cos(rob->heading));
     //rx = r.x; ry = r.y;
     //r.x += dx;
     //r.y += dy; 
