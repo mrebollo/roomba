@@ -160,45 +160,20 @@ void cyclic_behav() {
  * - Guardar resultados
  */
 void on_stop() {
-    char opcion;
+    char respuesta[10];
     
     printf("\n========================================\n");
     printf("Simulación completada\n");
     printf("========================================\n");
+    printf("\nResultados guardados en:\n");
+    printf("  • log.csv   - Trayectoria del robot\n");
+    printf("  • stats.csv - Estadísticas de ejecución\n");
     
-    // Preguntar al usuario qué desea hacer
-    printf("\n¿Qué deseas hacer?\n");
-    printf("  v - Ver visualización animada\n");
-    printf("  s - Mostrar estadísticas\n");
-    printf("  q - Salir\n");
-    printf("Opción: ");
+    printf("\n¿Ver visualización? (s=sí, Enter=salir): ");
+    fgets(respuesta, sizeof(respuesta), stdin);
     
-    scanf(" %c", &opcion);
-    
-    switch(opcion) {
-        case 'v':
-        case 'V':
-            printf("\nMostrando visualización...\n");
-            printf("(Presiona Ctrl-C para detener)\n\n");
-            visualize();
-            break;
-            
-        case 's':
-        case 'S':
-            printf("\nEstadísticas guardadas en:\n");
-            printf("  - log.csv (trayectoria completa)\n");
-            printf("  - stats.csv (estadísticas de ejecución)\n");
-            printf("\nPuedes analizarlas con un editor de texto o Excel.\n");
-            break;
-            
-        case 'q':
-        case 'Q':
-            printf("\nSaliendo...\n");
-            break;
-            
-        default:
-            printf("\nOpción no válida. Saliendo...\n");
-            break;
+    if(respuesta[0] == 's' || respuesta[0] == 'S') {
+        visualize();
     }
 }
 
