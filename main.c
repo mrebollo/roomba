@@ -14,7 +14,7 @@ void on_start(){
   /*
   sensor_t rob = rmb_state();
   float desv = rand() / (RAND_MAX * M_PI - M_PI_2); 
-  rmb_turn(rob.head + desv);
+  rmb_turn(rob.heading + desv);
   */
 }
 
