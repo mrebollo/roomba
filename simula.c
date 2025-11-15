@@ -32,27 +32,7 @@ static int at_base(){
 
 // Visual helpers moved to sim_visual.c
 
-static float base_heading(int x, int y){
-  float head[4] = {M_PI / 2, 3 * M_PI / 2, 0, M_PI};
-  if(x == 1) return head[2];
-  else if(x == map.ncol-2) return head[3];
-  else if(y == 1) return head[0];
-  else return head[1];
-}
-
-static float put_base_at(int x, int y){
-  map.patch[y][x] = 'B';
-  map.bx = x;
-  map.by = y;
-  return base_heading(x, y);
-}
-
-static void set_base_at_origin(int *x, int *y, float *h){
-  *x = 1;
-  *y = 1;
-  *h = 0;
-  map.patch[*y][*x] = 'B';
-}
+// Base/world helpers now in sim_world.c
 
 static void tick(int action){
   assert(timer < config.exec_time);
@@ -90,147 +70,13 @@ static void step_vectors(float heading, int *rx, int *ry, float *dx, float *dy){
 
 // IO moved to sim_io.c
 
-static void save_map(){
-  FILE *fd = fopen("map.pgm","w");
-  if(!fd) return;
-  fprintf(fd,"P2\n#roomba map\n%d %d\n%d\n", map.ncol, map.nrow, 255);
-  for(int i = 0; i < map.nrow; i++){
-    for(int j = 0; j < map.ncol; j++){
-      switch(map.patch[i][j]){
-        case WALL: fprintf(fd,"%d ",128); break;
-        case EMPTY: fprintf(fd,"%d ",255); break;
-        case 'B': fprintf(fd,"%d ",0); break;
-        default: fprintf(fd,"%d ", map.patch[i][j]-'0');
-      }
-    }
-    fprintf(fd,"\n");
-  }
-  fclose(fd);
-}
+// save_map in sim_world.c
 
-static void create_vertical_wall(){
-  int len = rand()%map.nrow/2 + map.nrow/4;
-  int init = rand()%map.nrow/2 + 2;
-  int col = rand()%(map.ncol-4)+2;
-  for(int i = 0; i < len; i++)
-    map.patch[init + i][col] = WALL;
-  stats.cell_total -= len;
-}
+// world helpers in sim_world.c
 
-static void create_horiz_wall(){
-  int len = rand()%map.ncol/2 + map.ncol/4;
-  int init = rand()%map.ncol/2 + 2;
-  int row = rand()%(map.nrow-4)+2;
-  for(int i = 0; i < len; i++)
-    map.patch[row][init + i] = WALL;
-  stats.cell_total -= len;
-}
+// generate_map in sim_world.c
 
-static void create_random_obstacles(float prop){
-  for(int i = 2; i < WORLDSIZE-2; i++)
-    for(int j = 2; j < WORLDSIZE-2; j++)
-      if(rand()/(float)RAND_MAX < prop){
-        map.patch[i][j] = WALL;
-        DEBUG_PRINT("%d, %d\n", i, j);
-      }
-}
-
-static void init_empty_world(int nrow,int ncol){
-  map.nrow = nrow;
-  map.ncol = ncol;
-  for(int i = 0; i < WORLDSIZE; i++)
-    for(int j = 0; j < WORLDSIZE; j++)
-      map.patch[i][j] = EMPTY;
-}
-
-static void add_border_walls(){
-  for(int i = 0; i < map.nrow; i++){
-    map.patch[i][0] = WALL;
-    map.patch[i][map.ncol-1] = WALL;
-  }
-  for(int i = 0; i < map.ncol; i++){
-    map.patch[0][i] = WALL;
-    map.patch[map.nrow-1][i] = WALL;
-  }
-  stats.cell_total = map.ncol * map.nrow - (map.ncol + map.nrow - 4);
-}
-
-static void add_obstacles(float nobs){
-  if(nobs >= 1){
-    int numobs = (int)nobs;
-    while(numobs-- > 0){
-      if(rand()%2) create_vertical_wall();
-      else create_horiz_wall();
-    }
-  } else if(nobs > 0) {
-    create_random_obstacles(nobs);
-  }
-}
-
-static void place_dirt(int num_dirty){
-  stats.dirt_total = 0;
-  map.ndirt = num_dirty;
-  for(int i = 0; i < num_dirty; i++){
-    int row, col;
-    do{
-      row = rand()%(map.nrow-2) + 1;
-      col = rand()%(map.ncol-2) + 1;
-    }while(map.patch[row][col] != EMPTY);
-    map.dirt[i].x = col;
-    map.dirt[i].y = row;
-    map.dirt[i].depth = rand()%MAXDIRT + 1;
-    map.patch[row][col] = '0' + map.dirt[i].depth;
-    stats.dirt_total += map.dirt[i].depth;
-  }
-}
-
-int generate_map(int nrow, int ncol, int num_dirty, float nobs){
-  if(nrow > WORLDSIZE || ncol > WORLDSIZE)
-    return -1;
-  init_empty_world(nrow, ncol);
-  add_border_walls();
-  add_obstacles(nobs);
-  place_dirt(num_dirty);
-  return 0;
-}
-
-int load_map(char *filename){
-  int i, j, cell, dc = 0;
-  int nrow, ncol, aux;
-  char line[50];
-  DEBUG_PRINT("Loading map %s\n", filename);
-  FILE *fd = fopen(filename, "r");
-  if(!fd) return -1;
-  map.ndirt = 0;
-  fgets(line, 50, fd);
-  fgets(line, 50, fd);
-  fscanf(fd, "%d%d", &ncol, &nrow);
-  fscanf(fd, "%d", &aux);
-  if(nrow > WORLDSIZE || ncol > WORLDSIZE){ fclose(fd); return -1; }
-  map.nrow = nrow;
-  map.ncol = ncol;
-  for(i = 0; i < nrow; i++){
-    for(j = 0; j < ncol; j++){
-      fscanf(fd, "%d", &cell);
-      switch(cell){
-        case 128: map.patch[i][j] = WALL; break;
-        case 255: map.patch[i][j] = EMPTY; break;
-        case 0: put_base_at(j, i); break;
-        default:
-          map.dirt[dc].x = i;
-          map.dirt[dc].y = j;
-          map.dirt[dc++].depth = cell;
-          map.patch[i][j] = cell + '0';
-          map.ndirt++;
-          break;
-      }
-    }
-    fgets(line, 50, fd);
-  }
-  fclose(fd);
-  map.name = filename;
-  return 0;
-}
+// load_map in sim_world.c
 // Visualization moved to sim_visual.c
 
 static void _save_log_wrapper(void){ save_log(hist, timer); }
@@ -250,7 +96,7 @@ void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time){
   atexit(_save_stats_wrapper);
   density = rand()/(float)RAND_MAX * 0.05f;
   if(map.name == NULL)
-    generate_map(WORLDSIZE, WORLDSIZE, 100, density);
+    sim_world_generate(&map, WORLDSIZE, WORLDSIZE, 100, density);
 }
 
 void run(){
@@ -265,13 +111,17 @@ int rmb_awake(int *x, int *y){
   DEBUG_PRINT("Awaking...\n");
   DEBUG_PRINT("Map: %s\n", map.name);
   if(map.name != NULL){
-    rob->heading = put_base_at(map.bx, map.by);
-    *x = map.bx;
-    *y = map.by;
+    if(map.bx > 0 && map.by > 0){
+      rob->heading = sim_world_put_base(&map, map.bx, map.by);
+      *x = map.bx;
+      *y = map.by;
+    } else {
+      sim_world_set_base_origin(&map, x, y, &rob->heading);
+    }
   } else {
     DEBUG_PRINT("No map loaded\n");
-    set_base_at_origin(x, y, &rob->heading);
-    save_map();
+    sim_world_set_base_origin(&map, x, y, &rob->heading);
+    sim_world_save(&map);
   }
   rob->x = *x;
   rob->y = *y;
@@ -358,4 +208,8 @@ float rmb_battery(){
 
 int rmb_at_base(){
   return at_base();
+}
+
+int load_map(char *filename){
+  return sim_world_load(&map, filename);
 }

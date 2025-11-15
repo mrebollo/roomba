@@ -79,3 +79,10 @@ extern struct _stat stats;
 // IO (implementado en sim_io.c)
 void save_log(const sensor_t *hist, int len);
 void save_stats(const struct _stat *st);
+
+// World (implementado en sim_world.c)
+int sim_world_generate(map_t* m, int nrow, int ncol, int num_dirty, float nobs);
+int sim_world_load(map_t* m, char *filename);
+void sim_world_save(const map_t* m);
+float sim_world_put_base(map_t* m, int x, int y);
+void sim_world_set_base_origin(map_t* m, int *x, int *y, float *h);
