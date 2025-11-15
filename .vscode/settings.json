@@ -1,6 +1,0 @@
-{
-    "files.associations": {
-        "simula_core.h": "c",
-        "simula_robot.h": "c"
-    }
-}

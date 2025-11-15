@@ -6,6 +6,18 @@
 #include <time.h>
 #include "simula.h"
 
+// Compilation flags for student vs competition mode
+#ifndef COMPETITION_MODE
+  #define DEBUG_PRINT(...) printf(__VA_ARGS__)
+  #define ENABLE_VISUALIZATION 1
+  #define STATS_FILE "stats.csv"
+  #define LOG_FILE "log.csv"
+#else
+  #define DEBUG_PRINT(...) // No output in competition mode
+  #define ENABLE_VISUALIZATION 0
+  #define STATS_FILE "../stats.csv"
+  #define LOG_FILE "log.csv"
+#endif
 
 #define WORLDSIZE 50
 #define WALL '#'
@@ -91,8 +103,10 @@ void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time){
   config.exec_beh = beh;
   config.on_stop = stop;
   config.exec_time = exec_time > 0 && exec_time < WORLDSIZE * WORLDSIZE ? exec_time : WORLDSIZE * WORLDSIZE;
+  #ifndef COMPETITION_MODE
   if(stop != NULL)
     atexit(stop);
+  #endif
   atexit(save_log);
   atexit(save_stats);
 
@@ -137,10 +151,7 @@ float base_heading(int x, int y){
 
 // set base next to a wall
 void set_base(int *x, int *y, float *h){
-    // up = 0, down, left, right = 3
-    float head[4] = {M_PI / 2, 3 * M_PI / 2, 0, M_PI};
-    int wall = rand() % 4;
-    //TODO: cambiarlo para usar put_base_at() y base_heading()
+    // TODO: cambiarlo para usar put_base_at() y base_heading()
     switch(rand() % 4){
     //left wall
     case 0: *y = 1; *x = rand() % (map.ncol-4) + 2; *h = M_PI / 2; break;
@@ -174,7 +185,7 @@ int at_base(){
 }
 
 
-void save_state(sensor_t *state, robot_t r){
+void save_state(sensor_t *state){
   state->x = rob->x;
   state->y = rob->y;
   state->head = rob->head;
@@ -187,7 +198,7 @@ void save_state(sensor_t *state, robot_t r){
 void tick(int action){
   assert(timer < config.exec_time);
   //update_sensors(); 
-  save_state(&hist[timer], r);
+  save_state(&hist[timer]);
   /*
   printf("%d, %d, %.1f, %d, %d, %.1f\n", rob->x, rob->y, rob->head * 180.0 / M_PI, 
         rob->bumper, rob->infrarred, rob->battery);  
@@ -199,7 +210,7 @@ void tick(int action){
 
 void save_log(){
   int i;
-  FILE *fd = fopen("log.csv","w");
+  FILE *fd = fopen(LOG_FILE,"w");
   if(!fd)
     return;
   fprintf(fd, "y, x, head, bump, ifr, batt\n");
@@ -213,7 +224,7 @@ void save_log(){
 
 void save_stats(){
   int i;
-  FILE *fd = fopen("stats.csv","w");
+  FILE *fd = fopen(STATS_FILE,"w");
   if(!fd)
     return;
   stats.bat_mean = 0;
@@ -238,6 +249,7 @@ forward, turn, bumps, clean, load\n");
 
 void save_map(){
   FILE *fd = fopen("map.pgm","w");
+  if(!fd) return;
 
   fprintf(fd,"P2\n#roomba map\n%d %d\n%d\n", map.ncol, map.nrow, 255);
   for(int i = 0; i < map.nrow; i++){
@@ -259,16 +271,17 @@ void save_map(){
 int load_map(char *filename){
   int i, j, cell, dc = 0; 
   int nrow, ncol, aux;
-  int numobs, len, orient, init; //obstacle
   char line[50];
-  printf("Loading map %s\n", filename);
+  DEBUG_PRINT("Loading map %s\n", filename);
   FILE *fd = fopen(filename, "r");
   fgets(line, 50, fd); //P2
   fgets(line, 50, fd); //comment
   fscanf(fd,"%d%d", &ncol, &nrow);
   fscanf(fd,"%d", &aux);
-  if( nrow > WORLDSIZE || ncol > WORLDSIZE)
+  if( nrow > WORLDSIZE || ncol > WORLDSIZE){
+    fclose(fd);
     return -1;
+  }
   //empty
   map.nrow = nrow;
   map.ncol = ncol;
@@ -283,7 +296,6 @@ int load_map(char *filename){
         map.patch[i][j] = EMPTY;
         break;  
       case 0:
-        //TODO review this call and the inversion of x and y
         put_base_at(j, i);
         break;
       default:
@@ -355,7 +367,7 @@ void create_random_obstacles(float prop){
 
 int generate_map(int nrow, int ncol, int num_dirty, float nobs){
   int i, j, row, col;
-  int numobs, len, orient, init; //obstacle
+  int numobs;
   if( nrow > WORLDSIZE || ncol > WORLDSIZE)
     return -1;
   //empty
@@ -445,13 +457,10 @@ void print_path(sensor_t hist[], int len){
   //add initial dirt to map
   for(i = 0; i < map.ndirt; i++){
     d = map.dirt[i];
-    //ATENCION: cambiado para el mapa precargado
-    //comprobar con el mapa generado (o poner un if)
     if(map.name != NULL)
       map.patch[d.x][d.y] = d.depth + '0';
     else
       map.patch[d.y][d.x] = d.depth + '0';
-    /////////////////////////////////////
   }
   //add path to map
   for(i = 0; i < len; i++)
@@ -482,14 +491,17 @@ void print_path(sensor_t hist[], int len){
 
 
 void visualize(){
+  #if ENABLE_VISUALIZATION
   int t;
   for(t = 0; t < config.exec_time; t++){
     system("clear");
     print_path(hist, t);
     printf("Ctrl-C para salir\n");
     system("sleep 0.1");
-
   }
+  #else
+  // Visualization disabled in competition mode
+  #endif
 }
 
 
@@ -499,17 +511,15 @@ void visualize(){
 
 
 int rmb_awake(int *x, int *y){
-  printf("Awaking...\n");
-  printf("Map: %s\n", map.name);
+  DEBUG_PRINT("Awaking...\n");
+  DEBUG_PRINT("Map: %s\n", map.name);
   if(map.name != NULL){
     rob->head = put_base_at(map.bx, map.by);
     *x = map.bx;
     *y = map.by;
   }   
   else{
-    printf("No map loaded\n");
-    //for 2024 version of simulator
-    //set_base(x, y, &rob->head);
+    DEBUG_PRINT("No map loaded\n");
     set_base_at_origin(x, y, &rob->head);
     save_map();
   } 
@@ -523,35 +533,20 @@ int rmb_awake(int *x, int *y){
   return 1;
 }
 
-/*
 void rmb_turn(float alpha){
-    rob->head = fmod(rob->head + alpha, 2 * M_PI);
-    rob->bumper = 0;
-    rob->battery -= 0.1;
-    stats.bat_total += 0.1;
-    stats.moves[TURN]++;
-}
-*/
-
-// 23-24 version to correct "s-movement" bad behavior
- void rmb_turn(float alpha){
-  //printf("RMB: turn(%f)\n", alpha);
   rob->head += alpha;
-  //printf("RMB: turn(%f) -> new head %f\n", alpha, rob->head);
   if(rob->head < 0)
     rob->head += 2 * M_PI;
   rob->head = fmod(rob->head, 2 * M_PI);
-  //printf("RMB: turn(%f) -> final head %f\n", alpha, rob->head);
   rob->bumper = 0;
   rob->battery -= 0.1;
-  //tick(0);
 }
 
 
 void rmb_forward(){
-    char patch;
     float dy, dx;
-    int rx, ry, batt;
+    int rx, ry;
+    float batt;
     dy = rounda(sin(rob->head));
     dx = rounda(cos(rob->head));
     //rx = r.x; ry = r.y;
@@ -591,7 +586,6 @@ void rmb_forward(){
         rob->infrarred = 0;
       else if(map.patch[rob->y][rob->x] != 'B'){
         rob->infrarred = map.patch[rob->y][rob->x] - '0';
-        //printf("*** CLEAN ***\n");
       }  
       stats.moves[FWD]++;
       stats.cell_visited++;
@@ -602,7 +596,6 @@ void rmb_forward(){
 }
 
 void rmb_clean(){
-  //printf("Cleaning...");
   int dirt = map.patch[rob->y][rob->x] - '0';
   if (dirt > 0){
     dirt--;
@@ -613,7 +606,6 @@ void rmb_clean(){
     stats.moves[CLE]++;
     if(dirt == 0) stats.dirt_cleaned++;
   }
-  //printf("...done\n");
   tick(dirt);
 }
 

@@ -1,15 +1,10 @@
 #ifndef _SIMULA_H
 #define _SIMULA_H
 
-#include "simula_core.h"
-#include "simula_robot.h"
-#include "simula_map.h"
-
-
 /**
  * @brief Estructura con las lecturas de los sensores en el instante actual 
  * 
-
+ */
 typedef struct sensor{
     int x, y;       ///< posición del robot en horizontal (x) y vertical (y)
     float head;     ///< dirección en la que apunta actualmente el robot
@@ -17,8 +12,6 @@ typedef struct sensor{
     int infrarred;  ///< valor del sensor de infrarrojos (detección de suciedad)
     float battery;  ///< capacidad de batería disponible
 } sensor_t;
-*/
-
 
 /**
  * @brief Función que ejecuta el comportamiento principal del robot.
@@ -38,11 +31,8 @@ void run();
  * - start, que se ejecuta una sola vez para preparar el simulador
  * - beh, que define el comportamiento principal del robot (cíclico)
  * - stop, que se ejecuta uan vez al final para ejecutar las tareas de cierre. 
- * 
- * 
  */
 void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time);
-
 
 /**
  * @brief Carga un mapa generado en una simulación anterior
@@ -51,7 +41,6 @@ void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time);
  * los obstáculos, la suciedad y la posición de la base.
  */
 int load_map(char *filename);
-
 
 
 /**
@@ -72,8 +61,7 @@ void visualize();
  * El robot dispone de una base en la que reposa cuando está inactivo. Para activar al robot, debe ejecutarse
  * esta acción awake() cuando se encuentre en la posición de la base. La base siempre estará pegada a un muro
  * y el ángulo inicial del robot será perpendicular a él.
- * 
- * El método devuelve a través de los parámetros las coordenadas x e y de la base.
+ * * El método devuelve a través de los parámetros las coordenadas x e y de la base.
  * 
  * Esta acción no consume batería.
  * 
