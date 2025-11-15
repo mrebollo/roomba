@@ -36,6 +36,12 @@
 *.x86_64
 *.hex
 
+# Local binaries and outputs
+roomba
+gen
+*.pgm
+*.csv
+
 # Debug files
 *.dSYM/
 *.su

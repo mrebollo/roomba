@@ -15,7 +15,7 @@ DEBUG_FLAGS = -g -O0
 RELEASE_FLAGS = -O2
 
 # Source files
-SOURCES = main.c simula.c sim_visual.c sim_io.c sim_world.c
+SOURCES = main.c simula.c sim_robot.c sim_visual.c sim_io.c sim_world.c
 TARGET = roomba
 
 

@@ -86,3 +86,6 @@ int sim_world_load(map_t* m, char *filename);
 void sim_world_save(const map_t* m);
 float sim_world_put_base(map_t* m, int x, int y);
 void sim_world_set_base_origin(map_t* m, int *x, int *y, float *h);
+
+// Robot (implementado en sim_robot.c)
+float sim_robot_battery_mean(void);
