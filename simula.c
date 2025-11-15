@@ -24,7 +24,7 @@
 #define UNKNOWN '.'
 #define EMPTY ' '
 #define MAXDIRT 5
-#define M_PI_8 M_PI / 8
+#define M_PI_8 ((M_PI) / 8)
 
 /**
  * @brief Data structure to store dirt positions in the map
@@ -228,9 +228,9 @@ void save_stats(){
   if(!fd)
     return;
   stats.bat_mean = 0;
-  for(i = 0; i < config.exec_time; i++)
+  for(i = 0; i < timer; i++)
     stats.bat_mean += hist[i].battery;
-  stats.bat_mean /= config.exec_time;
+  stats.bat_mean /= (timer > 0 ? timer : 1);
   fprintf(fd, "cell_total, cell_visited, dirt_total, dirt_cleaned, bat_total, bat_mean, \
 forward, turn, bumps, clean, load\n");
   fprintf(fd, "%d, %d, %d, %d, %.1f, %.1f, %d, %d, %d, %d, %d\n", 
@@ -274,6 +274,9 @@ int load_map(char *filename){
   char line[50];
   DEBUG_PRINT("Loading map %s\n", filename);
   FILE *fd = fopen(filename, "r");
+  if(!fd)
+    return -1;
+  map.ndirt = 0;
   fgets(line, 50, fd); //P2
   fgets(line, 50, fd); //comment
   fscanf(fd,"%d%d", &ncol, &nrow);
@@ -360,7 +363,7 @@ void create_random_obstacles(float prop){
     for(j = 2; j < WORLDSIZE-2; j++) 
       if(rand() / (float)RAND_MAX < prop){ 
        map.patch[i][j] = WALL;  
-             printf("%d, %d\n", i, j); 
+       DEBUG_PRINT("%d, %d\n", i, j); 
       }
 } 
 
@@ -493,7 +496,7 @@ void print_path(sensor_t hist[], int len){
 void visualize(){
   #if ENABLE_VISUALIZATION
   int t;
-  for(t = 0; t < config.exec_time; t++){
+  for(t = 0; t < timer; t++){
     system("clear");
     print_path(hist, t);
     printf("Ctrl-C para salir\n");
@@ -540,6 +543,8 @@ void rmb_turn(float alpha){
   rob->heading = fmod(rob->heading, 2 * M_PI);
   rob->bumper = 0;
   rob->battery -= 0.1;
+  stats.bat_total += 0.1;
+  stats.moves[TURN]++;
 }
 
 
