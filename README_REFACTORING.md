@@ -4,21 +4,25 @@
 
 ```
 roomba/
-├── simula.h                    # API pública para estudiantes
-├── simula.c                    # Simulador completo (versión estudiante)
-├── main.c                      # Proyecto del estudiante
-├── Makefile                    # Compilación para estudiantes
-├── maps/                       # Mapas de entorno
-│   └── generate.c
-├── samples/                    # Ejemplos para estudiantes
+├── simula.h              # API pública (visible a estudiantes)
+├── simula.c              # Núcleo: configure(), run(), wrappers públicos
+├── sim_robot.c           # Acciones del robot y helpers (rmb_*)
+├── sim_world.c           # Mundo: generar/cargar/guardar mapas (con map_t*)
+├── sim_visual.c          # Visualización ASCII + HUD + Ctrl-C
+├── sim_io.c              # I/O de fichero: log.csv y stats.csv
+├── main.c                # Proyecto del estudiante
+├── Makefile              # Compilación para estudiantes
+├── samples/              # Ejemplos para estudiantes
 │   ├── main.c
 │   ├── roomba.c
 │   └── ...
-└── competition/                # Versión competición (profesor)
-    ├── simula_comp.c          # Wrapper modo competición
-    ├── runner.c               # Ejecutor de torneos
-    └── Makefile               # Compilación competición
+└── competition/          # Versión competición (profesor)
+  ├── simula_comp.c    # Wrapper modo competición
+  ├── runner.c         # Ejecutor de torneos
+  └── Makefile         # Compilación competición
 ```
+
+Nota: existe un generador de mapas de apoyo en `maps/generate.c`, pensado para uso del profesor. No es necesario para el flujo del estudiante y no forma parte del binario ni del Makefile por defecto.
 
 ## Para Estudiantes
 
@@ -115,11 +119,14 @@ Ejecutor que:
 
 ## Cambios Principales
 
-### 1. Unificación
-- **Antes:** `simula_v3_2024.c` y `simulacomp_24.c` (código duplicado)
-- **Ahora:** `simula.c` + flags condicionales
+### 1. Modularización interna
+- **sim_robot.c:** acciones del robot (`rmb_*`) y lógica de batería/tiempos.
+- **sim_world.c:** generación/carga/guardado de mapas; API con `map_t*` (sin globales ocultos).
+- **sim_visual.c:** impresión del mapa, HUD y manejo de `SIGINT` (Ctrl-C para salir).
+- **sim_io.c:** volcado de `log.csv` y `stats.csv` desacoplado de estado global.
+- **simula.c:** orquestación (configuración, ciclo principal, atexit) manteniendo la API pública estable.
 
-### 2. Compilación Condicional
+### 2. Compilación condicional
 ```c
 #ifndef COMPETITION_MODE
   #define DEBUG_PRINT(...) printf(__VA_ARGS__)
@@ -130,7 +137,7 @@ Ejecutor que:
 #endif
 ```
 
-### 3. Limpieza de Código
+### 3. Limpieza de código
 - ✓ Eliminado código comentado obsoleto
 - ✓ Eliminados TODOs resueltos
 - ✓ Eliminadas variables no utilizadas
@@ -166,12 +173,12 @@ Si tenías proyectos con la versión anterior:
 
 ## Uso de Mapas
 
-### Generar Mapa Aleatorio
+### Generar mapa aleatorio
 ```bash
 ./roomba              # Genera mapa automático
 ```
 
-### Cargar Mapa Existente
+### Cargar mapa existente
 ```bash
 ./roomba maps/custom.pgm
 ```
@@ -192,6 +199,24 @@ Posibles mejoras manteniendo compatibilidad:
 - Nuevas acciones `rmb_*()` en `simula.c`
 - Diferentes algoritmos de scoring en `runner.c`
 - Visualización web (sin afectar código estudiante)
+
+## Detalles de módulos
+
+- sim_robot.c
+  - Expone la API del robot usada por estudiantes (`rmb_awake/turn/forward/clean/load` y consultas `rmb_*`).
+  - Controla el avance del tiempo (tick) y acumula media de batería (expuesta internamente vía `sim_robot_battery_mean()`).
+
+- sim_world.c
+  - Todas las funciones aceptan un `map_t*` explícito (sin depender de `map` global).
+  - `sim_world_generate`, `sim_world_load`, `sim_world_save`, `sim_world_put_base`, `sim_world_set_base_origin`.
+
+- sim_visual.c
+  - Funciones de visualización, barra de progreso, brújula y trayectoria.
+  - Maneja Ctrl-C con `SIGINT` y `nanosleep` para una salida limpia.
+
+- sim_io.c
+  - `save_log(hist, len)` y `save_stats(&stats)` escriben en el directorio actual (`log.csv`, `stats.csv`).
+  - No usan estado global oculto: reciben los datos por parámetro.
 
 ---
 
