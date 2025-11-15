@@ -4,82 +4,18 @@
 #include <math.h>
 #include <assert.h>
 #include <time.h>
-#include <signal.h>
 #include "simula.h"
+#include "simula_internal.h"
+map_t map = {0};
+robot_t r;
+sensor_t hist[WORLDSIZE*WORLDSIZE];
+config_t config;
+int timer;
+struct sensor *rob = (struct sensor*)&r;
+struct _stat stats = {0};
+static double _bat_sum = 0.0;
+static int _bat_samples = 0;
 
-#ifndef COMPETITION_MODE
-  #define DEBUG_PRINT(...) printf(__VA_ARGS__)
-  #define ENABLE_VISUALIZATION 1
-  #define STATS_FILE "stats.csv"
-  #define LOG_FILE "log.csv"
-#else
-  #define DEBUG_PRINT(...) 
-  #define ENABLE_VISUALIZATION 0
-  #define STATS_FILE "../stats.csv"
-  #define LOG_FILE "log.csv"
-#endif
-
-#define WORLDSIZE 50
-#define WALL '#'
-#define EMPTY ' '
-#define MAXDIRT 5
-#define M_PI_8 ((M_PI) / 8)
-
-// Costes de batería (constantes)
-#define COST_TURN 0.1f
-#define COST_MOVE 1.0f
-#define COST_MOVE_DIAG 1.4f
-#define COST_BUMP 0.5f
-#define COST_CLEAN 0.5f
-
-#define MAXBAT 1000
-#define PROGBARLEN 50
-#define rounda(a) (round((a)*100000) / 100000.0)
-
-typedef struct _dirt{
-  int x, y;
-  int depth;
-} dirt_t;
-
-typedef struct _map{
-  char patch[WORLDSIZE][WORLDSIZE];
-  int nrow, ncol;
-  dirt_t dirt[WORLDSIZE*WORLDSIZE];
-  int ndirt;
-  char *name;
-  int bx, by;
-} map_t;
-
-typedef struct _config{
-  void (*on_start)();
-  void (*exec_beh)();
-  void (*on_stop)();
-  FILE *output;
-  int exec_time;
-} config_t;
-
-typedef struct _robot{
-  sensor_t s;
-  float x, y;
-} robot_t;
-
-static map_t map;
-static robot_t r;
-static sensor_t hist[WORLDSIZE*WORLDSIZE];
-static config_t config;
-static int timer;
-static struct sensor *rob = (struct sensor*)&r;
-
-enum movement {FWD, TURN, BUMP, CLE, LOAD};
-struct _stat{
-  int cell_total;
-  int cell_visited;
-  int dirt_total;
-  int dirt_cleaned;
-  float bat_total;
-  float bat_mean;
-  int moves[5];
-} stats;
 
 static void save_state(sensor_t *state){
   state->x = rob->x;
@@ -94,29 +30,7 @@ static int at_base(){
   return map.patch[rob->y][rob->x] == 'B';
 }
 
-static char* ascii_progress(int perc){
-  static char bar[PROGBARLEN+3];
-  int i;
-  bar[0] = '[';
-  bar[PROGBARLEN+1] = ']';
-  bar[PROGBARLEN+2] = '\0';
-  for(i = 1; i <= perc / 2; i++) bar[i] = '=';
-  for(; i <= PROGBARLEN; i++) bar[i] = ' ';
-  return bar;
-}
-
-static char *compass(float angle){
-  static char dir[3];
-  if(angle >= 15*M_PI_8 || angle < M_PI_8) strcpy(dir, "E");
-  else if(angle < 3*M_PI_8) strcpy(dir, "SE");
-  else if(angle < 5*M_PI_8) strcpy(dir, "S");
-  else if(angle < 7*M_PI_8) strcpy(dir, "SW");
-  else if(angle < 9*M_PI_8) strcpy(dir, "W");
-  else if(angle < 11*M_PI_8) strcpy(dir, "NW");
-  else if(angle < 13*M_PI_8) strcpy(dir, "N");
-  else strcpy(dir, "NE");
-  return dir;
-}
+// Visual helpers moved to sim_visual.c
 
 static float base_heading(int x, int y){
   float head[4] = {M_PI / 2, 3 * M_PI / 2, 0, M_PI};
@@ -143,6 +57,8 @@ static void set_base_at_origin(int *x, int *y, float *h){
 static void tick(int action){
   assert(timer < config.exec_time);
   save_state(&hist[timer]);
+  _bat_sum += rob->battery;
+  _bat_samples++;
   if(rob->battery < 0.1 || (action != -1 && ++timer >= config.exec_time))
     exit(0);
 }
@@ -170,75 +86,9 @@ static void step_vectors(float heading, int *rx, int *ry, float *dx, float *dy){
   *ry = (int)(r.y + *dy);
 }
 
-static void print_map_ascii(){
-  for(int i = 0; i < map.nrow; i++){
-    for(int j = 0; j < map.ncol; j++)
-      printf("%c", map.patch[i][j]);
-    printf("\n");
-  }
-}
+// Status/HUD moved to sim_visual.c
 
-static void annotate_dirt_to_map(){
-  for(int i = 0; i < map.ndirt; i++){
-    dirt_t d = map.dirt[i];
-    if(map.name != NULL)
-      map.patch[d.x][d.y] = d.depth + '0';
-    else
-      map.patch[d.y][d.x] = d.depth + '0';
-  }
-}
-
-static void overlay_path_on_map(sensor_t h[], int len){
-  for(int i = 0; i < len; i++)
-    map.patch[h[i].y][h[i].x] = '.';
-}
-
-static void mark_base_and_end(sensor_t h[], int len){
-  map.patch[h[0].y][h[0].x] = 'B';
-  map.patch[h[len].y][h[len].x] = 'o';
-}
-
-static void print_status_line(sensor_t *s){
-  int bat = s->battery / MAXBAT * 100;
-  printf("\nBATT: %s %d%%", ascii_progress(bat), bat);
-  if (bat < 20 && bat > 0.1)
-    printf(" WARNING!");
-  printf("\n\nPOS (y:%2d,x:%2d)\t\tHEAD: %s (%d)\n",
-    s->y, s->x, compass(s->heading), (int)(s->heading * 180.0 / M_PI));
-  printf("\nBUMPER: %c\t\t IFR: %c%s\n",
-    s->bumper ? 'D' : ' ',
-    s->infrarred > 0 ? s->infrarred + '0' : ' ',
-    s->infrarred > 0 ? "...cleaning" : " ");
-}
-
-static void save_log(){
-  FILE *fd = fopen(LOG_FILE,"w");
-  if(!fd) return;
-  fprintf(fd, "y, x, head, bump, ifr, batt\n");
-  for(int i = 0; i < timer; i++)
-    fprintf(fd, "%d, %d, %.1f, %d, %d, %.1f\n",
-      hist[i].y, hist[i].x,
-      hist[i].heading * 180.0 / M_PI,
-      hist[i].bumper,
-      hist[i].infrarred,
-      hist[i].battery);
-  fclose(fd);
-}
-
-static void save_stats(){
-  FILE *fd = fopen(STATS_FILE,"w");
-  if(!fd) return;
-  stats.bat_mean = 0;
-  for(int i = 0; i < timer; i++)
-    stats.bat_mean += hist[i].battery;
-  stats.bat_mean /= (timer > 0 ? timer : 1);
-  fprintf(fd, "cell_total, cell_visited, dirt_total, dirt_cleaned, bat_total, bat_mean, forward, turn, bumps, clean, load\n");
-  fprintf(fd, "%d, %d, %d, %d, %.1f, %.1f, %d, %d, %d, %d, %d\n",
-    stats.cell_total, stats.cell_visited, stats.dirt_total, stats.dirt_cleaned,
-    stats.bat_total, stats.bat_mean,
-    stats.moves[FWD], stats.moves[TURN], stats.moves[BUMP], stats.moves[CLE], stats.moves[LOAD]);
-  fclose(fd);
-}
+// IO moved to sim_io.c
 
 static void save_map(){
   FILE *fd = fopen("map.pgm","w");
@@ -379,43 +229,12 @@ int load_map(char *filename){
   }
   fclose(fd);
   map.name = filename;
-  print_map_ascii();
   return 0;
 }
+// Visualization moved to sim_visual.c
 
-void print_map(){
-  print_map_ascii();
-}
-
-void print_path(sensor_t h[], int len){
-  annotate_dirt_to_map();
-  overlay_path_on_map(h, len);
-  mark_base_and_end(h, len);
-  print_map_ascii();
-  print_status_line(&h[len]);
-}
-
-// Visualization interrupt handling
-static volatile sig_atomic_t g_stop_vis = 0;
-static void sigint_vis_handler(int signo){
-  (void)signo;
-  g_stop_vis = 1;
-}
-
-void visualize(){
-#if ENABLE_VISUALIZATION
-  g_stop_vis = 0;
-  void (*prev)(int) = signal(SIGINT, sigint_vis_handler);
-  for(int t = 0; t < timer && !g_stop_vis; t++){
-    system("clear");
-    print_path(hist, t);
-    printf("Ctrl-C para salir\n");
-    struct timespec ts = {0, 100000000};
-    nanosleep(&ts, NULL);
-  }
-  signal(SIGINT, prev);
-#endif
-}
+static void _save_log_wrapper(void){ save_log(hist, timer); }
+static void _save_stats_wrapper(void){ stats.bat_mean = (_bat_samples>0)? (float)(_bat_sum/_bat_samples) : 0.0f; save_stats(&stats); }
 
 void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time){
   float density;
@@ -427,8 +246,8 @@ void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time){
 #ifndef COMPETITION_MODE
   if(stop != NULL) atexit(stop);
 #endif
-  atexit(save_log);
-  atexit(save_stats);
+  atexit(_save_log_wrapper);
+  atexit(_save_stats_wrapper);
   density = rand()/(float)RAND_MAX * 0.05f;
   if(map.name == NULL)
     generate_map(WORLDSIZE, WORLDSIZE, 100, density);
