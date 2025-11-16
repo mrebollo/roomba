@@ -40,7 +40,7 @@ static void step_vectors(float heading, int *rx, int *ry, float *dx, float *dy){
 int rmb_awake(int *x, int *y){
   DEBUG_PRINT("Awaking...\n");
   DEBUG_PRINT("Map: %s\n", map.name);
-  if(map.name != NULL){
+  if(map.name[0] != '\0'){
     if(map.base_x > 0 && map.base_y > 0){
       rob->heading = sim_world_put_base(&map, map.base_x, map.base_y);
       *x = map.base_x;

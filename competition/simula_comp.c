@@ -27,7 +27,8 @@
 void execute_map(char* filename, int type) {
     // Store map type for statistics
     extern map_t map;
-    map.name = filename;
+    if(filename) snprintf(map.name, sizeof(map.name), "%s", filename);
+    else map.name[0] = '\0';
     
     if(load_map(filename) != 0) {
         fprintf(stderr, "Error loading map: %s\n", filename);

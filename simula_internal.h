@@ -39,7 +39,7 @@ typedef struct _map{
   int nrow, ncol;
   dirt_t dirt[WORLDSIZE*WORLDSIZE];
   int ndirt;
-  char *name;
+  char name[256];
   int base_x, base_y;
 } map_t;
 

@@ -95,9 +95,9 @@ void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time){
   atexit(_save_log_wrapper);
   atexit(_save_stats_wrapper);
   density = rand()/(float)RAND_MAX * 0.05f;
-  if(map.name == NULL)
+  if(map.name[0] == '\0')
     sim_world_generate(&map, WORLDSIZE, WORLDSIZE, 100, density);
-  if(map.name == NULL)
+  if(map.name[0] == '\0')
     stats_rebuild_from_map(&map);
 }
 

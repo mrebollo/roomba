@@ -188,6 +188,9 @@ int sim_world_load(map_t* m, char *filename){
     fgets(line, 50, fd);
   }
   fclose(fd);
-  m->name = filename;
+  if(filename)
+    snprintf(m->name, sizeof(m->name), "%s", filename);
+  else
+    m->name[0] = '\0';
   return 0;
 }
