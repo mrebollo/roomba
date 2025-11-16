@@ -109,6 +109,4 @@ void stats_visit_cell(void);
 void stats_bump(void);
 void stats_clean_action(int before, int after);
 void stats_battery_consume(float amount);
-void stats_set_cell_total(int total);
-void stats_decrease_free_cells(int count);
 void stats_rebuild_from_map(const map_t* m);

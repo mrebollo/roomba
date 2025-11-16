@@ -68,8 +68,6 @@ void stats_clean_action(int before, int after){
   if(before > 0 && after == 0) stats.dirt_cleaned++;
 }
 void stats_battery_consume(float amount){ stats.bat_total += amount; }
-void stats_set_cell_total(int total){ stats.cell_total = total; }
-void stats_decrease_free_cells(int count){ stats.cell_total -= count; }
 void stats_rebuild_from_map(const map_t* m){
   int cells = 0;
   int dirt_sum = 0;
