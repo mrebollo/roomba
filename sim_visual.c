@@ -30,32 +30,29 @@ static char *compass(float angle){
   return dir;
 }
 
-static void print_map_ascii(){
+static void print_map_ascii(char view[WORLDSIZE][WORLDSIZE]){
   for(int i = 0; i < map.nrow; i++){
     for(int j = 0; j < map.ncol; j++)
-      printf("%c", map.cells[i][j]);
+      printf("%c", view[i][j]);
     printf("\n");
   }
 }
 
-static void annotate_dirt_to_map(){
+static void annotate_dirt_to_map(char view[WORLDSIZE][WORLDSIZE]){
   for(int i = 0; i < map.ndirt; i++){
     dirt_t d = map.dirt[i];
-    if(map.name != NULL)
-      map.cells[d.y][d.x] = d.depth + '0';
-    else
-      map.cells[d.y][d.x] = d.depth + '0';
+    view[d.y][d.x] = (char)('0' + d.depth);
   }
 }
 
-static void overlay_path_on_map(sensor_t h[], int len){
+static void overlay_path_on_map(char view[WORLDSIZE][WORLDSIZE], sensor_t h[], int len){
   for(int i = 0; i < len; i++)
-    map.cells[h[i].y][h[i].x] = '.';
+    view[h[i].y][h[i].x] = '.';
 }
 
-static void mark_base_and_end(sensor_t h[], int len){
-  map.cells[h[0].y][h[0].x] = 'B';
-  map.cells[h[len].y][h[len].x] = 'o';
+static void mark_base_and_end(char view[WORLDSIZE][WORLDSIZE], sensor_t h[], int len){
+  view[h[0].y][h[0].x] = 'B';
+  view[h[len].y][h[len].x] = 'o';
 }
 
 static void print_status_line(sensor_t *s){
@@ -77,11 +74,11 @@ static void sigint_vis_handler(int signo){
   g_stop_vis = 1;
 }
 
-static void print_path(sensor_t h[], int len){
-  annotate_dirt_to_map();
-  overlay_path_on_map(h, len);
-  mark_base_and_end(h, len);
-  print_map_ascii();
+static void print_path(char view[WORLDSIZE][WORLDSIZE], sensor_t h[], int len){
+  annotate_dirt_to_map(view);
+  overlay_path_on_map(view, h, len);
+  mark_base_and_end(view, h, len);
+  print_map_ascii(view);
   print_status_line(&h[len]);
 }
 
@@ -93,7 +90,12 @@ void visualize(){
     // ANSI clear to avoid spawning subshells
     printf("\033[H\033[J");
     fflush(stdout);
-    print_path(hist, t);
+    char view[WORLDSIZE][WORLDSIZE];
+    // copy current map to a local view buffer
+    for(int i = 0; i < map.nrow; i++)
+      for(int j = 0; j < map.ncol; j++)
+        view[i][j] = map.cells[i][j];
+    print_path(view, hist, t);
     printf("Ctrl-C para salir\n");
     const long ms = 100;
     struct timespec ts = { ms/1000, (ms%1000)*1000000L };

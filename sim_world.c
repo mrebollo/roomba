@@ -45,6 +45,34 @@ void sim_world_save(const map_t* m){
   fclose(fd);
 }
 
+int sim_world_is_wall(const map_t* m, int y, int x){
+  return m->cells[y][x] == WALL;
+}
+
+int sim_world_is_base(const map_t* m, int y, int x){
+  return m->cells[y][x] == 'B';
+}
+
+int sim_world_cell_dirt(const map_t* m, int y, int x){
+  char c = m->cells[y][x];
+  if(c == 'B' || c == WALL || c == EMPTY) return 0;
+  return c - '0';
+}
+
+void sim_world_set_cell_dirt(map_t* m, int y, int x, int dirt){
+  if(dirt <= 0) m->cells[y][x] = EMPTY;
+  else m->cells[y][x] = (char)('0' + dirt);
+}
+
+int sim_world_clean_cell(map_t* m, int y, int x){
+  int d = sim_world_cell_dirt(m, y, x);
+  if(d > 0){
+    --d;
+    sim_world_set_cell_dirt(m, y, x, d);
+  }
+  return d;
+}
+
 static void create_vertical_wall(map_t* m){
   int len = rand()%m->nrow/2 + m->nrow/4;
   int init = rand()%m->nrow/2 + 2;

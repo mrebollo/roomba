@@ -17,17 +17,14 @@ static void save_state(sensor_t *state){
   state->battery = rob->battery;
 }
 
-static int at_base(){
-  return map.cells[rob->y][rob->x] == 'B';
-}
 
 static void tick(int action){
-  assert(timer < config.exec_time);
   save_state(&hist[timer]);
   _bat_sum += rob->battery;
   _bat_samples++;
-  if(rob->battery < 0.1 || (action != -1 && ++timer >= config.exec_time))
-    exit(0);
+  if(action != -1) ++timer;
+  if(rob->battery < 0.1f)
+    sim_request_stop();
 }
 
 static void apply_battery(float amount){
@@ -35,15 +32,8 @@ static void apply_battery(float amount){
   stats.bat_total += amount;
 }
 
-static int is_wall_cell(int y, int x){
-  return map.cells[y][x] == WALL;
-}
-
 static void update_ifr_at_cell(){
-  if(map.cells[rob->y][rob->x] == EMPTY)
-    rob->infrared = 0;
-  else if(map.cells[rob->y][rob->x] != 'B')
-    rob->infrared = map.cells[rob->y][rob->x] - '0';
+  rob->infrared = sim_world_cell_dirt(&map, rob->y, rob->x);
 }
 
 static void step_vectors(float heading, int *rx, int *ry, float *dx, float *dy){
@@ -93,7 +83,7 @@ void rmb_forward(){
   float dy, dx;
   int rx, ry;
   step_vectors(rob->heading, &rx, &ry, &dx, &dy);
-  if(is_wall_cell(ry, rx)){
+  if(sim_world_is_wall(&map, ry, rx)){
     rob->bumper = 1;
     stats.moves[BUMP]++;
     tick(-1);
@@ -112,10 +102,9 @@ void rmb_forward(){
 }
 
 void rmb_clean(){
-  int dirt = map.cells[rob->y][rob->x] - '0';
+  int dirt = sim_world_cell_dirt(&map, rob->y, rob->x);
   if(dirt > 0){
-    dirt--;
-    map.cells[rob->y][rob->x] = dirt + '0';
+    dirt = sim_world_clean_cell(&map, rob->y, rob->x);
     apply_battery(COST_CLEAN);
     rob->infrared = dirt;
     stats.moves[CLEAN]++;
@@ -125,7 +114,7 @@ void rmb_clean(){
 }
 
 int rmb_load(){
-  if(at_base()){
+  if(sim_world_is_base(&map, rob->y, rob->x)){
     rob->battery += 10;
     if(rob->battery > MAXBAT)
       rob->battery = MAXBAT;
@@ -154,7 +143,7 @@ float rmb_battery(){
 }
 
 int rmb_at_base(){
-  return at_base();
+  return sim_world_is_base(&map, rob->y, rob->x);
 }
 
 float sim_robot_battery_mean(void){

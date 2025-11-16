@@ -14,6 +14,11 @@ int timer;
 struct sensor *rob = (struct sensor*)&r;
 struct _stat stats = {0};
 // robot helpers moved to sim_robot.c
+int sim_should_stop = 0;
+
+void sim_request_stop(void){
+  sim_should_stop = 1;
+}
 
 // Visual helpers moved to sim_visual.c
 
@@ -54,9 +59,10 @@ void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time){
 
 void run(){
   timer = 0;
+  sim_should_stop = 0;
   if(config.on_start)
     config.on_start();
-  for(;;)
+  while(!sim_should_stop && timer < config.exec_time)
     config.exec_beh();
 }
 

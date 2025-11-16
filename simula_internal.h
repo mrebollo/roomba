@@ -87,5 +87,16 @@ void sim_world_save(const map_t* m);
 float sim_world_put_base(map_t* m, int x, int y);
 void sim_world_set_base_origin(map_t* m, int *x, int *y, float *h);
 
+// World query/mutate helpers (implemented in sim_world.c)
+int sim_world_is_wall(const map_t* m, int y, int x);
+int sim_world_is_base(const map_t* m, int y, int x);
+int sim_world_cell_dirt(const map_t* m, int y, int x);
+void sim_world_set_cell_dirt(map_t* m, int y, int x, int dirt);
+int sim_world_clean_cell(map_t* m, int y, int x);
+
 // Robot (implementado en sim_robot.c)
 float sim_robot_battery_mean(void);
+
+// Core stop control (implemented in simula.c)
+void sim_request_stop(void);
+extern int sim_should_stop;
