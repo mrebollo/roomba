@@ -22,7 +22,7 @@ static void tick(int action){
 
 static void apply_battery(float amount){
   rob->battery -= amount;
-  stats.bat_total += amount;
+  stats_battery_consume(amount);
 }
 
 static void update_ifr_at_cell(){
@@ -69,7 +69,7 @@ void rmb_turn(float alpha){
   rob->heading = fmod(rob->heading, 2 * M_PI);
   rob->bumper = 0;
   apply_battery(COST_TURN);
-  stats.moves[TURN]++;
+  stats_move(TURN);
 }
 
 void rmb_forward(){
@@ -78,7 +78,7 @@ void rmb_forward(){
   step_vectors(rob->heading, &rx, &ry, &dx, &dy);
   if(sim_world_is_wall(&map, ry, rx)){
     rob->bumper = 1;
-    stats.moves[BUMP]++;
+    stats_bump();
     tick(-1);
     apply_battery(COST_BUMP);
     return;
@@ -88,8 +88,8 @@ void rmb_forward(){
   rob->x = rx;
   rob->y = ry;
   update_ifr_at_cell();
-  stats.moves[FWD]++;
-  stats.cell_visited++;
+  stats_move(FWD);
+  stats_visit_cell();
   tick(rob->infrared);
   apply_battery((fabsf(dy*dx) < 0.0001f) ? COST_MOVE : COST_MOVE_DIAG);
 }
@@ -97,11 +97,11 @@ void rmb_forward(){
 void rmb_clean(){
   int dirt = sim_world_cell_dirt(&map, rob->y, rob->x);
   if(dirt > 0){
+    int before = dirt;
     dirt = sim_world_clean_cell(&map, rob->y, rob->x);
     apply_battery(COST_CLEAN);
     rob->infrared = dirt;
-    stats.moves[CLEAN]++;
-    if(dirt == 0) stats.dirt_cleaned++;
+    stats_clean_action(before, dirt);
   }
   tick(dirt);
 }
@@ -114,7 +114,7 @@ int rmb_load(){
     tick(0);
     return 1;
   }
-  stats.moves[LOAD]++;
+  stats_move(LOAD);
   return 0;
 }
 

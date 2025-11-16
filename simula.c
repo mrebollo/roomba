@@ -59,6 +59,18 @@ static void _save_stats_wrapper(void){
   save_stats(&stats);
 }
 
+// Stats helpers
+void stats_move(int kind){ stats.moves[kind]++; }
+void stats_visit_cell(void){ stats.cell_visited++; }
+void stats_bump(void){ stats.moves[BUMP]++; }
+void stats_clean_action(int before, int after){
+  stats.moves[CLEAN]++;
+  if(before > 0 && after == 0) stats.dirt_cleaned++;
+}
+void stats_battery_consume(float amount){ stats.bat_total += amount; }
+void stats_set_cell_total(int total){ stats.cell_total = total; }
+void stats_decrease_free_cells(int count){ stats.cell_total -= count; }
+
 void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time){
   float density;
   srand(time(0));

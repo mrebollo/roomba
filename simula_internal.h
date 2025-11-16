@@ -102,3 +102,12 @@ extern int sim_should_stop;
 
 // Core tick/log (implemented in simula.c)
 void sim_log_tick(int action);
+
+// Stats helpers (implemented in simula.c)
+void stats_move(int kind);
+void stats_visit_cell(void);
+void stats_bump(void);
+void stats_clean_action(int before, int after);
+void stats_battery_consume(float amount);
+void stats_set_cell_total(int total);
+void stats_decrease_free_cells(int count);
