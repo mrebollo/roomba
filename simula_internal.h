@@ -95,8 +95,6 @@ void sim_world_set_cell_dirt(map_t* m, int y, int x, int dirt);
 int sim_world_clean_cell(map_t* m, int y, int x);
 
 // Robot (implementado en sim_robot.c)
-float sim_robot_battery_mean(void);
-void sim_robot_record_sample(float battery);
 
 // Core stop control (implemented in simula.c)
 void sim_request_stop(void);

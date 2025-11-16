@@ -2,11 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <assert.h>
 #include "simula_internal.h"
 
-static double _bat_sum = 0.0;
-static int _bat_samples = 0;
+/* battery mean tracking removed; computed at exit by scanning hist[] */
 
 static void save_state(sensor_t *state){
   state->x = rob->x;
@@ -142,11 +140,4 @@ int rmb_at_base(){
   return sim_world_is_base(&map, rob->y, rob->x);
 }
 
-float sim_robot_battery_mean(void){
-  return (_bat_samples > 0) ? (float)(_bat_sum / _bat_samples) : 0.0f;
-}
-
-void sim_robot_record_sample(float battery){
-  _bat_sum += battery;
-  _bat_samples++;
-}
+/* battery mean now computed at exit from hist[], helpers removed */

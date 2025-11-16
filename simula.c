@@ -28,7 +28,6 @@ void sim_log_tick(int action){
     hist[timer].bumper = rob->bumper;
     hist[timer].infrared = rob->infrared;
     hist[timer].battery = rob->battery;
-    sim_robot_record_sample(rob->battery);
     if(action != -1) ++timer;
   }
   if(rob->battery < 0.1f)
@@ -53,7 +52,12 @@ void sim_log_tick(int action){
 // Visualization moved to sim_visual.c
 
 static void _save_log_wrapper(void){ save_log(hist, timer); }
-static void _save_stats_wrapper(void){ stats.bat_mean = sim_robot_battery_mean(); save_stats(&stats); }
+static void _save_stats_wrapper(void){
+  float sum = 0.0f;
+  for(int i = 0; i < timer; i++) sum += hist[i].battery;
+  stats.bat_mean = (timer > 0) ? sum / (float)timer : 0.0f;
+  save_stats(&stats);
+}
 
 void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time){
   float density;
