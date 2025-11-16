@@ -177,8 +177,8 @@ int sim_world_load(map_t* m, char *filename){
         case 255: m->cells[i][j] = EMPTY; break;
         case 0: sim_world_put_base(m, j, i); break;
         default:
-          m->dirt[dc].x = i;
-          m->dirt[dc].y = j;
+          m->dirt[dc].x = j; // column -> x
+          m->dirt[dc].y = i; // row -> y
           m->dirt[dc++].depth = cell;
           m->cells[i][j] = cell + '0';
           m->ndirt++;
