@@ -35,12 +35,12 @@ typedef struct _dirt{
 } dirt_t;
 
 typedef struct _map{
-  char patch[WORLDSIZE][WORLDSIZE];
+  char cells[WORLDSIZE][WORLDSIZE];
   int nrow, ncol;
   dirt_t dirt[WORLDSIZE*WORLDSIZE];
   int ndirt;
   char *name;
-  int bx, by;
+  int base_x, base_y;
 } map_t;
 
 typedef struct _config{
@@ -56,7 +56,7 @@ typedef struct _robot{
   float x, y;
 } robot_t;
 
-enum movement {FWD, TURN, BUMP, CLE, LOAD};
+enum movement {FWD, TURN, BUMP, CLEAN, LOAD};
 struct _stat{
   int cell_total;
   int cell_visited;

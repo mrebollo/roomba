@@ -13,12 +13,12 @@ static void save_state(sensor_t *state){
   state->y = rob->y;
   state->heading = rob->heading;
   state->bumper = rob->bumper;
-  state->infrarred = rob->infrarred;
+  state->infrared = rob->infrared;
   state->battery = rob->battery;
 }
 
 static int at_base(){
-  return map.patch[rob->y][rob->x] == 'B';
+  return map.cells[rob->y][rob->x] == 'B';
 }
 
 static void tick(int action){
@@ -36,14 +36,14 @@ static void apply_battery(float amount){
 }
 
 static int is_wall_cell(int y, int x){
-  return map.patch[y][x] == WALL;
+  return map.cells[y][x] == WALL;
 }
 
 static void update_ifr_at_cell(){
-  if(map.patch[rob->y][rob->x] == EMPTY)
-    rob->infrarred = 0;
-  else if(map.patch[rob->y][rob->x] != 'B')
-    rob->infrarred = map.patch[rob->y][rob->x] - '0';
+  if(map.cells[rob->y][rob->x] == EMPTY)
+    rob->infrared = 0;
+  else if(map.cells[rob->y][rob->x] != 'B')
+    rob->infrared = map.cells[rob->y][rob->x] - '0';
 }
 
 static void step_vectors(float heading, int *rx, int *ry, float *dx, float *dy){
@@ -58,10 +58,10 @@ int rmb_awake(int *x, int *y){
   DEBUG_PRINT("Awaking...\n");
   DEBUG_PRINT("Map: %s\n", map.name);
   if(map.name != NULL){
-    if(map.bx > 0 && map.by > 0){
-      rob->heading = sim_world_put_base(&map, map.bx, map.by);
-      *x = map.bx;
-      *y = map.by;
+    if(map.base_x > 0 && map.base_y > 0){
+      rob->heading = sim_world_put_base(&map, map.base_x, map.base_y);
+      *x = map.base_x;
+      *y = map.base_y;
     } else {
       sim_world_set_base_origin(&map, x, y, &rob->heading);
     }
@@ -107,18 +107,18 @@ void rmb_forward(){
   update_ifr_at_cell();
   stats.moves[FWD]++;
   stats.cell_visited++;
-  tick(rob->infrarred);
+  tick(rob->infrared);
   apply_battery((fabsf(dy*dx) < 0.0001f) ? COST_MOVE : COST_MOVE_DIAG);
 }
 
 void rmb_clean(){
-  int dirt = map.patch[rob->y][rob->x] - '0';
+  int dirt = map.cells[rob->y][rob->x] - '0';
   if(dirt > 0){
     dirt--;
-    map.patch[rob->y][rob->x] = dirt + '0';
+    map.cells[rob->y][rob->x] = dirt + '0';
     apply_battery(COST_CLEAN);
-    rob->infrarred = dirt;
-    stats.moves[CLE]++;
+    rob->infrared = dirt;
+    stats.moves[CLEAN]++;
     if(dirt == 0) stats.dirt_cleaned++;
   }
   tick(dirt);
@@ -146,7 +146,7 @@ int rmb_bumper(){
 }
 
 int rmb_ifr(){
-  return rob->infrarred;
+  return rob->infrared;
 }
 
 float rmb_battery(){

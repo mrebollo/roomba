@@ -33,7 +33,7 @@ static char *compass(float angle){
 static void print_map_ascii(){
   for(int i = 0; i < map.nrow; i++){
     for(int j = 0; j < map.ncol; j++)
-      printf("%c", map.patch[i][j]);
+      printf("%c", map.cells[i][j]);
     printf("\n");
   }
 }
@@ -42,20 +42,20 @@ static void annotate_dirt_to_map(){
   for(int i = 0; i < map.ndirt; i++){
     dirt_t d = map.dirt[i];
     if(map.name != NULL)
-      map.patch[d.x][d.y] = d.depth + '0';
+      map.cells[d.y][d.x] = d.depth + '0';
     else
-      map.patch[d.y][d.x] = d.depth + '0';
+      map.cells[d.y][d.x] = d.depth + '0';
   }
 }
 
 static void overlay_path_on_map(sensor_t h[], int len){
   for(int i = 0; i < len; i++)
-    map.patch[h[i].y][h[i].x] = '.';
+    map.cells[h[i].y][h[i].x] = '.';
 }
 
 static void mark_base_and_end(sensor_t h[], int len){
-  map.patch[h[0].y][h[0].x] = 'B';
-  map.patch[h[len].y][h[len].x] = 'o';
+  map.cells[h[0].y][h[0].x] = 'B';
+  map.cells[h[len].y][h[len].x] = 'o';
 }
 
 static void print_status_line(sensor_t *s){
@@ -67,8 +67,8 @@ static void print_status_line(sensor_t *s){
     s->y, s->x, compass(s->heading), (int)(s->heading * 180.0 / M_PI));
   printf("\nBUMPER: %c\t\t IFR: %c%s\n",
     s->bumper ? 'D' : ' ',
-    s->infrarred > 0 ? s->infrarred + '0' : ' ',
-    s->infrarred > 0 ? "...cleaning" : " ");
+    s->infrared > 0 ? s->infrared + '0' : ' ',
+    s->infrared > 0 ? "...cleaning" : " ");
 }
 
 static volatile sig_atomic_t g_stop_vis = 0;
@@ -77,7 +77,7 @@ static void sigint_vis_handler(int signo){
   g_stop_vis = 1;
 }
 
-void print_path(sensor_t h[], int len){
+static void print_path(sensor_t h[], int len){
   annotate_dirt_to_map();
   overlay_path_on_map(h, len);
   mark_base_and_end(h, len);

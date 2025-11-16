@@ -9,7 +9,7 @@ typedef struct sensor{
     int x, y;           ///< Posición del robot (x: columna, y: fila)
     float heading;      ///< Orientación en radianes (0 = Este, PI/2 = Norte)
     int bumper;         ///< 1 = obstáculo detectado, 0 = libre
-    int infrarred;      ///< Nivel de suciedad detectado (0 = limpio, >0 = sucio)
+    int infrared;       ///< Nivel de suciedad detectado (0 = limpio, >0 = sucio)
     float battery;      ///< Batería disponible (máximo: 1000)
 } sensor_t;
 

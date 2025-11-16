@@ -14,9 +14,9 @@ static float base_heading(const map_t* m, int x, int y){
 }
 
 float sim_world_put_base(map_t* m, int x, int y){
-  m->patch[y][x] = 'B';
-  m->bx = x;
-  m->by = y;
+  m->cells[y][x] = 'B';
+  m->base_x = x;
+  m->base_y = y;
   return base_heading(m, x, y);
 }
 
@@ -24,7 +24,7 @@ void sim_world_set_base_origin(map_t* m, int *x, int *y, float *h){
   *x = 1;
   *y = 1;
   *h = 0;
-  m->patch[*y][*x] = 'B';
+  m->cells[*y][*x] = 'B';
 }
 
 void sim_world_save(const map_t* m){
@@ -33,11 +33,11 @@ void sim_world_save(const map_t* m){
   fprintf(fd,"P2\n#roomba map\n%d %d\n%d\n", m->ncol, m->nrow, 255);
   for(int i = 0; i < m->nrow; i++){
     for(int j = 0; j < m->ncol; j++){
-      switch(m->patch[i][j]){
+      switch(m->cells[i][j]){
         case WALL: fprintf(fd,"%d ",128); break;
         case EMPTY: fprintf(fd,"%d ",255); break;
         case 'B': fprintf(fd,"%d ",0); break;
-        default: fprintf(fd,"%d ", m->patch[i][j]-'0');
+        default: fprintf(fd,"%d ", m->cells[i][j]-'0');
       }
     }
     fprintf(fd,"\n");
@@ -50,7 +50,7 @@ static void create_vertical_wall(map_t* m){
   int init = rand()%m->nrow/2 + 2;
   int col = rand()%(m->ncol-4)+2;
   for(int i = 0; i < len; i++)
-    m->patch[init + i][col] = WALL;
+    m->cells[init + i][col] = WALL;
   stats.cell_total -= len;
 }
 
@@ -59,7 +59,7 @@ static void create_horiz_wall(map_t* m){
   int init = rand()%m->ncol/2 + 2;
   int row = rand()%(m->nrow-4)+2;
   for(int i = 0; i < len; i++)
-    m->patch[row][init + i] = WALL;
+    m->cells[row][init + i] = WALL;
   stats.cell_total -= len;
 }
 
@@ -67,7 +67,7 @@ static void create_random_obstacles(map_t* m, float prop){
   for(int i = 2; i < WORLDSIZE-2; i++)
     for(int j = 2; j < WORLDSIZE-2; j++)
       if(rand()/(float)RAND_MAX < prop){
-        m->patch[i][j] = WALL;
+        m->cells[i][j] = WALL;
         DEBUG_PRINT("%d, %d\n", i, j);
       }
 }
@@ -77,17 +77,17 @@ static void init_empty_world(map_t* m, int nrow,int ncol){
   m->ncol = ncol;
   for(int i = 0; i < WORLDSIZE; i++)
     for(int j = 0; j < WORLDSIZE; j++)
-      m->patch[i][j] = EMPTY;
+      m->cells[i][j] = EMPTY;
 }
 
 static void add_border_walls(map_t* m){
   for(int i = 0; i < m->nrow; i++){
-    m->patch[i][0] = WALL;
-    m->patch[i][m->ncol-1] = WALL;
+    m->cells[i][0] = WALL;
+    m->cells[i][m->ncol-1] = WALL;
   }
   for(int i = 0; i < m->ncol; i++){
-    m->patch[0][i] = WALL;
-    m->patch[m->nrow-1][i] = WALL;
+    m->cells[0][i] = WALL;
+    m->cells[m->nrow-1][i] = WALL;
   }
   stats.cell_total = m->ncol * m->nrow - (m->ncol + m->nrow - 4);
 }
@@ -112,11 +112,11 @@ static void place_dirt(map_t* m, int num_dirty){
     do{
       row = rand()%(m->nrow-2) + 1;
       col = rand()%(m->ncol-2) + 1;
-    }while(m->patch[row][col] != EMPTY);
+    }while(m->cells[row][col] != EMPTY);
     m->dirt[i].x = col;
     m->dirt[i].y = row;
     m->dirt[i].depth = rand()%MAXDIRT + 1;
-    m->patch[row][col] = '0' + m->dirt[i].depth;
+    m->cells[row][col] = '0' + m->dirt[i].depth;
     stats.dirt_total += m->dirt[i].depth;
   }
 }
@@ -150,14 +150,14 @@ int sim_world_load(map_t* m, char *filename){
     for(j = 0; j < ncol; j++){
       fscanf(fd, "%d", &cell);
       switch(cell){
-        case 128: m->patch[i][j] = WALL; break;
-        case 255: m->patch[i][j] = EMPTY; break;
+        case 128: m->cells[i][j] = WALL; break;
+        case 255: m->cells[i][j] = EMPTY; break;
         case 0: sim_world_put_base(m, j, i); break;
         default:
           m->dirt[dc].x = i;
           m->dirt[dc].y = j;
           m->dirt[dc++].depth = cell;
-          m->patch[i][j] = cell + '0';
+          m->cells[i][j] = cell + '0';
           m->ndirt++;
           break;
       }
