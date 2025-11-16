@@ -79,7 +79,6 @@ static void create_vertical_wall(map_t* m){
   int col = rand()%(m->ncol-4)+2;
   for(int i = 0; i < len; i++)
     m->cells[init + i][col] = WALL;
-  stats_decrease_free_cells(len);
 }
 
 static void create_horiz_wall(map_t* m){
@@ -88,7 +87,6 @@ static void create_horiz_wall(map_t* m){
   int row = rand()%(m->nrow-4)+2;
   for(int i = 0; i < len; i++)
     m->cells[row][init + i] = WALL;
-  stats_decrease_free_cells(len);
 }
 
 static void create_random_obstacles(map_t* m, float prop){
@@ -117,7 +115,6 @@ static void add_border_walls(map_t* m){
     m->cells[0][i] = WALL;
     m->cells[m->nrow-1][i] = WALL;
   }
-  stats_set_cell_total(m->ncol * m->nrow - (m->ncol + m->nrow - 4));
 }
 
 static void add_obstacles(map_t* m, float nobs){
@@ -133,7 +130,6 @@ static void add_obstacles(map_t* m, float nobs){
 }
 
 static void place_dirt(map_t* m, int num_dirty){
-  stats.dirt_total = 0;
   m->ndirt = num_dirty;
   for(int i = 0; i < num_dirty; i++){
     int row, col;
@@ -145,7 +141,6 @@ static void place_dirt(map_t* m, int num_dirty){
     m->dirt[i].y = row;
     m->dirt[i].depth = rand()%MAXDIRT + 1;
     m->cells[row][col] = '0' + m->dirt[i].depth;
-    stats.dirt_total += m->dirt[i].depth;
   }
 }
 

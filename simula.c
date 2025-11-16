@@ -70,6 +70,19 @@ void stats_clean_action(int before, int after){
 void stats_battery_consume(float amount){ stats.bat_total += amount; }
 void stats_set_cell_total(int total){ stats.cell_total = total; }
 void stats_decrease_free_cells(int count){ stats.cell_total -= count; }
+void stats_rebuild_from_map(const map_t* m){
+  int cells = 0;
+  int dirt_sum = 0;
+  for(int i = 0; i < m->nrow; i++){
+    for(int j = 0; j < m->ncol; j++){
+      char c = m->cells[i][j];
+      if(c != WALL) cells++;
+      if(c != WALL && c != EMPTY && c != 'B') dirt_sum += (c - '0');
+    }
+  }
+  stats.cell_total = cells;
+  stats.dirt_total = dirt_sum;
+}
 
 void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time){
   float density;
@@ -86,6 +99,8 @@ void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time){
   density = rand()/(float)RAND_MAX * 0.05f;
   if(map.name == NULL)
     sim_world_generate(&map, WORLDSIZE, WORLDSIZE, 100, density);
+  if(map.name == NULL)
+    stats_rebuild_from_map(&map);
 }
 
 void run(){
@@ -100,5 +115,7 @@ void run(){
 // robot API moved to sim_robot.c
 
 int load_map(char *filename){
-  return sim_world_load(&map, filename);
+  int rc = sim_world_load(&map, filename);
+  if(rc == 0) stats_rebuild_from_map(&map);
+  return rc;
 }
