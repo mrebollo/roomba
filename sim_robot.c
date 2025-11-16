@@ -19,12 +19,7 @@ static void save_state(sensor_t *state){
 
 
 static void tick(int action){
-  save_state(&hist[timer]);
-  _bat_sum += rob->battery;
-  _bat_samples++;
-  if(action != -1) ++timer;
-  if(rob->battery < 0.1f)
-    sim_request_stop();
+  sim_log_tick(action);
 }
 
 static void apply_battery(float amount){
@@ -126,7 +121,8 @@ int rmb_load(){
 }
 
 sensor_t rmb_state(){
-  sensor_t s = r.s;
+  sensor_t s;
+  save_state(&s);
   return s;
 }
 
@@ -148,4 +144,9 @@ int rmb_at_base(){
 
 float sim_robot_battery_mean(void){
   return (_bat_samples > 0) ? (float)(_bat_sum / _bat_samples) : 0.0f;
+}
+
+void sim_robot_record_sample(float battery){
+  _bat_sum += battery;
+  _bat_samples++;
 }

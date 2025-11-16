@@ -20,6 +20,21 @@ void sim_request_stop(void){
   sim_should_stop = 1;
 }
 
+void sim_log_tick(int action){
+  if(timer < config.exec_time){
+    hist[timer].x = rob->x;
+    hist[timer].y = rob->y;
+    hist[timer].heading = rob->heading;
+    hist[timer].bumper = rob->bumper;
+    hist[timer].infrared = rob->infrared;
+    hist[timer].battery = rob->battery;
+    sim_robot_record_sample(rob->battery);
+    if(action != -1) ++timer;
+  }
+  if(rob->battery < 0.1f)
+    sim_request_stop();
+}
+
 // Visual helpers moved to sim_visual.c
 
 // Base/world helpers now in sim_world.c
