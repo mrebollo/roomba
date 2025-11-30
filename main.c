@@ -1,29 +1,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 #include "simula.h"
 
-struct coor{
-  int x, y;
-};
 
 
 void on_start(){
-  struct coor base;
-  sensor_t rob;
-  float desv;
-  rmb_awake(&base.x, &base.y);
-  //random heading in a 180º arc
+  int basex, basey;
+  
+  rmb_awake(&basex, &basey);
+  //sale de la pared con un ángulo aleatorio +/-90º
   /*
-  rob = rmb_state();
-  desv = rand()  / (float)RAND_MAX * M_PI - M_PI_2; 
-  rmb_turn(rob.head + desv);
+  sensor_t rob = rmb_state();
+  float desv = rand() / (RAND_MAX * M_PI - M_PI_2); 
+  rmb_turn(rob.heading + desv);
   */
 }
 
 
 void cyclic_behav(){
-  float angle;
   //da un paso en la dirección actual
   rmb_forward();
   sensor_t rob = rmb_state();
@@ -31,7 +27,7 @@ void cyclic_behav(){
   //detección de obstáculos
   if(rmb_bumper()){
     //gira un ángulo aleatorio
-    angle = rand() / (float)RAND_MAX * 2 * M_PI; 
+    float angle = rand() / (float)RAND_MAX * 2 * M_PI; 
     rmb_turn(angle);
   }
   //deteccion de suciedad
@@ -51,6 +47,7 @@ void on_stop(){
 
 
 int main(int argc, char *argv[]){
+  srand(time(NULL));
   if(argc > 1)
     load_map(argv[1]);
   configure(on_start, cyclic_behav, on_stop, 100);
