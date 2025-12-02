@@ -147,13 +147,14 @@ void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time){
     exit(1);
   }
   
-#ifndef COMPETITION_MODE
-  if(stop != NULL) atexit(stop);
-#endif
+  // Register cleanup handlers (LIFO order - last registered executes first)
+  // _cleanup_hist must be registered BEFORE stop so it executes AFTER
   atexit(_cleanup_hist);
   atexit(_save_log_wrapper);
   atexit(_save_stats_wrapper);
-  atexit(_save_stats_wrapper);
+#ifndef COMPETITION_MODE
+  if(stop != NULL) atexit(stop);
+#endif
   density = rand()/(float)RAND_MAX * MAX_OBSTACLE_DENSITY;
   if(map.name[0] == '\0')
     sim_world_generate(&map, WORLDSIZE, WORLDSIZE, DEFAULT_DIRT_CELLS, density);

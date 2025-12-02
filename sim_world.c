@@ -318,10 +318,10 @@ static int read_pgm_header(FILE *fd, int *nrow, int *ncol){
   char line[LINE_BUFFER_SIZE];
   int aux;
   
-  fgets(line, LINE_BUFFER_SIZE, fd);  // P2
-  fgets(line, LINE_BUFFER_SIZE, fd);  // comment
-  fscanf(fd, "%d%d", ncol, nrow);
-  fscanf(fd, "%d", &aux);
+  (void)fgets(line, LINE_BUFFER_SIZE, fd);  // P2
+  (void)fgets(line, LINE_BUFFER_SIZE, fd);  // comment
+  (void)fscanf(fd, "%d%d", ncol, nrow);
+  (void)fscanf(fd, "%d", &aux);
   
   if(*nrow > WORLDSIZE || *ncol > WORLDSIZE){
     fprintf(stderr, "Error: Map size (%dx%d) exceeds WORLDSIZE\n", *nrow, *ncol);
@@ -373,10 +373,10 @@ static int parse_map_cells(FILE *fd, map_t *m){
   for(int i = 0; i < m->nrow; i++){
     for(int j = 0; j < m->ncol; j++){
       int cell;
-      fscanf(fd, "%d", &cell);
+      (void)fscanf(fd, "%d", &cell);
       process_cell(m, cell, i, j, &dc);
     }
-    fgets(line, LINE_BUFFER_SIZE, fd);
+    (void)fgets(line, LINE_BUFFER_SIZE, fd);
   }
   return 0;
 }
@@ -401,6 +401,8 @@ int sim_world_load(map_t* m, char *filename){
   }
   
   m->ndirt = 0;
+  m->base_x = -1;
+  m->base_y = -1;
   if(read_pgm_header(fd, &nrow, &ncol) != 0){
     fclose(fd);
     return -1;

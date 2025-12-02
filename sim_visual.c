@@ -175,12 +175,21 @@ static void print_path(char view[WORLDSIZE][WORLDSIZE], sensor_t h[], int len){
  */
 void visualize(){
 #if ENABLE_VISUALIZATION
+  if(!hist){
+    printf("No history available for visualization\n");
+    return;
+  }
   g_stop_vis = 0;
   void (*prev)(int) = signal(SIGINT, sigint_vis_handler);
+  
+  // Hide cursor and clear screen once at start
+  printf("\033[?25l\033[2J");
+  fflush(stdout);
+  
   for(int t = 0; t < timer && !g_stop_vis; t++){
-    // ANSI clear to avoid spawning subshells
-    printf("\033[H\033[J");
-    fflush(stdout);
+    // Move cursor to home position (top-left) without clearing
+    printf("\033[H");
+    
     char view[WORLDSIZE][WORLDSIZE];
     // copy current map to a local view buffer
     for(int i = 0; i < map.nrow; i++)
@@ -188,10 +197,18 @@ void visualize(){
         view[i][j] = map.cells[i][j];
     print_path(view, hist, t);
     printf("Ctrl-C para salir\n");
+    
+    // Flush output once after all drawing is done
+    fflush(stdout);
+    
     const long ms = VISUALIZATION_DELAY_MS;
     struct timespec ts = { ms/1000, (ms%1000)*1000000L };
     nanosleep(&ts, NULL);
   }
+  
+  // Restore cursor and clean up
+  printf("\033[?25h");
+  fflush(stdout);
   signal(SIGINT, prev);
 #endif
 }

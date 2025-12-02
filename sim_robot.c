@@ -129,7 +129,7 @@ int rmb_awake(int *x, int *y){
   DEBUG_PRINT("Awaking...\n");
   DEBUG_PRINT("Map: %s\n", map.name);
   if(map.name[0] != '\0'){
-    if(map.base_x > 0 && map.base_y > 0){
+    if(map.base_x >= 0 && map.base_y >= 0){
       rob->heading = sim_world_put_base(&map, map.base_x, map.base_y);
       *x = map.base_x;
       *y = map.base_y;
@@ -143,8 +143,12 @@ int rmb_awake(int *x, int *y){
   }
   
   // Initialize robot position and battery
-  update_position(0, 0, *x, *y);
+  r.precise_x = *x;
+  r.precise_y = *y;
+  rob->x = *x;
+  rob->y = *y;
   rob->battery = MAXBAT;
+  rob->bumper = 0;
   tick(0);
   return 1;
 }
@@ -164,6 +168,7 @@ void rmb_turn(float alpha){
   rob->bumper = 0;
   apply_battery(COST_TURN);
   stats_move(TURN);
+  tick(0);
 }
 
 /**
@@ -185,6 +190,7 @@ void rmb_forward(){
   // Move successful - update position
   update_position(dx, dy, rx, ry);
   update_ifr_at_cell();
+  rob->bumper = 0;
   // Update stats
   stats_move(FWD);
   stats_visit_cell();
