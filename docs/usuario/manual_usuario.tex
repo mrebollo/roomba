@@ -1,0 +1,1071 @@
+% Manual del Usuario - Simulador Roomba
+% Compilar con: pdflatex manual_usuario.tex
+
+\documentclass[11pt,a4paper]{article}
+
+% Paquetes
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{caption}
+
+% Configuración de página
+\geometry{
+    left=2.5cm,
+    right=2.5cm,
+    top=3cm,
+    bottom=3cm
+}
+
+% Configuración de encabezado y pie de página
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Manual del Usuario}
+\fancyhead[R]{Simulador Roomba}
+\fancyfoot[C]{\thepage}
+
+% Configuración de código C
+\lstdefinestyle{cstyle}{
+    language=C,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=8pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    rulecolor=\color{gray!30},
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    captionpos=b,
+    xleftmargin=2em,
+    framexleftmargin=1.5em,
+    showstringspaces=false
+}
+
+\lstset{style=cstyle}
+
+% Cambiar "Listing" por "Código" en los captions
+\renewcommand{\lstlistingname}{Código}
+
+% Configuración de cajas de información
+\newtcolorbox{infobox}[1]{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=#1
+}
+
+\newtcolorbox{warningbox}[1]{
+    colback=orange!5!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=#1
+}
+
+\newtcolorbox{exercisebox}[1]{
+    colback=green!5!white,
+    colframe=green!75!black,
+    fonttitle=\bfseries,
+    title=#1
+}
+
+\newtcolorbox{tipbox}[1]{
+    colback=yellow!5!white,
+    colframe=yellow!75!black,
+    fonttitle=\bfseries,
+    title=#1
+}
+
+% Configuración de hipervínculos
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Manual del Usuario - Simulador Roomba},
+    pdfauthor={Universidad},
+    pdfsubject={Programación de Robots},
+    pdfkeywords={robot, roomba, simulación, C}
+}
+
+% Comando para código inline
+\newcommand{\code}[1]{\texttt{#1}}
+
+\begin{document}
+
+% Portada
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge\bfseries Manual del Usuario\par}
+    \vspace{1cm}
+    {\LARGE Simulador Roomba\par}
+    \vspace{2cm}
+    
+    {\Large Guía Paso a Paso para\\Programar tu Robot de Limpieza\par}
+    \vspace{3cm}
+    
+    \begin{tikzpicture}
+        \draw[fill=gray!20] (0,0) circle (2cm);
+        \draw[fill=black] (0,0) circle (1.8cm);
+        \draw[fill=gray!30] (0,0) circle (0.5cm);
+        \draw[thick,->] (0,0) -- (1.5,0);
+        \node at (0,-3) {\Large Versión 2025};
+    \end{tikzpicture}
+    
+    \vfill
+    {\large 
+    Grado en Inf. Industrial y Robótica\\
+    ETS Informática - Univ. Politécnica de Valencia\\
+    Diciembre 2025\par}
+\end{titlepage}
+
+% Índice
+\tableofcontents
+\newpage
+
+% Contenido
+\section{Introducción}
+
+Este manual te enseñará a programar comportamientos para un robot de limpieza virtual. No necesitas experiencia previa en robótica, solo conocimientos básicos de programación en C.
+
+\subsection{¿Qué es el Simulador?}
+
+El simulador te permite programar un robot de limpieza virtual que se mueve en un mundo 2D. El robot puede:
+
+\begin{itemize}
+    \item Moverse y girar
+    \item Detectar obstáculos con su bumper
+    \item Detectar suciedad con sensor infrarrojo
+    \item Limpiar celdas sucias
+    \item Recargar su batería en la base
+\end{itemize}
+
+\subsection{Estructura de un Programa}
+
+Todo programa sigue este patrón:
+
+\begin{lstlisting}[caption={Estructura básica de un programa}]
+#include "simula.h"
+
+void inicializar() {
+    // Codigo que se ejecuta UNA vez al inicio
+}
+
+void comportamiento() {
+    // Codigo que se ejecuta REPETIDAMENTE (ciclo principal)
+}
+
+void finalizar() {
+    visualize();  // Muestra la animacion al terminar
+}
+
+int main() {
+    configure(inicializar, comportamiento, finalizar, 1000);
+    run();
+    return 0;
+}
+\end{lstlisting}
+
+\section{Tu Primer Programa}
+
+\subsection{Ejemplo 1: Robot Inmóvil}
+
+Empecemos con lo más simple - un robot que solo despierta y se queda quieto:
+
+\begin{lstlisting}[caption={Robot inmóvil}]
+#include "simula.h"
+#include <stdio.h>
+
+void inicializar() {
+    int x, y;
+    rmb_awake(&x, &y);
+    printf("Robot activado en posicion (%d, %d)\n", x, y);
+}
+
+void comportamiento() {
+    // No hace nada - el robot esta quieto
+}
+
+void finalizar() {
+    visualize();
+}
+
+int main() {
+    configure(inicializar, comportamiento, finalizar, 100);
+    run();
+    return 0;
+}
+\end{lstlisting}
+
+\begin{infobox}{¿Qué hace este código?}
+\begin{itemize}
+    \item \code{rmb\_awake(\&x, \&y)} --- Activa el robot y obtiene su posición inicial
+    \item \code{configure(...)} --- Configura el simulador con 100 ciclos máximo
+    \item \code{run()} --- Ejecuta la simulación
+    \item \code{visualize()} --- Muestra el resultado animado
+\end{itemize}
+\end{infobox}
+
+\begin{exercisebox}{Ejercicio}
+Compila y ejecuta este programa. Observa dónde aparece el robot. Ver sección~\ref{sec:compilacion} para las opciones de compilación.
+\end{exercisebox}
+
+\subsection{Ejemplo 2: Robot que Avanza}
+
+Ahora hagamos que el robot se mueva:
+
+\begin{lstlisting}[caption={Robot que avanza}]
+#include "simula.h"
+
+void inicializar() {
+    int x, y;
+    rmb_awake(&x, &y);
+}
+
+void comportamiento() {
+    rmb_forward();  // Avanza un paso en cada ciclo
+}
+
+void finalizar() {
+    visualize();
+}
+
+int main() {
+    configure(inicializar, comportamiento, finalizar, 50);
+    run();
+    return 0;
+}
+\end{lstlisting}
+
+\begin{warningbox}{Observación}
+El robot avanza en línea recta hasta que choca con una pared. Cuando choca, el bumper se activa pero el robot intenta seguir avanzando contra la pared. \textbf{Problema:} El robot no sabe evitar obstáculos todavía.
+\end{warningbox}
+
+\section{Entendiendo los Sensores}
+
+El robot tiene varios sensores que puedes consultar:
+
+\subsection{Sensor Bumper}
+
+Detecta si el robot chocó con algo:
+
+\begin{lstlisting}[caption={Usando el bumper}]
+if (rmb_bumper()) {
+    printf("Obstaculo detectado!\n");
+}
+\end{lstlisting}
+
+\begin{itemize}
+    \item Devuelve \texttt{1} si hay colisión
+    \item Devuelve \texttt{0} si está libre
+\end{itemize}
+
+\subsection{Sensor Infrarrojo}
+
+Detecta suciedad en la posición actual:
+
+\begin{lstlisting}[caption={Usando el sensor infrarrojo}]
+int nivel_suciedad = rmb_ifr();
+if (nivel_suciedad > 0) {
+    printf("Hay suciedad de nivel %d\n", nivel_suciedad);
+}
+\end{lstlisting}
+
+\begin{itemize}
+    \item Devuelve \texttt{0} si está limpio
+    \item Devuelve \texttt{1-5} según el nivel de suciedad
+\end{itemize}
+
+\subsection{Sensor de Batería}
+
+Consulta la batería restante:
+
+\begin{lstlisting}[caption={Consultando la batería}]
+float bateria = rmb_battery();
+printf("Bateria: %.1f\n", bateria);
+\end{lstlisting}
+
+\begin{itemize}
+    \item Máximo: 1000
+    \item Mínimo: 0 (robot se detiene)
+\end{itemize}
+
+\subsection{Posición y Orientación}
+
+Lee todos los sensores a la vez:
+
+\begin{lstlisting}[caption={Leyendo todos los sensores}]
+sensor_t estado = rmb_state();
+printf("Posicion: (%d, %d)\n", estado.x, estado.y);
+printf("Orientacion: %.2f radianes\n", estado.heading);
+printf("Bateria: %.1f\n", estado.battery);
+\end{lstlisting}
+
+\section{Movimiento Básico}
+
+\subsection{Girar}
+
+El robot puede girar especificando un ángulo en radianes:
+
+\begin{lstlisting}[caption={Diferentes giros}]
+#include <math.h>
+
+rmb_turn(M_PI / 2);     // Gira 90 grados a la izquierda
+rmb_turn(-M_PI / 2);    // Gira 90 grados a la derecha
+rmb_turn(M_PI);         // Gira 180 grados (media vuelta)
+rmb_turn(M_PI / 4);     // Gira 45 grados a la izquierda
+\end{lstlisting}
+
+\begin{tipbox}{Recuerda}
+\begin{itemize}
+    \item Ángulos positivos = giro a la izquierda (antihorario)
+    \item Ángulos negativos = giro a la derecha (horario)
+    \item $2\pi$ radianes = $360$ grados (vuelta completa)
+\end{itemize}
+\end{tipbox}
+
+\subsection{Ejemplo 3: Robot que Explora en Cuadrado}
+
+\begin{lstlisting}[caption={Robot dibujando un cuadrado}]
+#include "simula.h"
+#include <math.h>
+
+int pasos = 0;
+int lado_actual = 0;
+
+void inicializar() {
+    int x, y;
+    rmb_awake(&x, &y);
+}
+
+void comportamiento() {
+    if (pasos < 10) {
+        rmb_forward();
+        pasos++;
+    } else {
+        rmb_turn(M_PI / 2);  // Gira 90 grados al completar un lado
+        pasos = 0;
+        lado_actual++;
+        
+        if (lado_actual >= 4) {
+            lado_actual = 0;  // Comienza nuevo cuadrado
+        }
+    }
+}
+
+void finalizar() {
+    visualize();
+}
+
+int main() {
+    configure(inicializar, comportamiento, finalizar, 200);
+    run();
+    return 0;
+}
+\end{lstlisting}
+
+\begin{exercisebox}{Ejercicio}
+Modifica el programa para que haga un triángulo en lugar de un cuadrado.
+\textit{Pista: Un triángulo equilátero tiene ángulos de 120 grados externos.}
+\end{exercisebox}
+
+\section{Detección de Obstáculos}
+
+\subsection{Ejemplo 4: Robot que Rebota}
+
+Cuando detecta un obstáculo, gira y continúa:
+
+\begin{lstlisting}[caption={Robot con rebote aleatorio},label=lst:rebote]
+#include "simula.h"
+#include <math.h>
+#include <stdlib.h>
+#include <time.h>
+
+void inicializar() {
+    int x, y;
+    rmb_awake(&x, &y);
+    srand(time(NULL));  // Inicializa numeros aleatorios
+}
+
+void comportamiento() {
+    if (rmb_bumper()) {
+        // Choco - gira un angulo aleatorio entre 45 y 135 grados
+        float angulo = (M_PI / 4) + 
+                       (rand() / (float)RAND_MAX) * (M_PI / 2);
+        rmb_turn(angulo);
+    } else {
+        // Libre - avanza
+        rmb_forward();
+    }
+}
+
+void finalizar() {
+    visualize();
+}
+
+int main() {
+    configure(inicializar, comportamiento, finalizar, 1000);
+    run();
+    return 0;
+}
+\end{lstlisting}
+
+\begin{tipbox}{Estrategia}
+Este es el comportamiento básico de un Roomba real --- rebota aleatoriamente cuando encuentra obstáculos.
+\end{tipbox}
+
+\subsection{Ejemplo 5: Robot que Sigue Paredes}
+
+Una estrategia más inteligente usando máquina de estados:
+
+\begin{lstlisting}[caption={Robot siguiendo paredes}]
+#include "simula.h"
+#include <math.h>
+
+typedef enum { AVANZANDO, GIRANDO, AJUSTANDO } Estado;
+Estado estado_actual = AVANZANDO;
+int pasos_desde_choque = 0;
+
+void inicializar() {
+    int x, y;
+    rmb_awake(&x, &y);
+}
+
+void comportamiento() {
+    switch(estado_actual) {
+        case AVANZANDO:
+            if (rmb_bumper()) {
+                rmb_turn(M_PI / 2);
+                estado_actual = GIRANDO;
+                pasos_desde_choque = 0;
+            } else {
+                rmb_forward();
+                pasos_desde_choque++;
+                
+                if (pasos_desde_choque > 5) {
+                    estado_actual = AJUSTANDO;
+                }
+            }
+            break;
+            
+        case GIRANDO:
+            rmb_forward();
+            estado_actual = AVANZANDO;
+            break;
+            
+        case AJUSTANDO:
+            rmb_turn(-M_PI / 4);
+            pasos_desde_choque = 0;
+            estado_actual = AVANZANDO;
+            break;
+    }
+}
+
+void finalizar() {
+    visualize();
+}
+
+int main() {
+    configure(inicializar, comportamiento, finalizar, 1000);
+    run();
+    return 0;
+}
+\end{lstlisting}
+
+\section{Limpieza Inteligente}
+
+\subsection{Ejemplo 6: Robot que Limpia al Detectar Suciedad}
+
+\begin{lstlisting}[caption={Limpieza básica}]
+#include "simula.h"
+#include <math.h>
+
+void inicializar() {
+    int x, y;
+    rmb_awake(&x, &y);
+}
+
+void comportamiento() {
+    // Primero verifica si hay suciedad
+    if (rmb_ifr() > 0) {
+        rmb_clean();  // Limpia la celda actual
+        return;       // Dedica este ciclo solo a limpiar
+    }
+    
+    // Si no hay suciedad, navega
+    if (rmb_bumper()) {
+        rmb_turn(M_PI / 2);
+    } else {
+        rmb_forward();
+    }
+}
+
+void finalizar() {
+    visualize();
+}
+
+int main() {
+    configure(inicializar, comportamiento, finalizar, 1000);
+    run();
+    return 0;
+}
+\end{lstlisting}
+
+\begin{infobox}{Importante}
+\code{rmb\_clean()} reduce el nivel de suciedad en 1. Si una celda tiene nivel 3, necesitarás limpiar 3 veces.
+\end{infobox}
+
+\subsection{Ejemplo 7: Limpieza Completa de una Celda}
+
+\begin{lstlisting}[caption={Limpieza completa}]
+void comportamiento() {
+    int suciedad = rmb_ifr();
+    
+    if (suciedad > 0) {
+        // Limpia hasta que este completamente limpia
+        while (rmb_ifr() > 0) {
+            rmb_clean();
+        }
+        return;
+    }
+    
+    // Navegacion con rebote aleatorio
+    if (rmb_bumper()) {
+        rmb_turn(M_PI / 2);
+    } else {
+        rmb_forward();
+    }
+}
+\end{lstlisting}
+
+\begin{warningbox}{Cuidado}
+Cada \code{rmb\_clean()} consume batería (0.5 unidades). Asegúrate de tener suficiente batería antes de limpiar.
+\end{warningbox}
+
+\section{Gestión de Batería}
+
+\subsection{Costes de Batería}
+
+Cada acción consume batería según la tabla~\ref{tab:costes}.
+
+\begin{table}[h]
+\centering
+\caption{Costes de batería por acción}
+\label{tab:costes}
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Acción} & \textbf{Coste} \\
+\hline
+\code{rmb\_turn()} & 0.1 \\
+\code{rmb\_forward()} (recto) & 1.0 \\
+\code{rmb\_forward()} (diagonal) & 1.4 \\
+\code{rmb\_clean()} & 0.5 \\
+Colisión (bumper activo) & 0.5 \\
+\code{rmb\_load()} & +10 (recarga) \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Ejemplo 8: Seguimiento de Estadísticas con Finalizar}
+
+La función \code{finalizar()} es opcional pero útil para mostrar estadísticas personalizadas al final de la simulación. En este ejemplo usamos \textbf{variables static} dentro de \code{comportamiento()} en lugar de variables globales:
+
+\begin{lstlisting}[caption={Usando variables static para estadísticas}]
+#include "simula.h"
+#include <math.h>
+
+void inicializar() {
+    int x, y;
+    rmb_awake(&x, &y);
+}
+
+void comportamiento() {
+    // Variables static: mantienen su valor entre llamadas
+    static int pasos_totales = 0;
+    static int colisiones = 0;
+    static int limpiezas = 0;
+    
+    if (rmb_ifr() > 0) {
+        rmb_clean();
+        limpiezas++;
+    } else if (rmb_bumper()) {
+        rmb_turn(M_PI / 2);
+        colisiones++;
+    } else {
+        rmb_forward();
+        pasos_totales++;
+    }
+}
+
+void finalizar() {
+    printf("\n=== Estadisticas de la Mision ===\n");
+    printf("Pasos realizados: %d\n", pasos_totales);
+    printf("Colisiones: %d\n", colisiones);
+    printf("Limpiezas: %d\n", limpiezas);
+    printf("Bateria final: %.1f\n", rmb_battery());
+    printf("Eficiencia: %.2f limpiezas/paso\n", 
+           (float)limpiezas / pasos_totales);
+    
+    visualize();
+}
+
+int main() {
+    configure(inicializar, comportamiento, finalizar, 1000);
+    run();
+    return 0;
+}
+\end{lstlisting}
+
+\begin{infobox}{Uso de finalizar()}
+La función \code{finalizar()} es \textbf{OBLIGATORIA} y se ejecuta automáticamente cuando termina \code{run()}. Debe incluir la llamada a \code{visualize()} para mostrar la animación. También puedes usarla para mostrar estadísticas o guardar datos antes de la visualización.
+\end{infobox}
+
+
+
+\section{Estrategias Completas}
+
+\subsection{Ejemplo 9: Robot Autónomo Completo}
+
+Este ejemplo implementa un robot completo con:
+\begin{itemize}
+    \item Exploración inteligente
+    \item Limpieza automática
+    \item Regreso a base cuando batería baja
+    \item Recarga automática
+\end{itemize}
+
+\begin{lstlisting}[caption={Robot autónomo completo},breaklines=true]
+#include "simula.h"
+#include <math.h>
+#include <stdio.h>
+
+typedef enum {
+    EXPLORANDO,
+    LIMPIANDO,
+    REGRESANDO,
+    RECARGANDO
+} EstadoRobot;
+
+EstadoRobot estado = EXPLORANDO;
+int base_x, base_y;
+int celdas_limpiadas = 0;
+
+void inicializar() {
+    rmb_awake(&base_x, &base_y);
+    printf("Robot iniciado en base (%d, %d)\n", base_x, base_y);
+}
+
+void explorar() {
+    if (rmb_ifr() > 0) {
+        estado = LIMPIANDO;
+        return;
+    }
+    
+    if (rmb_bumper()) {
+        float angulo = M_PI / 2 + (rand() % 90) * M_PI / 180;
+        rmb_turn(angulo);
+    } else {
+        rmb_forward();
+    }
+}
+
+void limpiar() {
+    if (rmb_ifr() > 0) {
+        rmb_clean();
+    } else {
+        celdas_limpiadas++;
+        estado = EXPLORANDO;
+    }
+}
+
+void regresar_base() {
+    sensor_t s = rmb_state();
+    
+    if (s.x == base_x && s.y == base_y) {
+        estado = RECARGANDO;
+        return;
+    }
+    
+    int dx = base_x - s.x;
+    int dy = base_y - s.y;
+    float angulo_objetivo = atan2(dy, dx);
+    float dif = angulo_objetivo - s.heading;
+    
+    while (dif > M_PI) dif -= 2 * M_PI;
+    while (dif < -M_PI) dif += 2 * M_PI;
+    
+    if (fabs(dif) > 0.2) {
+        rmb_turn(dif * 0.3);
+    } else {
+        if (!rmb_bumper()) {
+            rmb_forward();
+        } else {
+            rmb_turn(M_PI / 2);
+        }
+    }
+}
+
+void recargar() {
+    if (rmb_battery() < 900) {
+        rmb_load();
+    } else {
+        estado = EXPLORANDO;
+    }
+}
+
+void comportamiento() {
+    if (rmb_battery() < 150 && estado != REGRESANDO 
+        && estado != RECARGANDO) {
+        estado = REGRESANDO;
+    }
+    
+    switch(estado) {
+        case EXPLORANDO:
+            explorar();
+            break;
+        case LIMPIANDO:
+            limpiar();
+            break;
+        case REGRESANDO:
+            regresar_base();
+            break;
+        case RECARGANDO:
+            recargar();
+            break;
+    }
+}
+
+void finalizar() {
+    // Mostrar resumen final
+    printf("\n=== Resumen Final ===\n");
+    printf("Celdas limpiadas: %d\n", celdas_limpiadas);
+    printf("Bateria restante: %.1f\n", rmb_battery());
+    
+    visualize();
+}
+
+int main() {
+    configure(inicializar, comportamiento, finalizar, 5000);
+    run();
+    return 0;
+}
+\end{lstlisting}
+
+\section{Compilación del Proyecto}
+\label{sec:compilacion}
+
+Existen tres formas de compilar tu programa con el simulador:
+
+\subsection{Opción 1: Compilación Directa desde Fuentes}
+
+Compila todos los archivos fuente directamente con \code{gcc}:
+
+\begin{verbatim}
+gcc main.c simula.c sim_robot.c sim_visual.c sim_io.c \
+    sim_world.c sim_stats.c -lm -o roomba
+./roomba
+\end{verbatim}
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Control total sobre el proceso de compilación
+    \item No requiere archivos adicionales
+    \item Útil para entender cómo funciona la compilación
+\end{itemize}
+
+\textbf{Desventajas:}
+\begin{itemize}
+    \item Comando largo y propenso a errores
+    \item Recompila todo cada vez (lento)
+\end{itemize}
+
+\subsection{Opción 2: Usar Makefile (Recomendado)}
+
+La forma más simple y profesional es usar \code{make}:
+
+\begin{verbatim}
+make
+./roomba
+\end{verbatim}
+
+O directamente:
+
+\begin{verbatim}
+make run
+\end{verbatim}
+
+El \code{Makefile} incluye varios objetivos útiles:
+
+\begin{verbatim}
+make          # Compila el proyecto
+make run      # Compila y ejecuta
+make debug    # Compila con símbolos de depuración
+make clean    # Limpia archivos generados
+\end{verbatim}
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Comando corto y fácil de recordar
+    \item Recompila solo lo necesario (rápido)
+    \item Estándar en proyectos C/C++
+\end{itemize}
+
+\subsection{Opción 3: Compilación con Objeto Precompilado}
+
+Si el profesor proporciona un archivo \code{simula.o} precompilado, puedes compilar solo tu \code{main.c}:
+
+\begin{verbatim}
+gcc main.c simula.o -lm -o roomba
+./roomba
+\end{verbatim}
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Compilación muy rápida (solo tu código)
+    \item No necesitas los fuentes del simulador
+    \item Útil para competiciones o exámenes
+\end{itemize}
+
+\textbf{Nota:} El archivo \code{simula.o} debe ser compatible con tu sistema operativo y versión de compilador.
+
+\begin{tipbox}{Consejo}
+Para proyectos, usa \textbf{Opción 2 (make)}. Para aprender o depurar, usa \textbf{Opción 1}. Si te dan \code{simula.o}, usa \textbf{Opción 3}.
+\end{tipbox}
+
+\section{Depuración y Visualización}
+
+\subsection{Archivos Generados}
+
+Después de ejecutar tu programa, se generan automáticamente:
+
+\begin{enumerate}
+    \item \texttt{log.csv} --- Historial completo de posiciones
+    \item \texttt{stats.csv} --- Estadísticas finales
+    \item \texttt{map.pgm} --- Imagen del mapa
+\end{enumerate}
+
+\subsection{Leer las Estadísticas}
+
+\begin{verbatim}
+$ cat stats.csv
+cell_total, cell_visited, dirt_total, dirt_cleaned, 
+bat_total, bat_mean, forward, turn, bumps, clean, load
+2285, 87, 310, 25, 850.5, 720.3, 87, 45, 12, 50, 3
+\end{verbatim}
+
+\textbf{Interpretación:}
+\begin{itemize}
+    \item \texttt{cell\_total}: 2285 celdas totales en el mapa
+    \item \texttt{cell\_visited}: 87 celdas visitadas (3.8\% del mapa)
+    \item \texttt{dirt\_total}: 310 unidades de suciedad iniciales
+    \item \texttt{dirt\_cleaned}: 25 unidades limpiadas (8\% del total)
+    \item \texttt{bat\_total}: 850.5 unidades de batería consumidas
+\end{itemize}
+
+\subsection{Cargar un Mapa Existente}
+
+Puedes cargar un mapa guardado para practicar en el mismo escenario. Hay dos formas:
+
+\subsubsection{Opción 1: Desde el Código}
+
+Llama a \code{load\_map()} antes de \code{configure()}:
+
+\begin{lstlisting}[caption={Cargando un mapa desde el código}]
+void finalizar() {
+    visualize();
+}
+
+int main() {
+    load_map("map.pgm");  // Carga un mapa especifico
+    configure(inicializar, comportamiento, finalizar, 1000);
+    run();
+    return 0;
+}
+\end{lstlisting}
+
+\subsubsection{Opción 2: Por Línea de Comandos (Recomendado)}
+
+Permite especificar el mapa al ejecutar el programa:
+
+\begin{lstlisting}[caption={Cargando un mapa por línea de comandos}]
+int main(int argc, char *argv[]) {
+    // Si hay argumento, cargar el mapa especificado
+    if (argc > 1) {
+        if (load_map(argv[1]) != 0) {
+            printf("Error al cargar el mapa\n");
+            return 1;
+        }
+    }
+    // Si no hay argumento, se genera un mapa aleatorio
+    
+    configure(inicializar, comportamiento, finalizar, 1000);
+    run();
+    return 0;
+}
+\end{lstlisting}
+
+Ejecución:
+
+\begin{verbatim}
+./roomba                    # Genera mapa aleatorio
+./roomba mi_mapa.pgm        # Usa mi_mapa.pgm
+./roomba maps/dificil.pgm   # Usa maps/dificil.pgm
+\end{verbatim}
+
+\begin{tipbox}{Ventaja}
+La opción por línea de comandos te permite probar el mismo código en diferentes mapas sin recompilar.
+\end{tipbox}
+
+\section{Desafíos y Ejercicios}
+
+\subsection{Nivel Básico}
+
+\begin{exercisebox}{Ejercicio 1}
+\textbf{Cuadrado Perfecto:} Haz que el robot dibuje un cuadrado de $10 \times 10$ celdas sin salirse del trazado.
+\end{exercisebox}
+
+\begin{exercisebox}{Ejercicio 2}
+\textbf{Limpiador Simple:} Limpia al menos el 50\% de la suciedad del mapa.
+\end{exercisebox}
+
+\begin{exercisebox}{Ejercicio 3}
+\textbf{Explorador:} Visita al menos el 30\% de las celdas del mapa.
+\end{exercisebox}
+
+\subsection{Nivel Intermedio}
+
+\begin{exercisebox}{Ejercicio 4}
+\textbf{Gestor de Batería:} Implementa recarga automática cuando la batería caiga por debajo del 20\%.
+\end{exercisebox}
+
+\begin{exercisebox}{Ejercicio 5}
+\textbf{Espiral Completa:} Cubre el área en espiral sin repetir celdas.
+\end{exercisebox}
+
+\begin{exercisebox}{Ejercicio 6}
+\textbf{Limpieza Profunda:} Limpia el 80\% de la suciedad del mapa.
+\end{exercisebox}
+
+\subsection{Nivel Avanzado}
+
+\begin{exercisebox}{Ejercicio 7}
+\textbf{Cobertura Completa:} Visita el 95\% de las celdas accesibles del mapa.
+\end{exercisebox}
+
+\begin{exercisebox}{Ejercicio 8}
+\textbf{Eficiencia Energética:} Limpia 50+ unidades de suciedad con menos de 500 unidades de batería.
+\end{exercisebox}
+
+\begin{exercisebox}{Ejercicio 9}
+\textbf{Robot Inteligente:} Implementa una estrategia que adapte su comportamiento según el nivel de batería y suciedad detectada.
+\end{exercisebox}
+
+\section{Referencia Rápida de Funciones}
+
+\begin{table}[h]
+\centering
+\caption{Funciones disponibles para el robot}
+\label{tab:funciones}
+\small
+\begin{tabular}{|p{4.5cm}|p{5.5cm}|c|}
+\hline
+\textbf{Función} & \textbf{Descripción} & \textbf{Coste} \\
+\hline
+\code{rmb\_awake(\&x, \&y)} & Activa el robot, devuelve posición inicial & 0 \\
+\hline
+\code{rmb\_forward()} & Avanza un paso & 1.0/1.4 \\
+\hline
+\code{rmb\_turn(angulo)} & Gira en radianes & 0.1 \\
+\hline
+\code{rmb\_clean()} & Limpia celda actual & 0.5 \\
+\hline
+\code{rmb\_load()} & Recarga +10 (solo en base) & 0 \\
+\hline
+\code{rmb\_state()} & Lee todos los sensores & 0 \\
+\hline
+\code{rmb\_bumper()} & Lee bumper (0 o 1) & 0 \\
+\hline
+\code{rmb\_ifr()} & Lee infrarrojo (0-5) & 0 \\
+\hline
+\code{rmb\_battery()} & Lee batería (0-1000) & 0 \\
+\hline
+\code{rmb\_at\_base()} & Verifica si está en base & 0 \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Consejos Finales}
+
+\begin{tipbox}{Tips para Programar tu Robot}
+\begin{enumerate}
+    \item \textbf{Prueba Incrementalmente:} Empieza simple y añade complejidad gradualmente
+    \item \textbf{Usa Estados:} Las máquinas de estados hacen el código más claro y mantenible
+    \item \textbf{Gestiona la Batería:} Siempre ten un plan para volver a la base antes de quedarte sin energía
+    \item \textbf{Visualiza:} Usa \code{visualize()} para ver qué está haciendo tu robot
+    \item \textbf{Analiza Estadísticas:} Revisa \texttt{stats.csv} para mejorar tu estrategia
+\end{enumerate}
+\end{tipbox}
+
+\section{Problemas Comunes}
+
+\subsection{El robot no se mueve}
+
+\begin{itemize}
+    \item ¿Llamaste a \code{rmb\_awake()} en \code{inicializar()}?
+    \item ¿Estás llamando a \code{rmb\_forward()} o \code{rmb\_turn()}?
+\end{itemize}
+
+\subsection{El robot choca constantemente}
+
+\begin{itemize}
+    \item Verifica con \code{rmb\_bumper()} antes de avanzar
+    \item Gira cuando detectes obstáculo
+\end{itemize}
+
+\subsection{Se queda sin batería}
+
+\begin{itemize}
+    \item Reduce la cantidad de acciones
+    \item Implementa regreso a base cuando batería $< 200$
+    \item Usa \code{rmb\_load()} en la base
+\end{itemize}
+
+\subsection{No limpia nada}
+
+\begin{itemize}
+    \item Verifica que estés llamando a \code{rmb\_clean()}
+    \item Asegúrate de que \code{rmb\_ifr() > 0} antes de limpiar
+    \item Recuerda que puede necesitar múltiples limpiezas por celda
+\end{itemize}
+
+\section{Conclusión}
+
+¡Felicidades! Ahora tienes todas las herramientas para programar robots de limpieza inteligentes. Experimenta con diferentes estrategias y compara los resultados.
+
+\textbf{Siguiente paso:} Revisa el código de \texttt{samples/} para ver más ejemplos avanzados.
+
+\vfill
+
+\begin{center}
+\rule{0.5\textwidth}{0.4pt}\\
+\textbf{Versión 2025}\\
+Última actualización: Diciembre 2025
+\end{center}
+
+\end{document}

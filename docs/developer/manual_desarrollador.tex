@@ -1,0 +1,2749 @@
+% Manual del Desarrollador - Simulador Roomba
+% Compilar con: pdflatex manual_desarrollador.tex
+
+\documentclass[11pt,a4paper]{article}
+
+% Paquetes
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{caption}
+
+% Configuración de página
+\geometry{
+    left=2.5cm,
+    right=2.5cm,
+    top=3cm,
+    bottom=3cm
+}
+
+% Configuración de encabezado y pie de página
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Manual del Desarrollador}
+\fancyhead[R]{Simulador Roomba}
+\fancyfoot[C]{\thepage}
+
+% Configuración de código C
+\lstdefinestyle{cstyle}{
+    language=C,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=8pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    rulecolor=\color{gray!30},
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    captionpos=b,
+    xleftmargin=2em,
+    framexleftmargin=1.5em,
+    showstringspaces=false
+}
+
+\lstset{style=cstyle}
+
+% Cambiar "Listing" por "Código" en los captions
+\renewcommand{\lstlistingname}{Código}
+
+% Configuración de cajas de información
+\newtcolorbox{notebox}[1]{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=#1
+}
+
+\newtcolorbox{warningbox}[1]{
+    colback=orange!5!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=#1
+}
+
+\newtcolorbox{techbox}[1]{
+    colback=purple!5!white,
+    colframe=purple!75!black,
+    fonttitle=\bfseries,
+    title=#1
+}
+
+% Configuración de hipervínculos
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Manual del Desarrollador - Simulador Roomba},
+    pdfauthor={Universidad},
+    pdfsubject={Documentación Técnica},
+    pdfkeywords={simulador, roomba, arquitectura, desarrollo}
+}
+
+% Título
+\title{
+    \vspace{-2cm}
+    {\Huge\textbf{Manual del Desarrollador}}\\
+    \vspace{0.5cm}
+    {\Large Simulador Roomba}\\
+    \vspace{0.5cm}
+    {\large Documentación Técnica y de Arquitectura}
+}
+\author{Proyecto Educativo - Universidad}
+\date{Versión 2025}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introducción}
+
+\subsection{Propósito del Documento}
+
+Este manual está dirigido a desarrolladores que deseen:
+
+\begin{itemize}
+    \item Entender la arquitectura interna del simulador
+    \item Extender las funcionalidades del sistema
+    \item Modificar el comportamiento del simulador
+    \item Depurar o mantener el código fuente
+    \item Integrar el simulador en otros proyectos
+\end{itemize}
+
+\subsection{Visión General del Sistema}
+
+El simulador Roomba es un sistema educativo que permite a estudiantes programar comportamientos de navegación y limpieza para un robot virtual. El sistema está diseñado con:
+
+\begin{itemize}
+    \item \textbf{Modularidad:} Separación clara entre módulos (robot, mundo, visualización, I/O)
+    \item \textbf{API Simple:} Interfaz clara para usuarios (estudiantes)
+    \item \textbf{Extensibilidad:} Fácil añadir nuevas funcionalidades
+    \item \textbf{Portabilidad:} Código C estándar sin dependencias externas
+\end{itemize}
+
+\subsection{Características Principales}
+
+\begin{itemize}
+    \item Simulación 2D discreta con orientación continua
+    \item Detección de obstáculos mediante bumper
+    \item Sensor infrarrojo para detección de suciedad
+    \item Sistema de batería con recarga en base
+    \item Generación de mapas aleatorios o carga desde archivos PGM
+    \item Visualización ASCII en tiempo real
+    \item Exportación de logs y estadísticas en formato CSV
+    \item Modo competición sin visualización
+\end{itemize}
+
+\section{Arquitectura del Sistema}
+
+\subsection{Visión de Módulos}
+
+El simulador está estructurado en varios módulos independientes:
+
+\begin{table}[h]
+\centering
+\caption{Módulos del sistema}
+\begin{tabular}{|l|l|p{6cm}|}
+\hline
+\textbf{Módulo} & \textbf{Archivo} & \textbf{Responsabilidad} \\
+\hline
+Núcleo & \texttt{simula.c} & Configuración, ciclo principal, coordinación \\
+\hline
+Robot & \texttt{sim\_robot.c} & Implementación de acciones del robot (\texttt{rmb\_*}) \\
+\hline
+Mundo & \texttt{sim\_world.c} & Gestión del mapa (generación, carga, consultas) \\
+\hline
+Visualización & \texttt{sim\_visual.c} & Renderizado ASCII, animaciones \\
+\hline
+E/S & \texttt{sim\_io.c} & Logs CSV, carga/guardado de mapas PGM \\
+\hline
+Estadísticas & \texttt{sim\_stats.c} & Recopilación y exportación de métricas \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Headers}
+
+\begin{itemize}
+    \item \textbf{simula.h} --- API pública para estudiantes (funciones \texttt{rmb\_*}, \texttt{configure()}, etc.)
+    \item \textbf{simula\_internal.h} --- API interna compartida entre módulos (estructuras, constantes, funciones auxiliares)
+\end{itemize}
+
+\subsection{Diagrama de Dependencias}
+
+\begin{verbatim}
+main.c (usuario)
+    |
+    v
+simula.h (API pública)
+    |
+    v
+simula.c (núcleo)
+    |
+    +-- sim_robot.c (acciones del robot)
+    +-- sim_world.c (gestión del mapa)
+    +-- sim_visual.c (visualización)
+    +-- sim_io.c (entrada/salida)
+    +-- sim_stats.c (estadísticas)
+    |
+    v
+simula_internal.h (estructuras internas)
+\end{verbatim}
+
+\section{Estructuras de Datos}
+
+\subsection{map\_t --- Representación del Mundo}
+
+\begin{lstlisting}[caption={Estructura del mapa}]
+typedef struct _map {
+    char cells[WORLDSIZE][WORLDSIZE];  // Matriz de celdas
+    int nrow, ncol;                    // Dimensiones reales
+    dirt_t dirt[WORLDSIZE*WORLDSIZE];  // Lista de suciedad
+    int ndirt;                         // Numero de celdas sucias
+    char name[256];                    // Nombre del archivo
+    int base_x, base_y;                // Coordenadas de la base
+} map_t;
+\end{lstlisting}
+
+\textbf{Detalles de implementación:}
+\begin{itemize}
+    \item \texttt{cells} --- Matriz de caracteres: \texttt{'\#'} = obstáculo, \texttt{' '} = vacío
+    \item \texttt{dirt} --- Array de estructuras \texttt{dirt\_t} con coordenadas y nivel de suciedad
+    \item \texttt{WORLDSIZE} --- Constante definida en \texttt{simula\_internal.h} (50x50)
+\end{itemize}
+
+\subsection{robot\_t --- Estado del Robot}
+
+\begin{lstlisting}[caption={Estructura del robot}]
+typedef struct _robot {
+    float precise_x, precise_y;     // Posicion continua
+    sensor_t sensor;                // Lecturas de sensores
+} robot_t;
+\end{lstlisting}
+
+\textbf{Nota importante:} El robot mantiene dos representaciones de posición:
+\begin{itemize}
+    \item \textbf{Posición continua} (\texttt{precise\_x}, \texttt{precise\_y}) --- Para rotaciones suaves
+    \item \textbf{Posición discreta} (\texttt{sensor.x}, \texttt{sensor.y}) --- Para interacciones con el mapa
+\end{itemize}
+
+\subsection{sensor\_t --- Lecturas de Sensores}
+
+\begin{lstlisting}[caption={Estructura de sensores (API pública)}]
+typedef struct _sensor {
+    int x, y;              // Posicion discreta (celda)
+    float heading;         // Orientacion en radianes [0, 2*PI)
+    float battery;         // Bateria restante [0, MAXBAT]
+    int bumper;            // 1 si colision, 0 si libre
+    int infrared;          // Nivel de suciedad [0, MAXDIRT]
+} sensor_t;
+\end{lstlisting}
+
+\subsection{config\_t --- Configuración de la Simulación}
+
+\begin{lstlisting}[caption={Configuración del simulador}]
+typedef struct _config {
+    void (*on_start)();     // Callback de inicializacion
+    void (*exec_beh)();     // Callback ciclico (comportamiento)
+    void (*on_stop)();      // Callback de finalizacion
+    FILE *output;           // Stream de salida para logs
+    int exec_time;          // Tiempo maximo (ticks)
+} config_t;
+\end{lstlisting}
+
+\section{Estado Global del Sistema}
+
+El simulador mantiene varias estructuras globales definidas en \texttt{simula.c}:
+
+\begin{lstlisting}[caption={Variables globales del sistema}]
+map_t map = {0};                      // Mapa del mundo
+robot_t r;                            // Estado interno del robot
+sensor_t *hist = NULL;                // Historial (asignado dinamicamente)
+config_t config;                      // Configuracion de la simulacion
+int timer;                            // Contador de ticks
+struct sensor *rob = &r.sensor;       // Puntero publico a sensores
+int sim_should_stop = 0;              // Flag de detencion
+\end{lstlisting}
+
+\subsection{Gestión del Ciclo de Vida}
+
+El simulador usa \texttt{atexit()} para garantizar que los recursos se liberen correctamente:
+
+\begin{lstlisting}[caption={Handlers de finalización}]
+static void _save_log_wrapper(void){ 
+    if(!hist) return;
+    save_log(hist, timer); 
+}
+
+static void _save_stats_wrapper(void){
+    if(!hist) return;
+    float sum = 0.0f;
+    for(int i = 0; i < timer; i++) 
+        sum += hist[i].battery;
+    stats_set_mean_battery((timer > 0) ? sum / timer : 0.0f);
+    save_stats(stats_get());
+}
+
+static void _free_hist_wrapper(void){
+    if(hist){
+        free(hist);
+        hist = NULL;
+    }
+}
+\end{lstlisting}
+
+Estos handlers se registran en \texttt{configure()}:
+
+\begin{lstlisting}[caption={Registro de handlers}]
+void configure(...) {
+    // Asignar memoria para historial
+    hist = calloc(exec_time, sizeof(sensor_t));
+    
+    // Registrar handlers de limpieza
+    atexit(_free_hist_wrapper);
+    atexit(_save_log_wrapper);
+    atexit(_save_stats_wrapper);
+    
+    // Si hay on_stop, registrarlo tambien
+    if(on_stop) atexit(on_stop);
+}
+\end{lstlisting}
+
+\begin{notebox}{Orden de Ejecución}
+Los handlers registrados con \texttt{atexit()} se ejecutan en orden inverso al registro:
+\begin{enumerate}
+    \item \texttt{on\_stop()} --- Callback del usuario (si existe)
+    \item \texttt{\_save\_stats\_wrapper()} --- Guardar estadísticas
+    \item \texttt{\_save\_log\_wrapper()} --- Guardar log CSV
+    \item \texttt{\_free\_hist\_wrapper()} --- Liberar memoria
+\end{enumerate}
+\end{notebox}
+
+\section{API Interna Detallada}
+
+\subsection{Módulo Mundo (sim\_world.c)}
+
+\subsubsection{Generación de Mapas}
+
+\begin{lstlisting}[caption={Inicialización del mundo}]
+void init_world(map_t *map);
+\end{lstlisting}
+
+Genera un mapa aleatorio con:
+\begin{itemize}
+    \item Habitaciones rectangulares conectadas por pasillos
+    \item Distribución aleatoria de suciedad
+    \item Base colocada en una posición accesible
+\end{itemize}
+
+\textbf{Algoritmo de generación de habitaciones:}
+
+\begin{lstlisting}[caption={Generación de habitaciones}]
+void generate_rooms(map_t *m) {
+    // 1. Llenar todo con paredes
+    for(int i = 0; i < WORLDSIZE; i++)
+        for(int j = 0; j < WORLDSIZE; j++)
+            m->cells[i][j] = WALL;
+    
+    // 2. Crear 3-6 habitaciones aleatorias
+    int num_rooms = 3 + rand() % 4;
+    for(int r = 0; r < num_rooms; r++) {
+        int w = 5 + rand() % 10;  // Ancho 5-15
+        int h = 5 + rand() % 10;  // Alto 5-15
+        int x = BORDER_MARGIN + rand() % (m->ncol - w - 2*BORDER_MARGIN);
+        int y = BORDER_MARGIN + rand() % (m->nrow - h - 2*BORDER_MARGIN);
+        
+        // Vaciar habitacion
+        for(int i = y; i < y+h; i++)
+            for(int j = x; j < x+w; j++)
+                m->cells[i][j] = EMPTY;
+    }
+    
+    // 3. Conectar habitaciones con pasillos
+    connect_rooms_with_corridors(m);
+}
+\end{lstlisting}
+
+\textbf{Distribución de suciedad:}
+
+\begin{lstlisting}[caption={Generación de suciedad}]
+void generate_dirt(map_t *m) {
+    m->ndirt = 0;
+    int target_cells = DEFAULT_DIRT_CELLS;
+    
+    for(int attempt = 0; attempt < target_cells * 2; attempt++) {
+        int x = rand() % m->ncol;
+        int y = rand() % m->nrow;
+        
+        // Solo en celdas vacias
+        if(m->cells[y][x] != EMPTY) continue;
+        
+        // Nivel aleatorio 1-5
+        int depth = 1 + rand() % MAXDIRT;
+        m->cells[y][x] = DIGIT_CHAR_BASE + depth;
+        
+        m->dirt[m->ndirt].x = x;
+        m->dirt[m->ndirt].y = y;
+        m->dirt[m->ndirt].depth = depth;
+        m->ndirt++;
+        
+        if(m->ndirt >= target_cells) break;
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Consultas del Mapa}
+
+\begin{lstlisting}[caption={Funciones de consulta}]
+int is_wall(map_t *map, int x, int y);
+int get_dirt(map_t *map, int x, int y);
+void set_dirt(map_t *map, int x, int y, int level);
+int is_base(map_t *map, int x, int y);
+\end{lstlisting}
+
+\textbf{Implementación de is\_wall:}
+
+\begin{lstlisting}[caption={Detección de obstáculos}]
+int is_wall(map_t *m, int x, int y) {
+    // Verificar limites
+    if(x < 0 || x >= m->ncol || y < 0 || y >= m->nrow)
+        return 1;  // Fuera del mapa = pared
+    
+    // Verificar celda
+    return (m->cells[y][x] == WALL);
+}
+\end{lstlisting}
+
+\textbf{Gestión de suciedad:}
+
+\begin{lstlisting}[caption={Obtener y modificar nivel de suciedad}]
+int get_dirt(map_t *m, int x, int y) {
+    if(x < 0 || x >= m->ncol || y < 0 || y >= m->nrow)
+        return 0;
+    
+    char c = m->cells[y][x];
+    if(c >= DIGIT_CHAR_BASE && c <= DIGIT_CHAR_BASE + MAXDIRT)
+        return c - DIGIT_CHAR_BASE;
+    
+    return 0;
+}
+
+void set_dirt(map_t *m, int x, int y, int level) {
+    if(x < 0 || x >= m->ncol || y < 0 || y >= m->nrow)
+        return;
+    
+    if(level <= 0)
+        m->cells[y][x] = EMPTY;  // Limpia
+    else if(level <= MAXDIRT)
+        m->cells[y][x] = DIGIT_CHAR_BASE + level;
+    
+    // Actualizar array de dirt
+    for(int i = 0; i < m->ndirt; i++) {
+        if(m->dirt[i].x == x && m->dirt[i].y == y) {
+            m->dirt[i].depth = level;
+            if(level <= 0) {
+                // Eliminar entrada (swap con ultimo)
+                m->dirt[i] = m->dirt[m->ndirt-1];
+                m->ndirt--;
+            }
+            break;
+        }
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Carga y Guardado de Mapas (Formato PGM)}
+
+\textbf{Estructura del archivo PGM:}
+
+\begin{verbatim}
+P2                    # Magic number (ASCII PGM)
+# roomba map          # Comentario
+50 40                 # Ancho Alto
+255                   # Valor máximo
+128 128 255 255 ...   # Valores de píxeles (fila por fila)
+\end{verbatim}
+
+\textbf{Códigos de valores:}
+\begin{itemize}
+    \item \texttt{128} --- Obstáculo/Pared
+    \item \texttt{255} --- Celda vacía
+    \item \texttt{0} --- Base
+    \item \texttt{1-5} --- Nivel de suciedad
+\end{itemize}
+
+\begin{lstlisting}[caption={Guardado de mapa en PGM}]
+void sim_world_save(const map_t* m){
+    FILE *fd = fopen("map.pgm","w");
+    if(!fd) return;
+    
+    fprintf(fd,"P2\n#roomba map\n%d %d\n%d\n", 
+            m->ncol, m->nrow, PGM_EMPTY_VALUE);
+    
+    for(int i = 0; i < m->nrow; i++){
+        for(int j = 0; j < m->ncol; j++){
+            switch(m->cells[i][j]){
+                case WALL: 
+                    fprintf(fd,"%d ", PGM_WALL_VALUE); 
+                    break;
+                case EMPTY: 
+                    fprintf(fd,"%d ", PGM_EMPTY_VALUE); 
+                    break;
+                case 'B': 
+                    fprintf(fd,"%d ", PGM_BASE_VALUE); 
+                    break;
+                default: 
+                    // Suciedad (1-5)
+                    fprintf(fd,"%d ", m->cells[i][j]-DIGIT_CHAR_BASE);
+            }
+        }
+        fprintf(fd,"\n");
+    }
+    fclose(fd);
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Carga de mapa desde PGM}]
+int load_map(char *filename){
+    FILE *fd = fopen(filename, "r");
+    if(!fd) return -1;
+    
+    char line[LINE_BUFFER_SIZE];
+    
+    // Leer magic number
+    fgets(line, sizeof(line), fd);
+    if(strncmp(line, "P2", 2) != 0) {
+        fclose(fd);
+        return -1;
+    }
+    
+    // Saltar comentarios
+    do {
+        fgets(line, sizeof(line), fd);
+    } while(line[0] == '#');
+    
+    // Leer dimensiones
+    sscanf(line, "%d %d", &map.ncol, &map.nrow);
+    
+    // Leer maxval (ignorar)
+    fgets(line, sizeof(line), fd);
+    
+    // Leer matriz de píxeles
+    map.ndirt = 0;
+    for(int i = 0; i < map.nrow; i++){
+        for(int j = 0; j < map.ncol; j++){
+            int val;
+            fscanf(fd, "%d", &val);
+            
+            if(val == PGM_WALL_VALUE)
+                map.cells[i][j] = WALL;
+            else if(val == PGM_EMPTY_VALUE)
+                map.cells[i][j] = EMPTY;
+            else if(val == PGM_BASE_VALUE){
+                map.cells[i][j] = 'B';
+                map.base_x = j;
+                map.base_y = i;
+            } else if(val >= 1 && val <= MAXDIRT) {
+                map.cells[i][j] = DIGIT_CHAR_BASE + val;
+                map.dirt[map.ndirt].x = j;
+                map.dirt[map.ndirt].y = i;
+                map.dirt[map.ndirt].depth = val;
+                map.ndirt++;
+            }
+        }
+    }
+    
+    fclose(fd);
+    strncpy(map.name, filename, sizeof(map.name)-1);
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Módulo Robot (sim\_robot.c)}
+
+\subsubsection{Arquitectura del Sistema de Movimiento}
+
+El robot mantiene dos representaciones de posición para permitir rotaciones suaves:
+
+\begin{table}[h]
+\centering
+\caption{Sistema de coordenadas dual}
+\begin{tabular}{|l|l|p{6cm}|}
+\hline
+\textbf{Tipo} & \textbf{Variable} & \textbf{Uso} \\
+\hline
+Continua & \texttt{r.precise\_x}, \texttt{r.precise\_y} & Cálculos de rotación y movimiento \\
+\hline
+Discreta & \texttt{rob->x}, \texttt{rob->y} & Interacciones con el mapa (colisiones, suciedad) \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Justificación técnica:}
+
+Las rotaciones sucesivas en un sistema discreto acumulan errores de redondeo. Por ejemplo:
+\begin{lstlisting}[caption={Problema con sistema puramente discreto}]
+// Robot en (5, 5), heading = 0 (Este)
+// Gira 45 grados 8 veces (deberia volver a 0)
+for(int i = 0; i < 8; i++) {
+    rmb_turn(M_PI / 4);
+    rmb_forward();  // Con discretizacion: (6,5), (6,6), (5,6)...
+}
+// Posicion final != (5, 5) debido a redondeos!
+\end{lstlisting}
+
+Con sistema dual:
+\begin{lstlisting}[caption={Sistema dual evita errores}]
+// precise_x, precise_y mantienen valores exactos
+// Solo se redondea para is_wall() y get_dirt()
+\end{lstlisting}
+
+\subsubsection{Movimiento}
+
+\begin{lstlisting}[caption={Implementación completa de rmb\_forward}]
+int rmb_forward() {
+    // 1. Calcular vectores de movimiento
+    float dy = rounda(sin(rob->heading));
+    float dx = rounda(cos(rob->heading));
+    int new_x = (int)(r.precise_x + dx);
+    int new_y = (int)(r.precise_y + dy);
+    
+    // 2. Verificar colision con obstaculos
+    if(is_wall(&map, new_x, new_y)) {
+        rob->bumper = 1;
+        stats_bump();
+        sim_log_tick(-1);  // -1 = no incrementar timer
+        apply_battery(COST_BUMP);
+        return -1;  // Fallo
+    }
+    
+    // 3. Actualizar posicion
+    r.precise_x += dx;
+    r.precise_y += dy;
+    rob->x = new_x;
+    rob->y = new_y;
+    rob->bumper = 0;  // Limpiar flag de colision
+    
+    // 4. Determinar coste (diagonal vs recto)
+    float cost = (fabsf(dy * dx) >= FLOAT_EPSILON) 
+                 ? COST_MOVE_DIAG 
+                 : COST_MOVE;
+    
+    // 5. Actualizar estado
+    apply_battery(cost);
+    update_ifr_at_cell();  // Actualizar sensor infrarrojo
+    stats_move(FWD);
+    stats_visit_cell();
+    sim_log_tick(FWD);
+    
+    return 0;  // Exito
+}
+\end{lstlisting}
+
+\textbf{Detección de movimiento diagonal:}
+
+\begin{lstlisting}[caption={¿Cuándo un movimiento es diagonal?}]
+// Movimiento es diagonal si ambos componentes son significativos
+// Ejemplo: heading = 45° => sin(45°) ≈ 0.707, cos(45°) ≈ 0.707
+// dy * dx = 0.707 * 0.707 ≈ 0.5 > FLOAT_EPSILON
+
+bool is_diagonal = (fabs(dy * dx) >= FLOAT_EPSILON);
+
+// Movimientos cardinales puros:
+// heading = 0° (E):  dy=0, dx=1   => dy*dx = 0
+// heading = 90° (N): dy=1, dx=0   => dy*dx = 0
+\end{lstlisting}
+
+\subsubsection{Rotación}
+
+\begin{lstlisting}[caption={Implementación de rmb\_turn}]
+int rmb_turn(float angle) {
+    // 1. Aplicar rotacion
+    rob->heading += angle;
+    
+    // 2. Normalizar a [0, 2*PI)
+    while(rob->heading < 0)
+        rob->heading += 2 * M_PI;
+    while(rob->heading >= 2 * M_PI)
+        rob->heading -= 2 * M_PI;
+    
+    // 3. Actualizar estado
+    apply_battery(COST_TURN);
+    stats_move(TURN);
+    sim_log_tick(TURN);
+    
+    return 0;
+}
+\end{lstlisting}
+
+\textbf{Tabla de ángulos comunes:}
+
+\begin{table}[h]
+\centering
+\caption{Ángulos de rotación típicos}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Giro} & \textbf{Radianes} & \textbf{Código} \\
+\hline
+90° izq & $\pi/2$ & \texttt{M\_PI / 2} \\
+90° der & $-\pi/2$ & \texttt{-M\_PI / 2} \\
+180° & $\pi$ & \texttt{M\_PI} \\
+45° izq & $\pi/4$ & \texttt{M\_PI / 4} \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Activación del Robot}
+
+\begin{lstlisting}[caption={Implementación de rmb\_awake}]
+int rmb_awake(int *x, int *y){
+    if(!x || !y) {
+        fprintf(stderr, "Error: Invalid parameters\n");
+        return 0;
+    }
+    
+    DEBUG_PRINT("Awaking robot...\n");
+    
+    // Determinar posicion inicial
+    if(map.name[0] != '\0'){
+        // Mapa cargado desde archivo
+        if(map.base_x > 0 && map.base_y > 0){
+            // Usar base del mapa
+            rob->heading = sim_world_put_base(&map, 
+                                              map.base_x, 
+                                              map.base_y);
+            *x = map.base_x;
+            *y = map.base_y;
+        } else {
+            // Mapa sin base definida - usar (1,1)
+            sim_world_set_base_origin(&map, x, y, &rob->heading);
+        }
+    } else {
+        // Mapa generado - colocar en (1,1)
+        sim_world_set_base_origin(&map, x, y, &rob->heading);
+        sim_world_save(&map);
+    }
+    
+    // Inicializar posicion y bateria
+    r.precise_x = (float)*x;
+    r.precise_y = (float)*y;
+    rob->x = *x;
+    rob->y = *y;
+    rob->battery = MAXBAT;
+    rob->bumper = 0;
+    update_ifr_at_cell();
+    
+    sim_log_tick(0);
+    return 1;
+}
+\end{lstlisting}
+
+\subsubsection{Limpieza}
+
+\begin{lstlisting}[caption={Implementación de rmb\_clean}]
+int rmb_clean() {
+    int before = sim_world_cell_dirt(&map, rob->y, rob->x);
+    
+    if(before <= 0)
+        return -1;  // No hay suciedad
+    
+    // Reducir suciedad en 1
+    int after = before - 1;
+    sim_world_set_cell_dirt(&map, rob->y, rob->x, after);
+    
+    // Actualizar sensor
+    update_ifr_at_cell();
+    
+    // Estadisticas y coste
+    stats_clean_action(before, after);
+    apply_battery(COST_CLEAN);
+    sim_log_tick(CLEAN);
+    
+    return 0;
+}
+\end{lstlisting}
+
+\textbf{Estrategia de limpieza incremental:}
+
+La limpieza reduce el nivel de suciedad en 1 por llamada. Esto permite:
+\begin{itemize}
+    \item Consumo de batería proporcional a la suciedad total
+    \item Posibilidad de interrumpir la limpieza (batería baja)
+    \item Decisiones tácticas: ¿limpiar completamente o parcialmente?
+\end{itemize}
+
+\begin{lstlisting}[caption={Ejemplo: Limpieza completa vs parcial}]
+// Estrategia 1: Limpiar completamente antes de continuar
+while(rmb_ifr() > 0) {
+    rmb_clean();
+}
+
+// Estrategia 2: Limpiar parcialmente y continuar
+if(rmb_ifr() > 3) {  // Solo si hay mucha suciedad
+    rmb_clean();
+    rmb_clean();
+}
+\end{lstlisting}
+
+\subsubsection{Recarga de Batería}
+
+\begin{lstlisting}[caption={Implementación de rmb\_load}]
+int rmb_load() {
+    // Verificar que esta en la base
+    if(!sim_world_is_base(&map, rob->x, rob->y))
+        return -1;
+    
+    // Verificar que no esta llena
+    if(rob->battery >= MAXBAT - FLOAT_EPSILON)
+        return -1;
+    
+    // Recargar
+    rob->battery += LOAD_BATTERY_AMOUNT;
+    if(rob->battery > MAXBAT)
+        rob->battery = MAXBAT;
+    
+    stats_move(LOAD);
+    sim_log_tick(LOAD);
+    
+    return 0;
+}
+\end{lstlisting}
+
+\textbf{Constante de recarga:}
+
+\texttt{LOAD\_BATTERY\_AMOUNT = 10.0f} es un compromiso entre:
+\begin{itemize}
+    \item \textbf{Valor pequeño:} Obliga a múltiples llamadas, consume tiempo de simulación
+    \item \textbf{Valor grande:} Recarga instantánea, poco realista
+\end{itemize}
+
+Típicamente se requieren 100 llamadas para cargar completamente ($1000 / 10 = 100$ ticks).
+
+\subsubsection{Lectura de Sensores}
+
+\begin{lstlisting}[caption={Implementación de rmb\_state}]
+sensor_t rmb_state() {
+    sensor_t state;
+    state.x = rob->x;
+    state.y = rob->y;
+    state.heading = rob->heading;
+    state.battery = rob->battery;
+    state.bumper = rob->bumper;
+    state.infrared = rob->infrared;
+    return state;  // Devuelve copia
+}
+
+// Funciones especializadas (mas eficientes)
+int rmb_bumper() { return rob->bumper; }
+int rmb_ifr() { return rob->infrared; }
+float rmb_battery() { return rob->battery; }
+
+int rmb_at_base() {
+    return sim_world_is_base(&map, rob->x, rob->y);
+}
+\end{lstlisting}
+
+\begin{warningbox}{Importante}
+\texttt{rmb\_state()} devuelve una \textbf{copia} del estado, no un puntero. Esto garantiza que el usuario no pueda modificar accidentalmente el estado interno del robot.
+\end{warningbox}
+
+\subsection{Módulo Visualización (sim\_visual.c)}
+
+\subsubsection{Sistema de Renderizado ASCII}
+
+El módulo de visualización convierte el estado del simulador en representación textual:
+
+\begin{lstlisting}[caption={Estructura del renderizador}]
+void print_map_ascii(char view[WORLDSIZE][WORLDSIZE]){
+    // 1. Copiar mapa base
+    memcpy(view, map.cells, sizeof(map.cells));
+    
+    // 2. Añadir marcadores de suciedad
+    annotate_dirt_to_map(view);
+    
+    // 3. Superponer camino recorrido
+    overlay_path_on_map(view, hist, timer);
+    
+    // 4. Marcar posicion actual del robot
+    mark_robot_position(view, rob->x, rob->y);
+    
+    // 5. Renderizar a terminal
+    for(int i = 0; i < map.nrow; i++){
+        for(int j = 0; j < map.ncol; j++)
+            printf("%c", view[i][j]);
+        printf("\n");
+    }
+}
+\end{lstlisting}
+
+\textbf{Tabla de símbolos del mapa:}
+
+\begin{table}[h]
+\centering
+\caption{Caracteres de visualización}
+\begin{tabular}{|c|l|l|}
+\hline
+\textbf{Carácter} & \textbf{Significado} & \textbf{Color/Estilo} \\
+\hline
+\texttt{\#} & Pared/Obstáculo & --- \\
+\texttt{.} & Celda visitada & --- \\
+\texttt{1-5} & Nivel de suciedad & --- \\
+\texttt{R} & Robot & --- \\
+\texttt{B} & Base de recarga & --- \\
+\texttt{*} & Posición final & --- \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Sistema de Animación}
+
+\begin{lstlisting}[caption={Función visualize - animación completa}]
+void visualize() {
+    if(!hist) {
+        fprintf(stderr, "Error: No history to visualize\n");
+        return;
+    }
+    
+    printf("\n=== REPLAY DE SIMULACION ===\n\n");
+    
+    // Cargar log desde archivo
+    FILE *log = fopen("log.csv", "r");
+    if(!log) {
+        fprintf(stderr, "Error: Cannot open log.csv\n");
+        return;
+    }
+    
+    char line[256];
+    fgets(line, sizeof(line), log);  // Saltar cabecera
+    
+    int frame = 0;
+    while(fgets(line, sizeof(line), log)) {
+        // Parsear linea del log
+        int tick, x, y, bumper, infrared;
+        float heading, battery;
+        sscanf(line, "%d,%d,%d,%f,%f,%d,%d",
+               &tick, &x, &y, &heading, &battery, 
+               &bumper, &infrared);
+        
+        // Limpiar pantalla
+        system("clear");  // Linux/Mac
+        // system("cls");  // Windows
+        
+        // Renderizar frame
+        char view[WORLDSIZE][WORLDSIZE];
+        memcpy(view, map.cells, sizeof(map.cells));
+        annotate_dirt_to_map(view);
+        overlay_path_on_map(view, hist, tick);
+        view[y][x] = 'R';
+        
+        print_map_ascii(view);
+        
+        // Mostrar información de estado
+        printf("\n");
+        printf("Tick: %d/%d\n", tick, timer);
+        printf("Posicion: (%d, %d)\n", x, y);
+        printf("Orientacion: %.2f° (%s)\n", 
+               heading * RAD_TO_DEG, compass(heading));
+        printf("Bateria: %s %.1f/%.0f\n", 
+               ascii_progress((int)(battery*100/MAXBAT)), 
+               battery, (float)MAXBAT);
+        printf("Bumper: %s\n", bumper ? "ACTIVO" : "---");
+        printf("Infrarrojo: %d\n", infrared);
+        
+        // Delay entre frames
+        usleep(VISUALIZATION_DELAY_MS * 1000);
+        frame++;
+    }
+    
+    fclose(log);
+    
+    // Mostrar estadisticas finales
+    print_final_statistics();
+}
+\end{lstlisting}
+
+\subsubsection{Utilidades de Visualización}
+
+\begin{lstlisting}[caption={Barra de progreso ASCII}]
+char* ascii_progress(int perc){
+    static char bar[PROGBARLEN+3];
+    bar[0] = '[';
+    bar[PROGBARLEN+1] = ']';
+    bar[PROGBARLEN+2] = '\0';
+    
+    int filled = perc / 2;  // PROGBARLEN = 50 => 0-100%
+    for(int i = 1; i <= filled; i++) 
+        bar[i] = '=';
+    for(int i = filled+1; i <= PROGBARLEN; i++) 
+        bar[i] = ' ';
+    
+    return bar;
+}
+
+// Ejemplos de salida:
+// 100%: [==================================================]
+//  50%: [=========================                         ]
+//   0%: [                                                  ]
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Conversión de ángulo a brújula}]
+char* compass(float angle){
+    static char dir[4];
+    
+    // Dividir círculo en 8 sectores de 45° (PI/4)
+    // Ajustar para que 0° = Este
+    
+    if(angle >= 15*M_PI_8 || angle < M_PI_8) 
+        strcpy(dir, "E");   // Este (0°)
+    else if(angle < 3*M_PI_8) 
+        strcpy(dir, "SE");  // Sureste (45°)
+    else if(angle < 5*M_PI_8) 
+        strcpy(dir, "S");   // Sur (90°)
+    else if(angle < 7*M_PI_8) 
+        strcpy(dir, "SW");  // Suroeste (135°)
+    else if(angle < 9*M_PI_8) 
+        strcpy(dir, "W");   // Oeste (180°)
+    else if(angle < 11*M_PI_8) 
+        strcpy(dir, "NW");  // Noroeste (225°)
+    else if(angle < 13*M_PI_8) 
+        strcpy(dir, "N");   // Norte (270°)
+    else 
+        strcpy(dir, "NE");  // Noreste (315°)
+    
+    return dir;
+}
+\end{lstlisting}
+
+\subsubsection{Superposición de Camino}
+
+\begin{lstlisting}[caption={Marcar trayectoria del robot}]
+void overlay_path_on_map(char view[WORLDSIZE][WORLDSIZE], 
+                         sensor_t h[], int len){
+    for(int i = 0; i < len; i++){
+        int x = h[i].x;
+        int y = h[i].y;
+        
+        // Verificar limites
+        if(y < 0 || y >= map.nrow || x < 0 || x >= map.ncol)
+            continue;
+        
+        // No sobreescribir paredes ni base
+        if(view[y][x] != WALL && view[y][x] != 'B')
+            view[y][x] = '.';
+    }
+}
+\end{lstlisting}
+
+\begin{notebox}{Optimización}
+Para simulaciones largas (>10000 ticks), la animación puede ser muy lenta. Considere:
+\begin{itemize}
+    \item Aumentar \texttt{VISUALIZATION\_DELAY\_MS}
+    \item Saltar frames (mostrar 1 de cada N)
+    \item Generar video en lugar de reproducir en tiempo real
+\end{itemize}
+\end{notebox}
+
+\subsection{Módulo Estadísticas (sim\_stats.c)}
+
+\subsubsection{Estructura de Datos}
+
+\begin{lstlisting}[caption={Estadísticas encapsuladas}]
+static struct _stat stats = {0};     // Variable privada
+
+struct _stat{
+    int cell_total;         // Total de celdas no-murales
+    int cell_visited;       // Celdas visitadas por el robot
+    int dirt_total;         // Suciedad inicial total
+    int dirt_cleaned;       // Celdas completamente limpiadas
+    float bat_total;        // Batería total consumida
+    float bat_mean;         // Batería media por tick
+    int moves[5];           // Contador por tipo de movimiento
+};
+
+// moves[0] = FWD (avances)
+// moves[1] = TURN (giros)
+// moves[2] = BUMP (colisiones)
+// moves[3] = CLEAN (limpiezas)
+// moves[4] = LOAD (recargas)
+\end{lstlisting}
+
+\subsubsection{API Pública}
+
+\begin{lstlisting}[caption={Funciones de actualización}]
+// Registrar movimiento
+void stats_move(int kind){ 
+    stats.moves[kind]++; 
+}
+
+// Incrementar celdas visitadas
+void stats_visit_cell(void){ 
+    stats.cell_visited++; 
+}
+
+// Registrar colision
+void stats_bump(void){ 
+    stats.moves[BUMP]++; 
+}
+
+// Registrar limpieza
+void stats_clean_action(int before, int after){
+    stats.moves[CLEAN]++;
+    if(before > 0 && after == 0)  // Celda completamente limpia
+        stats.dirt_cleaned++;
+}
+
+// Acumular consumo de bateria
+void stats_battery_consume(float amount){ 
+    stats.bat_total += amount; 
+}
+
+// Establecer bateria media
+void stats_set_mean_battery(float mean){
+    stats.bat_mean = mean;
+}
+
+// Obtener estadisticas (solo lectura)
+const struct _stat* stats_get(void){
+    return &stats;
+}
+\end{lstlisting}
+
+\subsubsection{Reconstrucción desde Mapa}
+
+\begin{lstlisting}[caption={Calcular estadísticas base del mapa}]
+void stats_rebuild_from_map(const map_t* m){
+    int cells = 0;
+    int dirt_sum = 0;
+    
+    for(int i = 0; i < m->nrow; i++){
+        for(int j = 0; j < m->ncol; j++){
+            char c = m->cells[i][j];
+            
+            // Contar celdas transitables
+            if(c != WALL) 
+                cells++;
+            
+            // Sumar suciedad
+            if(c >= DIGIT_CHAR_BASE && 
+               c <= DIGIT_CHAR_BASE + MAXDIRT) 
+                dirt_sum += (c - DIGIT_CHAR_BASE);
+        }
+    }
+    
+    stats.cell_total = cells;
+    stats.dirt_total = dirt_sum;
+}
+\end{lstlisting}
+
+\textbf{¿Cuándo se llama?} En \texttt{configure()}, después de cargar o generar el mapa.
+
+\subsubsection{Exportación a CSV}
+
+\begin{lstlisting}[caption={Guardado de estadísticas}]
+void save_stats(const struct _stat *s){
+    FILE *f = fopen("stats.csv", "w");
+    if(!f) {
+        fprintf(stderr, "Error: Cannot write stats.csv\n");
+        return;
+    }
+    
+    // Cabecera
+    fprintf(f, "cell_total,cell_visited,");
+    fprintf(f, "dirt_total,dirt_cleaned,");
+    fprintf(f, "bat_total,bat_mean,");
+    fprintf(f, "forward,turn,bumps,clean,load\n");
+    
+    // Datos
+    fprintf(f, "%d,%d,", s->cell_total, s->cell_visited);
+    fprintf(f, "%d,%d,", s->dirt_total, s->dirt_cleaned);
+    fprintf(f, "%.1f,%.1f,", s->bat_total, s->bat_mean);
+    fprintf(f, "%d,%d,%d,%d,%d\n", 
+            s->moves[FWD], s->moves[TURN], s->moves[BUMP],
+            s->moves[CLEAN], s->moves[LOAD]);
+    
+    fclose(f);
+}
+\end{lstlisting}
+
+\textbf{Ejemplo de salida:}
+
+\begin{verbatim}
+cell_total,cell_visited,dirt_total,dirt_cleaned,bat_total,
+bat_mean,forward,turn,bumps,clean,load
+2285,87,310,25,850.5,720.3,87,45,12,50,3
+\end{verbatim}
+
+\subsubsection{Métricas Derivadas}
+
+Basándose en las estadísticas guardadas, se pueden calcular:
+
+\begin{lstlisting}[caption={Métricas adicionales}]
+// Porcentaje de cobertura
+float coverage = (cell_visited / (float)cell_total) * 100;
+
+// Eficiencia de limpieza
+float clean_efficiency = (dirt_cleaned / (float)dirt_total) * 100;
+
+// Consumo promedio por movimiento
+float bat_per_move = bat_total / (float)(moves[FWD] + moves[TURN]);
+
+// Tasa de colisiones
+float collision_rate = moves[BUMP] / (float)moves[FWD];
+
+// Limpieza por tick
+float clean_per_tick = moves[CLEAN] / (float)timer;
+\end{lstlisting}
+
+\section{Flujo de Ejecución}
+
+\subsection{Fases de la Simulación}
+
+\subsubsection{Fase 1: Inicialización (configure)}
+
+\begin{lstlisting}[caption={Secuencia de inicialización}]
+void configure(long timeout, char* filename) {
+    // 1. Configurar generador aleatorio
+    srand(time(NULL));
+    
+    // 2. Configurar timeout
+    global_config.timeout = timeout;
+    
+    // 3. Cargar o generar mapa
+    if(filename && filename[0] != '\0') {
+        // Cargar mapa desde archivo PGM
+        sim_world_load(&map, filename);
+    } else {
+        // Generar mapa aleatorio
+        sim_world_generate(&map);
+    }
+    
+    // 4. Reconstruir estadisticas base
+    stats_rebuild_from_map(&map);
+    
+    // 5. Registrar funciones de limpieza (atexit)
+    atexit(_save_log_wrapper);
+    atexit(_save_stats_wrapper);
+    atexit(_free_hist_wrapper);
+    
+    // 6. Inicializar log CSV
+    sim_log_init();
+}
+\end{lstlisting}
+
+\textbf{Orden de las operaciones:} Es crítico que:
+\begin{itemize}
+    \item El mapa se cargue/genere \textbf{antes} de calcular estadísticas
+    \item Los handlers de \texttt{atexit()} se registren \textbf{al inicio} (se ejecutan en orden inverso al final)
+    \item El log se inicialice \textbf{después} de configurar el timeout
+\end{itemize}
+
+\subsubsection{Fase 2: Activación del Robot (rmb\_awake)}
+
+\begin{lstlisting}[caption={Secuencia de activación}]
+int rmb_awake(int *x, int *y) {
+    // 1. Determinar posicion inicial basada en mapa
+    if(map.name[0] != '\0') {
+        // Mapa cargado: usar base definida o (1,1)
+        if(map.base_x > 0 && map.base_y > 0) {
+            *x = map.base_x;
+            *y = map.base_y;
+        } else {
+            sim_world_set_base_origin(&map, x, y, &rob->heading);
+        }
+    } else {
+        // Mapa generado: base en (1,1)
+        sim_world_set_base_origin(&map, x, y, &rob->heading);
+    }
+    
+    // 2. Inicializar posiciones
+    rob->precise_x = (float)*x;
+    rob->precise_y = (float)*y;
+    rob->x = *x;
+    rob->y = *y;
+    
+    // 3. Inicializar estado
+    rob->battery = MAXBAT;
+    rob->bumper = 0;
+    rob->infrared = get_dirt(&map, *x, *y);
+    
+    // 4. Inicializar historial
+    hist = malloc(timeout * sizeof(sensor_t));
+    timer = 0;
+    
+    // 5. Log inicial
+    sim_log_tick(AWAKE);
+    
+    return 0;
+}
+\end{lstlisting}
+
+\subsubsection{Fase 3: Bucle Principal (usuario)}
+
+\begin{lstlisting}[caption={Estructura típica del main}]
+int main() {
+    // Configurar
+    configure(10000, NULL);
+    
+    // Activar robot
+    int x, y;
+    rmb_awake(&x, &y);
+    
+    // Bucle principal (algoritmo del usuario)
+    while(rmb_state().battery > 0) {
+        // Leer sensores
+        sensor_t state = rmb_state();
+        
+        // Decidir accion
+        if(state.bumper) {
+            rmb_turn(M_PI/2);  // Girar 90°
+        } else if(state.infrared > 0) {
+            rmb_clean();       // Limpiar
+        } else {
+            rmb_forward();     // Avanzar
+        }
+    }
+    
+    // Finalizar (llamado automaticamente por atexit)
+    return 0;
+}
+\end{lstlisting}
+
+\subsubsection{Fase 4: Finalización (finalizar)}
+
+\begin{lstlisting}[caption={Limpieza automática al salir}]
+// Funciones registradas con atexit() en configure():
+
+void _save_log_wrapper(void) {
+    sim_log_close();  // Cerrar y guardar log.csv
+}
+
+void _save_stats_wrapper(void) {
+    // Calcular bateria media
+    float mean_bat = 0;
+    for(int i = 0; i < timer; i++)
+        mean_bat += hist[i].battery;
+    mean_bat /= timer;
+    stats_set_mean_battery(mean_bat);
+    
+    // Guardar stats.csv
+    const struct _stat *s = stats_get();
+    save_stats(s);
+}
+
+void _free_hist_wrapper(void) {
+    if(hist) {
+        free(hist);
+        hist = NULL;
+    }
+}
+\end{lstlisting}
+
+\textbf{Importante:} Estas funciones se ejecutan automáticamente al salir del programa (incluso si hay \texttt{exit()} o error). Por eso \texttt{visualize()} debe estar dentro de \texttt{finalizar()} si se quiere ver la animación.
+
+\subsection{Diagrama de Secuencia}
+
+\begin{verbatim}
+Usuario              Simulador              Subsistemas
+  |                      |                       |
+  |--configure()-------->|                       |
+  |                      |--load/gen map-------->|
+  |                      |--stats_rebuild------->|
+  |                      |--atexit handlers----->|
+  |<---------------------|                       |
+  |                      |                       |
+  |--rmb_awake()-------->|                       |
+  |                      |--init robot---------->|
+  |                      |--alloc hist---------->|
+  |<---(x,y)-------------|                       |
+  |                      |                       |
+  | [BUCLE PRINCIPAL]    |                       |
+  |--rmb_state()-------->|                       |
+  |<--sensor_t-----------|                       |
+  |--rmb_forward()------>|                       |
+  |                      |--check collision----->|
+  |                      |--update position----->|
+  |                      |--consume battery----->|
+  |                      |--log tick------------>|
+  |<--result-------------|                       |
+  | ...                  |                       |
+  |                      |                       |
+  | [SALIDA DEL PROGRAMA]|                       |
+  |                      |--atexit: save log---->|
+  |                      |--atexit: save stats-->|
+  |                      |--atexit: free hist--->|
+  |                      |                       |
+\end{verbatim}
+
+\subsection{Módulo E/S (sim\_io.c)}
+
+\subsubsection{Logs CSV}
+
+\begin{lstlisting}[caption={Formato del log}]
+// Cabecera
+tick, x, y, heading, battery, bumper, infrared
+
+// Ejemplo de entradas
+0, 1, 1, 0.000000, 1000.0, 0, 0
+1, 2, 1, 0.000000, 999.0, 0, 0
+2, 3, 1, 0.000000, 998.0, 0, 2
+3, 3, 1, 0.000000, 997.5, 0, 1
+\end{lstlisting}
+
+\textbf{API de logging:}
+
+\begin{lstlisting}[caption={Funciones de log}]
+void sim_log_init(void);
+void sim_log_tick(int action);
+void sim_log_close(void);
+\end{lstlisting}
+
+\textbf{Implementación:}
+
+\begin{lstlisting}[caption={Sistema de logging}]
+static FILE *log_file = NULL;
+
+void sim_log_init(void) {
+    log_file = fopen("log.csv", "w");
+    if(!log_file) {
+        fprintf(stderr, "Error: Cannot create log.csv\n");
+        return;
+    }
+    
+    // Escribir cabecera
+    fprintf(log_file, "tick,x,y,heading,battery,bumper,infrared\n");
+}
+
+void sim_log_tick(int action) {
+    if(!log_file) return;
+    
+    // Guardar estado actual en historial
+    hist[timer].x = rob->x;
+    hist[timer].y = rob->y;
+    hist[timer].heading = rob->heading;
+    hist[timer].battery = rob->battery;
+    hist[timer].bumper = rob->bumper;
+    hist[timer].infrared = rob->infrared;
+    
+    // Escribir al log
+    fprintf(log_file, "%d,%d,%d,%f,%f,%d,%d\n",
+            timer,
+            rob->x, rob->y,
+            rob->heading, rob->battery,
+            rob->bumper, rob->infrared);
+    
+    timer++;  // Incrementar contador global
+    
+    // Verificar timeout
+    if(timer >= global_config.timeout) {
+        fprintf(stderr, "Timeout alcanzado (%ld ticks)\n", 
+                global_config.timeout);
+        exit(0);
+    }
+}
+
+void sim_log_close(void) {
+    if(log_file) {
+        fclose(log_file);
+        log_file = NULL;
+    }
+}
+\end{lstlisting}
+
+\textbf{¿Cuándo se registra un tick?} Al final de cada acción del robot:
+\begin{itemize}
+    \item \texttt{rmb\_forward()} → \texttt{sim\_log\_tick(FWD)}
+    \item \texttt{rmb\_turn()} → \texttt{sim\_log\_tick(TURN)}
+    \item \texttt{rmb\_clean()} → \texttt{sim\_log\_tick(CLEAN)}
+    \item \texttt{rmb\_load()} → \texttt{sim\_log\_tick(LOAD)}
+\end{itemize}
+
+\section{Extendiendo el Simulador}
+
+\subsection{Añadir una Nueva Acción del Robot}
+
+\textbf{Ejemplo:} Añadir \texttt{rmb\_backward()} para mover el robot hacia atrás.
+
+\textbf{Paso 1:} Declarar en \texttt{simula.h}:
+
+\begin{lstlisting}[caption={Declaración pública}]
+/**
+ * @brief Mueve el robot un paso hacia atras
+ * @return 0 si exito, -1 si colision
+ */
+int rmb_backward();
+\end{lstlisting}
+
+\textbf{Paso 2:} Añadir constante de movimiento en \texttt{simula\_internal.h}:
+
+\begin{lstlisting}[caption={Nuevo tipo de movimiento}]
+enum movement { 
+    FWD = 0, 
+    TURN, 
+    BUMP, 
+    CLEAN, 
+    LOAD, 
+    AWAKE,
+    BACK  // <-- Nueva accion
+};
+\end{lstlisting}
+
+\textbf{Paso 3:} Implementar en \texttt{sim\_robot.c}:
+
+\begin{lstlisting}[caption={Implementación de retroceso}]
+int rmb_backward() {
+    // 1. Calcular nueva posicion (invertir direccion)
+    float dx = -cos(rob->heading);
+    float dy = -sin(rob->heading);
+    
+    float new_x = rob->precise_x + dx;
+    float new_y = rob->precise_y + dy;
+    
+    int cell_x = (int)round(new_x);
+    int cell_y = (int)round(new_y);
+    
+    // 2. Verificar colision
+    if(is_wall(&map, cell_x, cell_y)) {
+        rob->bumper = 1;
+        apply_battery(COST_BUMP);
+        stats_bump();
+        sim_log_tick(BUMP);
+        return -1;
+    }
+    
+    // 3. Actualizar posicion
+    rob->precise_x = new_x;
+    rob->precise_y = new_y;
+    rob->x = cell_x;
+    rob->y = cell_y;
+    rob->bumper = 0;
+    
+    // 4. Consumir bateria (mismo coste que avanzar)
+    bool is_diagonal = (fabs(dy * dx) >= FLOAT_EPSILON);
+    float cost = is_diagonal ? COST_MOVE_DIAG : COST_MOVE;
+    apply_battery(cost);
+    
+    // 5. Actualizar sensores y estadisticas
+    update_ifr_at_cell();
+    stats_move(BACK);
+    stats_visit_cell();
+    sim_log_tick(BACK);
+    
+    return 0;
+}
+\end{lstlisting}
+
+\textbf{Paso 4:} Actualizar estadísticas en \texttt{sim\_stats.c}:
+
+\begin{lstlisting}[caption={Expandir estructura de estadísticas}]
+struct _stat{
+    // ... campos existentes
+    int moves[6];  // Cambiar de 5 a 6
+};
+
+// moves[5] = BACK (retrocesos)
+\end{lstlisting}
+
+\textbf{Paso 5:} Modificar guardado de estadísticas:
+
+\begin{lstlisting}[caption={Actualizar save\_stats}]
+void save_stats(const struct _stat *s){
+    // ... cabecera
+    fprintf(f, "forward,turn,bumps,clean,load,backward\n");
+    
+    // ... datos
+    fprintf(f, "%d,%d,%d,%d,%d,%d\n", 
+            s->moves[FWD], s->moves[TURN], s->moves[BUMP],
+            s->moves[CLEAN], s->moves[LOAD], s->moves[BACK]);
+}
+\end{lstlisting}
+
+\subsection{Añadir un Nuevo Sensor}
+
+\textbf{Ejemplo:} Añadir sensor de distancia a la pared más cercana.
+
+\textbf{Paso 1:} Añadir campo a \texttt{sensor\_t} en \texttt{simula.h}:
+
+\begin{lstlisting}[caption={Nuevo campo en sensor}]
+typedef struct _sensor {
+    int x, y;
+    float heading;
+    float battery;
+    int bumper;
+    int infrared;
+    int wall_distance;  // <-- Nuevo sensor
+} sensor_t;
+\end{lstlisting}
+
+\textbf{Paso 2:} Implementar función de cálculo en \texttt{sim\_robot.c}:
+
+\begin{lstlisting}[caption={Calcular distancia a pared}]
+int compute_wall_distance(map_t *m, int x, int y, float heading) {
+    int dist = 0;
+    float dx = cos(heading);
+    float dy = sin(heading);
+    
+    // Raycast en direccion del robot
+    float rx = (float)x + 0.5;
+    float ry = (float)y + 0.5;
+    
+    while(dist < WORLDSIZE) {
+        rx += dx;
+        ry += dy;
+        
+        int cx = (int)round(rx);
+        int cy = (int)round(ry);
+        
+        if(is_wall(m, cx, cy))
+            break;
+        
+        dist++;
+    }
+    
+    return dist;
+}
+\end{lstlisting}
+
+\textbf{Paso 3:} Actualizar sensor en \texttt{rmb\_state()}:
+
+\begin{lstlisting}[caption={Actualizar lectura de sensores}]
+sensor_t rmb_state() {
+    sensor_t state;
+    state.x = rob->x;
+    state.y = rob->y;
+    state.heading = rob->heading;
+    state.battery = rob->battery;
+    state.bumper = rob->bumper;
+    state.infrared = rob->infrared;
+    state.wall_distance = compute_wall_distance(&map, 
+                                                  rob->x, 
+                                                  rob->y, 
+                                                  rob->heading);
+    return state;
+}
+\end{lstlisting}
+
+\textbf{Paso 4:} Actualizar logs para incluir nuevo sensor:
+
+\begin{lstlisting}[caption={Expandir formato de log}]
+void sim_log_init(void) {
+    // ...
+    fprintf(log_file, 
+            "tick,x,y,heading,battery,bumper,infrared,wall_dist\n");
+}
+
+void sim_log_tick(int action) {
+    // ...
+    fprintf(log_file, "%d,%d,%d,%f,%f,%d,%d,%d\n",
+            timer, rob->x, rob->y, rob->heading, rob->battery,
+            rob->bumper, rob->infrared, 
+            hist[timer].wall_distance);
+}
+\end{lstlisting}
+
+\subsection{Añadir un Nuevo Generador de Mapas}
+
+\textbf{Ejemplo:} Generador de laberintos con algoritmo de backtracking recursivo.
+
+\textbf{Paso 1:} Crear función en \texttt{sim\_world.c}:
+
+\begin{lstlisting}[caption={Generador de laberinto}]
+void generate_maze_recursive(map_t *m, int x, int y) {
+    // Direcciones: N, S, E, W
+    int dirs[4][2] = {{0,-2}, {0,2}, {2,0}, {-2,0}};
+    
+    // Marcar celda actual como visitada (vacia)
+    m->cells[y][x] = EMPTY;
+    
+    // Mezclar direcciones aleatoriamente
+    shuffle_directions(dirs, 4);
+    
+    // Intentar cada direccion
+    for(int i = 0; i < 4; i++) {
+        int nx = x + dirs[i][0];
+        int ny = y + dirs[i][1];
+        
+        // Verificar limites
+        if(nx <= 0 || nx >= m->ncol-1 || 
+           ny <= 0 || ny >= m->nrow-1)
+            continue;
+        
+        // Si la celda destino es pared, excavar
+        if(m->cells[ny][nx] == WALL) {
+            // Abrir pasillo intermedio
+            m->cells[y + dirs[i][1]/2][x + dirs[i][0]/2] = EMPTY;
+            
+            // Recursion
+            generate_maze_recursive(m, nx, ny);
+        }
+    }
+}
+
+void sim_world_generate_maze(map_t *m) {
+    // 1. Llenar todo con paredes
+    for(int i = 0; i < WORLDSIZE; i++)
+        for(int j = 0; j < WORLDSIZE; j++)
+            m->cells[i][j] = WALL;
+    
+    // 2. Generar laberinto desde (1,1)
+    generate_maze_recursive(m, 1, 1);
+    
+    // 3. Colocar base y suciedad
+    sim_world_put_base(m, 1, 1);
+    generate_dirt(m);
+    
+    // 4. Guardar configuracion
+    strcpy(m->name, "maze_generated");
+    m->nrow = m->ncol = WORLDSIZE;
+}
+\end{lstlisting}
+
+\textbf{Paso 2:} Declarar en \texttt{simula\_internal.h}:
+
+\begin{lstlisting}[caption={Declaración interna}]
+void sim_world_generate_maze(map_t *m);
+\end{lstlisting}
+
+\textbf{Paso 3:} Usar en \texttt{configure()}:
+
+\begin{lstlisting}[caption={Opción de generación}]
+void configure(long timeout, char* filename) {
+    // ...
+    if(filename && strcmp(filename, "maze") == 0) {
+        sim_world_generate_maze(&map);
+    } else if(filename && filename[0] != '\0') {
+        sim_world_load(&map, filename);
+    } else {
+        sim_world_generate(&map);  // Por defecto
+    }
+    // ...
+}
+\end{lstlisting}
+
+\section{Depuración y Testing}
+
+\subsection{Compilación con Símbolos de Debug}
+
+\begin{lstlisting}[caption={Opciones de compilación}]
+# Debug: Sin optimizaciones, con simbolos
+gcc -g -O0 -DDEBUG -o roomba_debug main.c simula.o -lm
+
+# Release: Optimizado, sin debug
+gcc -O2 -o roomba main.c simula.o -lm
+
+# Competicion: Sin visualizacion
+gcc -O2 -DCOMPETITION_MODE -o roomba_comp main.c simula.o -lm
+\end{lstlisting}
+
+\textbf{Uso con GDB:}
+
+\begin{verbatim}
+$ gdb ./roomba_debug
+(gdb) break rmb_forward
+(gdb) run
+(gdb) print rob->x
+(gdb) print rob->battery
+(gdb) continue
+\end{verbatim}
+
+\subsection{Macros de Debug}
+
+\begin{lstlisting}[caption={Uso de DEBUG\_PRINT}]
+#ifdef DEBUG
+#define DEBUG_PRINT(fmt, ...) \
+    fprintf(stderr, "[DEBUG] " fmt, ##__VA_ARGS__)
+#else
+#define DEBUG_PRINT(fmt, ...) // No-op
+#endif
+
+// Ejemplo de uso
+DEBUG_PRINT("Robot en (%d,%d), orientacion=%.2f\n", 
+            rob->x, rob->y, rob->heading * RAD_TO_DEG);
+\end{lstlisting}
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Cero overhead en release (macro vacía)
+    \item Información detallada durante desarrollo
+    \item Salida a \texttt{stderr} para no contaminar logs
+\end{itemize}
+
+\subsection{Validación de Invariantes}
+
+\begin{lstlisting}[caption={Validación robusta}]
+#include <assert.h>
+
+void validate_robot_state(robot_t *r, map_t *m) {
+    // Posicion dentro del mapa
+    assert(r->x >= 0 && r->x < m->ncol);
+    assert(r->y >= 0 && r->y < m->nrow);
+    
+    // No en pared
+    assert(!is_wall(m, r->x, r->y));
+    
+    // Bateria valida
+    assert(r->battery >= -FLOAT_EPSILON);  // Permitir pequeños negativos
+    assert(r->battery <= MAXBAT + FLOAT_EPSILON);
+    
+    // Orientacion normalizada
+    assert(r->heading >= 0 && r->heading < 2*M_PI);
+    
+    // Consistencia posicion precisa vs discreta
+    assert(fabs(r->precise_x - r->x) < 1.0);
+    assert(fabs(r->precise_y - r->y) < 1.0);
+}
+
+// Llamar despues de cada accion
+int rmb_forward() {
+    // ... implementacion
+    
+    #ifdef DEBUG
+    validate_robot_state(rob, &map);
+    #endif
+    
+    return result;
+}
+\end{lstlisting}
+
+\subsection{Testing Unitario}
+
+\textbf{Estructura de tests:}
+
+\begin{lstlisting}[caption={Marco de testing simple}]
+// test_simulator.c
+
+#include "simula_internal.h"
+#include <assert.h>
+
+void test_turn_normalization() {
+    printf("Test: Normalizacion de angulos... ");
+    
+    rob->heading = 0.0;
+    rmb_turn(2*M_PI + 0.5);  // Mas de una vuelta
+    assert(fabs(rob->heading - 0.5) < FLOAT_EPSILON);
+    
+    rob->heading = 0.5;
+    rmb_turn(-M_PI);  // Angulo negativo
+    assert(fabs(rob->heading - (2*M_PI - M_PI + 0.5)) < FLOAT_EPSILON);
+    
+    printf("OK\n");
+}
+
+void test_forward_collision() {
+    printf("Test: Deteccion de colisiones... ");
+    
+    // Colocar pared delante
+    rob->x = 5;
+    rob->y = 5;
+    rob->heading = 0.0;  // Mirando este
+    map.cells[5][6] = WALL;
+    
+    int result = rmb_forward();
+    assert(result == -1);  // Debe fallar
+    assert(rob->bumper == 1);
+    assert(rob->x == 5);  // Posicion no cambio
+    
+    printf("OK\n");
+}
+
+void test_clean_mechanics() {
+    printf("Test: Mecanica de limpieza... ");
+    
+    // Colocar suciedad
+    rob->x = 5;
+    rob->y = 5;
+    set_dirt(&map, 5, 5, 3);  // Nivel 3
+    
+    // Limpiar una vez
+    rmb_clean();
+    assert(get_dirt(&map, 5, 5) == 2);
+    
+    // Limpiar hasta vaciar
+    rmb_clean();
+    rmb_clean();
+    assert(get_dirt(&map, 5, 5) == 0);
+    
+    printf("OK\n");
+}
+
+int main() {
+    // Setup global
+    configure(1000, NULL);
+    int x, y;
+    rmb_awake(&x, &y);
+    
+    // Ejecutar tests
+    test_turn_normalization();
+    test_forward_collision();
+    test_clean_mechanics();
+    
+    printf("\nTodos los tests pasaron!\n");
+    return 0;
+}
+\end{lstlisting}
+
+\textbf{Compilar y ejecutar:}
+
+\begin{verbatim}
+gcc -g -DDEBUG -o test_simulator test_simulator.c simula.o -lm
+./test_simulator
+\end{verbatim}
+
+\subsection{Herramientas de Análisis}
+
+\subsubsection{Valgrind (Detección de Fugas de Memoria)}
+
+\begin{verbatim}
+valgrind --leak-check=full --show-leak-kinds=all ./roomba
+\end{verbatim}
+
+\textbf{Problemas comunes detectados:}
+\begin{itemize}
+    \item Olvidar liberar \texttt{hist} al salir
+    \item Cerrar \texttt{log\_file} sin verificar que está abierto
+    \item Doble \texttt{free()} en funciones de limpieza
+\end{itemize}
+
+\subsubsection{AddressSanitizer (Detección de Errores de Acceso)}
+
+\begin{lstlisting}[caption={Compilar con ASAN}]
+gcc -fsanitize=address -g -o roomba_asan main.c simula.o -lm
+./roomba_asan
+\end{lstlisting}
+
+Detecta:
+\begin{itemize}
+    \item Buffer overflows (\texttt{cells[WORLDSIZE][WORLDSIZE]})
+    \item Use-after-free
+    \item Stack buffer overflow
+    \item Global buffer overflow
+\end{itemize}
+
+\subsubsection{Static Analysis (cppcheck)}
+
+\begin{verbatim}
+cppcheck --enable=all --inconclusive simula.c sim_*.c
+\end{verbatim}
+
+Encuentra:
+\begin{itemize}
+    \item Variables sin inicializar
+    \item Punteros nulos no verificados
+    \item Dead code
+    \item Condiciones siempre verdaderas/falsas
+\end{itemize}
+
+\section{Optimizaciones}
+
+\subsection{Optimización de Memoria}
+
+\subsubsection{Problema: Array de Suciedad Estático}
+
+El array \texttt{dirt\_t dirt[WORLDSIZE*WORLDSIZE]} desperdicia memoria cuando hay pocas celdas sucias.
+
+\textbf{Solución 1: Lista enlazada}
+
+\begin{lstlisting}[caption={Estructura dinámica}]
+typedef struct _dirt_node {
+    int x, y, depth;
+    struct _dirt_node *next;
+} dirt_node_t;
+
+typedef struct _map {
+    char cells[WORLDSIZE][WORLDSIZE];
+    int nrow, ncol;
+    dirt_node_t *dirt_list;  // Lista enlazada
+    int ndirt;
+    // ...
+} map_t;
+
+// Añadir suciedad
+void add_dirt(map_t *m, int x, int y, int depth) {
+    dirt_node_t *node = malloc(sizeof(dirt_node_t));
+    node->x = x;
+    node->y = y;
+    node->depth = depth;
+    node->next = m->dirt_list;
+    m->dirt_list = node;
+    m->ndirt++;
+}
+
+// Liberar memoria
+void free_dirt_list(dirt_node_t *head) {
+    while(head) {
+        dirt_node_t *tmp = head;
+        head = head->next;
+        free(tmp);
+    }
+}
+\end{lstlisting}
+
+\textbf{Trade-offs:}
+\begin{itemize}
+    \item \textbf{Pros:} Memoria proporcional a suciedad real ($O(n)$ vs $O(W^2)$)
+    \item \textbf{Contras:} Búsqueda más lenta ($O(n)$ vs $O(1)$ con array indexado)
+\end{itemize}
+
+\subsubsection{Problema: Historial Completo en Memoria}
+
+El array \texttt{hist[timeout]} puede ser enorme para simulaciones largas (timeout=100000 → 1.6 MB).
+
+\textbf{Solución: Streaming a disco}
+
+\begin{lstlisting}[caption={Historial incremental}]
+// En lugar de guardar todo en memoria:
+sensor_t hist[timeout];  // 1.6 MB para timeout=100000
+
+// Escribir directamente al CSV:
+void sim_log_tick(int action) {
+    // Escribir inmediatamente
+    fprintf(log_file, "%d,%d,%d,%f,%f,%d,%d\n",
+            timer, rob->x, rob->y, rob->heading, 
+            rob->battery, rob->bumper, rob->infrared);
+    fflush(log_file);  // Forzar escritura
+    
+    // No guardar en memoria
+    timer++;
+}
+
+// Para visualize(), leer desde archivo:
+void visualize() {
+    FILE *log = fopen("log.csv", "r");
+    // ... procesar linea por linea
+}
+\end{lstlisting}
+
+\textbf{Ventaja:} Memoria constante independiente de \texttt{timeout}.
+
+\subsection{Optimización de Visualización}
+
+\subsubsection{Problema: Renderizado Lento}
+
+\begin{lstlisting}[caption={Precarga del log completo}]
+typedef struct {
+    int tick, x, y, bumper, infrared;
+    float heading, battery;
+} log_entry_t;
+
+log_entry_t* load_entire_log(const char *file, int *count) {
+    FILE *f = fopen(file, "r");
+    
+    // Contar lineas
+    char line[256];
+    *count = 0;
+    fgets(line, sizeof(line), f);  // Skip header
+    while(fgets(line, sizeof(line), f))
+        (*count)++;
+    
+    // Alocar array
+    log_entry_t *log = malloc(*count * sizeof(log_entry_t));
+    
+    // Releer y parsear
+    rewind(f);
+    fgets(line, sizeof(line), f);  // Skip header
+    for(int i = 0; i < *count; i++) {
+        fscanf(f, "%d,%d,%d,%f,%f,%d,%d",
+               &log[i].tick, &log[i].x, &log[i].y,
+               &log[i].heading, &log[i].battery,
+               &log[i].bumper, &log[i].infrared);
+    }
+    
+    fclose(f);
+    return log;
+}
+\end{lstlisting}
+
+\textbf{Ventaja:} Una sola lectura de disco vs N lecturas (N = número de frames).
+
+\subsection{Optimización de Detección de Colisiones}
+
+\subsubsection{Spatial Hashing para Mapas Grandes}
+
+Si el mapa crece mucho (>100x100), verificar cada celda es ineficiente.
+
+\begin{lstlisting}[caption={Hashmap de obstáculos}]
+typedef struct _wall_set {
+    int coords[WORLDSIZE*WORLDSIZE][2];
+    int count;
+} wall_set_t;
+
+// Precomputar set de paredes al cargar mapa
+void build_wall_set(map_t *m, wall_set_t *ws) {
+    ws->count = 0;
+    for(int i = 0; i < m->nrow; i++) {
+        for(int j = 0; j < m->ncol; j++) {
+            if(m->cells[i][j] == WALL) {
+                ws->coords[ws->count][0] = j;
+                ws->coords[ws->count][1] = i;
+                ws->count++;
+            }
+        }
+    }
+}
+
+// Busqueda O(1) con hash (implementacion simplificada)
+bool is_wall_fast(wall_set_t *ws, int x, int y) {
+    int hash = (y * WORLDSIZE + x) % ws->count;
+    // ... implementar hash table completo
+}
+\end{lstlisting}
+
+\textbf{Nota:} En la práctica, el acceso directo a \texttt{cells[y][x]} es suficientemente rápido para mapas 50x50.
+
+\section{Preguntas Frecuentes}
+
+\subsection{¿Por qué el robot tiene posición continua y discreta?}
+
+\textbf{Problema sin posición continua:}
+
+\begin{lstlisting}[caption={Error de acumulación}]
+// Con solo posiciones discretas
+int x = 5, y = 5;
+float heading = M_PI / 4;  // 45 grados
+
+for(int i = 0; i < 4; i++) {
+    x += (int)round(cos(heading));  // Redondear a cada paso
+    y += (int)round(sin(heading));
+    // Despues de 4 pasos: (9, 9) esperado vs (8, 8) real
+}
+\end{lstlisting}
+
+\textbf{Con posición continua:}
+
+\begin{lstlisting}[caption={Precisión mantenida}]
+float precise_x = 5.0, precise_y = 5.0;
+float heading = M_PI / 4;
+
+for(int i = 0; i < 4; i++) {
+    precise_x += cos(heading);  // Mantener decimales
+    precise_y += sin(heading);
+}
+// precise_x = 7.828, precise_y = 7.828
+// Redondeo final: (8, 8) correcto
+\end{lstlisting}
+
+\subsection{¿Cómo funciona el sistema de batería?}
+
+Cada acción tiene un coste fijo:
+
+\begin{table}[h]
+\centering
+\caption{Costes de batería}
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Acción} & \textbf{Coste} \\
+\hline
+Girar 90° & 0.1 \\
+Avanzar (recto) & 1.0 \\
+Avanzar (diagonal) & 1.4 ($\sqrt{2}$) \\
+Colisión & 0.5 \\
+Limpiar & 0.5 \\
+Recargar & +10.0 \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Ejemplo de consumo:}
+
+\begin{lstlisting}[caption={Traza de batería}]
+// Inicio: 1000.0
+rmb_forward();  // 1000.0 - 1.0 = 999.0
+rmb_turn(M_PI/2);  // 999.0 - 0.1 = 998.9
+rmb_clean();  // 998.9 - 0.5 = 998.4
+rmb_forward();  // Colision! 998.4 - 0.5 = 997.9
+rmb_load();  // 997.9 + 10.0 = 1000.0 (max)
+\end{lstlisting}
+
+\subsection{¿Puedo cambiar el tamaño del mapa?}
+
+Sí, modificando \texttt{WORLDSIZE}:
+
+\begin{lstlisting}[caption={Configurar tamaño}]
+// simula_internal.h
+#define WORLDSIZE 100  // Cambiar de 50 a 100
+\end{lstlisting}
+
+\textbf{Impacto en memoria:}
+
+\begin{itemize}
+    \item \texttt{cells[][]}: $50 \times 50 = 2.5$ KB → $100 \times 100 = 10$ KB
+    \item \texttt{dirt[]}: $2500 \times 12$ bytes = 30 KB → $10000 \times 12$ bytes = 120 KB
+    \item Total por mapa: ~32 KB → ~130 KB
+\end{itemize}
+
+\subsection{¿Cómo añado un nuevo tipo de obstáculo?}
+
+\textbf{Ejemplo: Añadir agua (\texttt{\%}) que consume más batería}
+
+\textbf{Paso 1:} Definir constante:
+
+\begin{lstlisting}[caption={Nueva constante}]
+// simula_internal.h
+#define WATER '%'
+#define COST_MOVE_WATER 2.0  // Doble coste
+\end{lstlisting}
+
+\textbf{Paso 2:} Modificar \texttt{rmb\_forward()}:
+
+\begin{lstlisting}[caption={Detectar tipo de terreno}]
+int rmb_forward() {
+    // ... calcular nueva posicion
+    
+    char terrain = map.cells[cell_y][cell_x];
+    
+    if(terrain == WALL) {
+        // Colision
+        return -1;
+    }
+    
+    // Actualizar posicion
+    rob->x = cell_x;
+    rob->y = cell_y;
+    
+    // Consumir bateria segun terreno
+    float cost;
+    if(terrain == WATER)
+        cost = COST_MOVE_WATER;
+    else if(is_diagonal)
+        cost = COST_MOVE_DIAG;
+    else
+        cost = COST_MOVE;
+    
+    apply_battery(cost);
+    return 0;
+}
+\end{lstlisting}
+
+\textbf{Paso 3:} Actualizar generador:
+
+\begin{lstlisting}[caption={Colocar agua aleatoriamente}]
+void generate_water(map_t *m) {
+    int num_water = 50;
+    for(int i = 0; i < num_water; i++) {
+        int x = rand() % m->ncol;
+        int y = rand() % m->nrow;
+        
+        if(m->cells[y][x] == EMPTY)
+            m->cells[y][x] = WATER;
+    }
+}
+\end{lstlisting}
+
+\section{Referencias}
+
+\subsection{Documentación Doxygen}
+
+Para documentación detallada de cada función:
+
+\begin{verbatim}
+cd docs/html
+doxygen Doxyfile
+open index.html  # macOS
+xdg-open index.html  # Linux
+start index.html  # Windows
+\end{verbatim}
+
+La documentación Doxygen incluye:
+\begin{itemize}
+    \item Firma completa de cada función
+    \item Descripción de parámetros y valores de retorno
+    \item Grafos de llamadas entre funciones
+    \item Jerarquía de estructuras de datos
+    \item Índice por módulo
+\end{itemize}
+
+\subsection{Archivos Clave del Proyecto}
+
+\begin{table}[h]
+\centering
+\caption{Estructura del código fuente}
+\begin{tabular}{|l|p{8cm}|}
+\hline
+\textbf{Archivo} & \textbf{Contenido} \\
+\hline
+\texttt{simula.h} & API pública completa (funciones rmb\_*) \\
+\texttt{simula\_internal.h} & Estructuras internas, constantes, enums \\
+\texttt{simula.c} & Núcleo: configure(), awake(), estado global \\
+\texttt{sim\_robot.c} & Implementación de acciones del robot \\
+\texttt{sim\_world.c} & Generación y gestión del mapa \\
+\texttt{sim\_visual.c} & Renderizado ASCII y animación \\
+\texttt{sim\_io.c} & Sistema de logs CSV \\
+\texttt{sim\_stats.c} & Recopilación de estadísticas \\
+\texttt{Makefile} & Configuración de compilación \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Ejemplos de Uso}
+
+Ver la carpeta \texttt{samples/} para:
+\begin{itemize}
+    \item \texttt{random.c} --- Movimiento aleatorio básico
+    \item \texttt{main.c} --- Algoritmo de exploración simple
+    \item \texttt{roomba.c} --- Estrategia de limpieza mejorada
+\end{itemize}
+
+\subsection{Recursos Adicionales}
+
+\begin{itemize}
+    \item \textbf{Manual del Usuario:} \texttt{docs/usuario/manual\_usuario.pdf}
+    \item \textbf{README Principal:} \texttt{README.md}
+    \item \textbf{Guía de Refactorización:} \texttt{2025/README\_REFACTORING.md}
+\end{itemize}
+
+\subsection{Contacto y Contribuciones}
+
+Para dudas, sugerencias o contribuciones al proyecto, consultar:
+\begin{itemize}
+    \item Repositorio del proyecto (si aplicable)
+    \item Instructor del curso
+    \item Documentación inline en el código fuente
+\end{itemize}
+
+\end{document}
+
+// Ejemplo de línea
+42, 10, 15, 1.5708, 950.5, 0, 3
+\end{lstlisting}
+
+\subsubsection{Estadísticas CSV}
+
+\begin{lstlisting}[caption={Formato de estadísticas}]
+cell_total, cell_visited, dirt_total, dirt_cleaned,
+bat_total, bat_mean, forward, turn, bumps, clean, load
+\end{lstlisting}
+
+\subsubsection{Mapas PGM}
+
+Formato PGM (Portable Gray Map) para exportar/importar mapas:
+\begin{itemize}
+    \item \textbf{Cabecera:} \texttt{P2}, dimensiones, valor máximo
+    \item \textbf{Valores:} 0 = obstáculo, 255 = vacío, 1-5 = suciedad
+\end{itemize}
+
+\section{Flujo de Ejecución}
+
+\subsection{Secuencia de Inicialización}
+
+\begin{enumerate}
+    \item Usuario llama a \texttt{configure(on\_start, exec\_beh, on\_stop, max\_ticks)}
+    \item Si se proporcionó \texttt{argv[1]}, se carga el mapa con \texttt{load\_map()}
+    \item Si no, se genera mapa aleatorio con \texttt{init\_world()}
+    \item Se inicializan estadísticas
+    \item Se abre el archivo \texttt{log.csv}
+\end{enumerate}
+
+\subsection{Ciclo Principal}
+
+\begin{lstlisting}[caption={Bucle de simulación (simplificado)}]
+void run() {
+    // 1. Inicializacion
+    if (config.on_start)
+        config.on_start();
+    
+    // 2. Bucle principal
+    for (int tick = 0; tick < config.exec_time; tick++) {
+        // Verificar bateria
+        if (robot.sensor.battery <= 0)
+            break;
+        
+        // Ejecutar comportamiento
+        if (config.exec_beh)
+            config.exec_beh();
+        
+        // Actualizar sensores
+        update_sensors();
+        
+        // Escribir log
+        log_state(tick);
+        
+        // Visualizacion opcional en tiempo real
+        #ifdef ENABLE_VISUALIZATION
+            print_map_ascii(&world_map, &robot);
+        #endif
+    }
+    
+    // 3. Finalizacion
+    save_statistics();
+    if (config.on_stop)
+        config.on_stop();
+}
+\end{lstlisting}
+
+\subsection{Diagrama de Secuencia}
+
+\begin{verbatim}
+Usuario          main()         simula.c         sim_robot.c
+  |               |               |                   |
+  |--configure()-->|               |                   |
+  |               |--init_world()-->|                   |
+  |               |               |                   |
+  |--run()------->|               |                   |
+  |               |--on_start()--->|                   |
+  |               |               |                   |
+  |               |--[loop]------->|                   |
+  |               |   exec_beh()--->|                   |
+  |               |   |--rmb_forward()---------------->|
+  |               |   |<--result-----------------------|
+  |               |   log_state() |                   |
+  |               |<----------------|                   |
+  |               |               |                   |
+  |               |--save_stats() |                   |
+  |               |--on_stop()---->|                   |
+  |               |--visualize()-->|                   |
+  |<--------------|               |                   |
+\end{verbatim}
+
+\section{Constantes y Configuración}
+
+\subsection{Constantes del Mundo}
+
+\begin{table}[h]
+\centering
+\caption{Constantes principales}
+\begin{tabular}{|l|l|p{6cm}|}
+\hline
+\textbf{Constante} & \textbf{Valor} & \textbf{Descripción} \\
+\hline
+\texttt{WORLDSIZE} & 50 & Tamaño máximo del mapa (50x50) \\
+\texttt{WALL} & '\#' & Carácter de obstáculo \\
+\texttt{EMPTY} & ' ' & Carácter de celda vacía \\
+\texttt{MAXDIRT} & 5 & Nivel máximo de suciedad \\
+\texttt{MAXBAT} & 1000 & Batería máxima del robot \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Costes de Batería}
+
+\begin{table}[h]
+\centering
+\caption{Costes por acción}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Constante} & \textbf{Valor} \\
+\hline
+\texttt{COST\_TURN} & 0.1 \\
+\texttt{COST\_MOVE} & 1.0 \\
+\texttt{COST\_MOVE\_DIAG} & 1.4 \\
+\texttt{COST\_BUMP} & 0.5 \\
+\texttt{COST\_CLEAN} & 0.5 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Modo Competición}
+
+Para compilar en modo competición (sin visualización):
+
+\begin{verbatim}
+gcc -DCOMPETITION_MODE main.c simula.c ... -o roomba_comp
+\end{verbatim}
+
+Efectos:
+\begin{itemize}
+    \item \texttt{DEBUG\_PRINT()} se convierte en no-op
+    \item \texttt{ENABLE\_VISUALIZATION} = 0
+    \item No se muestra output ASCII en tiempo real
+    \item Solo se generan logs y estadísticas
+\end{itemize}
+
+\section{Extendiendo el Simulador}
+
+\subsection{Añadir una Nueva Acción del Robot}
+
+\textbf{Ejemplo:} Añadir \texttt{rmb\_backward()} para mover el robot hacia atrás.
+
+\begin{enumerate}
+    \item Declarar en \textbf{simula.h}:
+\begin{lstlisting}
+int rmb_backward();
+\end{lstlisting}
+
+    \item Implementar en \textbf{sim\_robot.c}:
+\begin{lstlisting}
+int rmb_backward() {
+    // Similar a rmb_forward() pero invierte direccion
+    float new_x = robot.precise_x - cos(robot.sensor.heading);
+    float new_y = robot.precise_y - sin(robot.sensor.heading);
+    
+    int cell_x = (int)round(new_x);
+    int cell_y = (int)round(new_y);
+    
+    if (is_wall(&world_map, cell_x, cell_y)) {
+        robot.sensor.bumper = 1;
+        consume_battery(COST_BUMP);
+        return -1;
+    }
+    
+    robot.precise_x = new_x;
+    robot.precise_y = new_y;
+    robot.sensor.x = cell_x;
+    robot.sensor.y = cell_y;
+    consume_battery(COST_MOVE);
+    
+    return 0;
+}
+\end{lstlisting}
+
+    \item Actualizar estadísticas en \textbf{sim\_stats.c} si es necesario.
+\end{enumerate}
+
+\subsection{Añadir un Nuevo Sensor}
+
+\textbf{Ejemplo:} Añadir sensor de distancia a la pared más cercana.
+
+\begin{enumerate}
+    \item Añadir campo a \texttt{sensor\_t} en \textbf{simula.h}:
+\begin{lstlisting}
+typedef struct _sensor {
+    // ... campos existentes
+    int wall_distance;  // Distancia a pared mas cercana
+} sensor_t;
+\end{lstlisting}
+
+    \item Implementar función de cálculo en \textbf{sim\_robot.c}:
+\begin{lstlisting}
+int calculate_wall_distance(robot_t *r, map_t *map) {
+    int dx[] = {0, 1, 0, -1};  // Direcciones N, E, S, W
+    int dy[] = {-1, 0, 1, 0};
+    
+    int min_dist = WORLDSIZE;
+    for (int i = 0; i < 4; i++) {
+        int dist = 0;
+        int x = r->sensor.x;
+        int y = r->sensor.y;
+        
+        while (!is_wall(map, x, y) && dist < WORLDSIZE) {
+            x += dx[i];
+            y += dy[i];
+            dist++;
+        }
+        
+        if (dist < min_dist)
+            min_dist = dist;
+    }
+    
+    return min_dist;
+}
+\end{lstlisting}
+
+    \item Actualizar \texttt{update\_sensors()} para llamar a la nueva función.
+    
+    \item Crear función de acceso público en \textbf{simula.h}:
+\begin{lstlisting}
+int rmb_wall_distance();
+\end{lstlisting}
+\end{enumerate}
+
+\subsection{Modificar el Generador de Mapas}
+
+Para cambiar el algoritmo de generación de mapas, editar \texttt{init\_world()} en \textbf{sim\_world.c}.
+
+\textbf{Ejemplo:} Generar un laberinto en lugar de habitaciones:
+
+\begin{lstlisting}[caption={Generador de laberinto básico}]
+void init_world_maze(map_t *map) {
+    // 1. Llenar todo con paredes
+    for (int i = 0; i < WORLDSIZE; i++)
+        for (int j = 0; j < WORLDSIZE; j++)
+            map->cells[i][j] = WALL;
+    
+    // 2. Algoritmo de generacion de laberinto
+    // (ej: recursive backtracking, Prim, etc.)
+    generate_maze_recursive(map, 1, 1);
+    
+    // 3. Colocar base y suciedad
+    place_base_randomly(map);
+    generate_dirt(map);
+}
+\end{lstlisting}
+
+\section{Depuración y Testing}
+
+\subsection{Compilación con Debug}
+
+\begin{verbatim}
+make debug
+gdb ./roomba
+\end{verbatim}
+
+El \texttt{Makefile} incluye un target \texttt{debug} que compila con \texttt{-g -O0}.
+
+\subsection{Macros de Debug}
+
+\begin{lstlisting}[caption={Uso de DEBUG\_PRINT}]
+DEBUG_PRINT("Robot en (%d, %d), bateria: %.1f\n", 
+            robot.sensor.x, robot.sensor.y, robot.sensor.battery);
+\end{lstlisting}
+
+Solo se imprime si \texttt{COMPETITION\_MODE} no está definido.
+
+\subsection{Validación de Estado}
+
+Añadir \texttt{assert()} para verificar invariantes:
+
+\begin{lstlisting}[caption={Ejemplo de validación}]
+#include <assert.h>
+
+void validate_robot_state(robot_t *r, map_t *map) {
+    // Verificar que el robot esta dentro del mapa
+    assert(r->sensor.x >= 0 && r->sensor.x < map->ncol);
+    assert(r->sensor.y >= 0 && r->sensor.y < map->nrow);
+    
+    // Verificar que no esta en una pared
+    assert(!is_wall(map, r->sensor.x, r->sensor.y));
+    
+    // Verificar rango de bateria
+    assert(r->sensor.battery >= 0 && r->sensor.battery <= MAXBAT);
+    
+    // Verificar orientacion
+    assert(r->sensor.heading >= 0 && r->sensor.heading < 2*M_PI);
+}
+\end{lstlisting}
+
+\subsection{Testing Unitario}
+
+\textbf{Ejemplo de test para \texttt{rmb\_turn()}:}
+
+\begin{lstlisting}[caption={Test de rotación}]
+void test_turn() {
+    // Setup
+    robot.sensor.heading = 0.0;  // Norte
+    
+    // Test 1: Giro de 90 grados
+    rmb_turn(M_PI / 2);
+    assert(fabs(robot.sensor.heading - M_PI/2) < 0.001);
+    
+    // Test 2: Normalizacion de angulo
+    rmb_turn(2 * M_PI + 0.5);
+    assert(fabs(robot.sensor.heading - (M_PI/2 + 0.5)) < 0.001);
+    
+    // Test 3: Angulo negativo
+    robot.sensor.heading = 0.0;
+    rmb_turn(-M_PI / 2);
+    assert(fabs(robot.sensor.heading - (3*M_PI/2)) < 0.001);
+    
+    printf("Test rmb_turn: OK\n");
+}
+\end{lstlisting}
+
+\section{Optimizaciones}
+
+\subsection{Optimización de Memoria}
+
+\textbf{Problema:} El array de suciedad (\texttt{dirt\_t dirt[WORLDSIZE*WORLDSIZE]}) puede ser muy grande.
+
+\textbf{Solución:} Usar lista enlazada o hash table para almacenar solo celdas con suciedad.
+
+\begin{lstlisting}[caption={Alternativa con lista enlazada}]
+typedef struct _dirt_node {
+    int x, y, depth;
+    struct _dirt_node *next;
+} dirt_node_t;
+
+typedef struct _map {
+    char cells[WORLDSIZE][WORLDSIZE];
+    int nrow, ncol;
+    dirt_node_t *dirt_list;  // Lista enlazada
+    int ndirt;
+    // ...
+} map_t;
+\end{lstlisting}
+
+\subsection{Optimización de Visualización}
+
+Para simulaciones largas, \texttt{visualize()} puede ser lento al releer \texttt{log.csv}.
+
+\textbf{Solución:} Cargar todo el log en memoria primero:
+
+\begin{lstlisting}[caption={Precarga del log}]
+typedef struct {
+    int tick, x, y;
+    float heading, battery;
+    int bumper, infrared;
+} log_entry_t;
+
+log_entry_t* load_log(const char *filename, int *count) {
+    FILE *f = fopen(filename, "r");
+    // Contar lineas primero
+    *count = count_lines(f);
+    
+    // Alocar memoria
+    log_entry_t *log = malloc(*count * sizeof(log_entry_t));
+    
+    // Leer todas las entradas
+    rewind(f);
+    for (int i = 0; i < *count; i++) {
+        fscanf(f, "%d,%d,%d,%f,%f,%d,%d",
+               &log[i].tick, &log[i].x, &log[i].y,
+               &log[i].heading, &log[i].battery,
+               &log[i].bumper, &log[i].infrared);
+    }
+    
+    fclose(f);
+    return log;
+}
+\end{lstlisting}
+
+\section{Preguntas Frecuentes}
+
+\subsection{¿Por qué el robot tiene posición continua y discreta?}
+
+La posición continua (\texttt{precise\_x}, \texttt{precise\_y}) permite rotaciones suaves sin errores de redondeo. La posición discreta se usa para interacciones con el mapa (colisiones, suciedad).
+
+\subsection{¿Cómo funciona el sistema de batería?}
+
+Cada acción consume batería según las constantes \texttt{COST\_*}. Cuando la batería llega a 0, el robot se detiene. La recarga (\texttt{rmb\_load()}) añade +10 si el robot está en la base.
+
+\subsection{¿Puedo cambiar el tamaño del mapa?}
+
+Sí, modificando \texttt{WORLDSIZE} en \texttt{simula\_internal.h}. Nota: esto afecta el uso de memoria (\texttt{WORLDSIZE * WORLDSIZE * sizeof(dirt\_t)}).
+
+\subsection{¿Cómo añado un nuevo tipo de obstáculo?}
+
+Modifica \texttt{cells[]} para usar más caracteres (ej: \texttt{'\%'} para agua, \texttt{'\^{}'} para trampa). Actualiza \texttt{is\_wall()} y las funciones de renderizado.
+
+\section{Referencias}
+
+\subsection{Documentación Doxygen}
+
+Para documentación detallada de cada función:
+
+\begin{verbatim}
+cd docs
+doxygen Doxyfile
+open html/index.html
+\end{verbatim}
+
+\subsection{Archivos Clave}
+
+\begin{itemize}
+    \item \texttt{simula.h} --- API pública completa
+    \item \texttt{simula\_internal.h} --- Estructuras internas
+    \item \texttt{simula.c} --- Núcleo del simulador
+    \item \texttt{Makefile} --- Configuración de compilación
+    \item \texttt{README.md} --- Información general del proyecto
+\end{itemize}
+
+\subsection{Contacto}
+
+Para dudas o contribuciones, consultar el repositorio del proyecto.
+
+\end{document}

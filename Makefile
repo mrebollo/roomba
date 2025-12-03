@@ -1,59 +1,72 @@
 # Makefile for Roomba Student Projects
 # 
 # This Makefile compiles the student's robot behavior (main.c)
-# with the simulation library (simula.c and helpers) for development and testing.
-# It now builds a single simula.o that contains the full simulator and links it
-# with the student's main.
+# with the simulation library (simula.c) for development and testing.
+#
+# Usage:
+#   make          - Build the student project
+#   make run      - Build and run the simulation
+#   make clean    - Remove generated files
+#   make debug    - Build with debug symbols
 
 CC = gcc
-CFLAGS = -Wall -Wextra -Wno-unused-result -lm
+CFLAGS = -Wall -Wextra -lm
 DEBUG_FLAGS = -g -O0
 RELEASE_FLAGS = -O2
 
 # Source files
-SIM_SRCS = simula.c sim_robot.c sim_visual.c sim_io.c sim_world.c sim_stats.c
-# We'll compile simula.c separately into simula_src.o to avoid a circular dependency
-SIM_HELPER_SRCS = sim_robot.c sim_visual.c sim_io.c sim_world.c sim_stats.c
-SIM_HELPER_OBJS = $(SIM_HELPER_SRCS:.c=.o)
-SIMULA_SRC_OBJ = simula_src.o
-SIM_OBJS = $(SIM_HELPER_OBJS) $(SIMULA_SRC_OBJ)
-STUDENT_SRCS = main.c
+SOURCES = main.c simula.c sim_robot.c sim_visual.c sim_io.c sim_world.c sim_stats.c
+LIBSOURCES = simula.c sim_robot.c sim_visual.c sim_io.c sim_world.c sim_stats.c sim_world_api.c
+LIBOBJECTS = simula.o
 TARGET = roomba
+MAPGEN = maps/mapgen
+VIEWMAP = maps/viewmap
 
 
 # Default target
 all: $(TARGET)
 
-# Link final executable: only main.o + simula.o
-$(TARGET): main.o simula.o
-	$(CC) main.o simula.o $(CFLAGS) $(RELEASE_FLAGS) -o $(TARGET)
+# Build student project
+$(TARGET): $(SOURCES) simula.h
+	$(CC) $(SOURCES) $(CFLAGS) $(RELEASE_FLAGS) -o $(TARGET)
 	@echo "✓ Student project compiled successfully"
 
-# Compile main with header dependency
-main.o: main.c simula.h
-	$(CC) -c main.c $(CFLAGS) $(RELEASE_FLAGS) -o main.o
-
-# Build a single relocatable object simula.o that contains the whole simulator
-# Compile simula.c into simula_src.o, compile helpers into their .o files, then merge
-$(SIMULA_SRC_OBJ): simula.c simula.h
-	$(CC) -c simula.c $(CFLAGS) $(RELEASE_FLAGS) -o $(SIMULA_SRC_OBJ)
-
-simula.o: $(SIM_OBJS)
-	$(CC) -r $(SIM_OBJS) -o simula.o
-	@echo "✓ simula.o created (contains: $(SIM_SRCS))"
-
-# Target to only build the combined simulator object
-simula: simula.o
-	@echo "✓ simula.o is up to date (generated)"
-
-# Generic rule to compile .c -> .o
-%.o: %.c simula.h
-	$(CC) -c $< $(CFLAGS) $(RELEASE_FLAGS) -o $@
-
 # Build with debug symbols
-debug: CFLAGS += $(DEBUG_FLAGS)
-debug: clean $(TARGET)
+debug: $(SOURCES) simula.h
+	$(CC) $(SOURCES) $(CFLAGS) $(DEBUG_FLAGS) -o $(TARGET)
 	@echo "✓ Debug build completed"
+
+
+# Build library object file for distribution to students
+lib: $(LIBOBJECTS)
+
+$(LIBOBJECTS): $(LIBSOURCES) simula.h simula_internal.h sim_world_api.h
+	$(CC) -c $(LIBSOURCES) $(CFLAGS) $(RELEASE_FLAGS)
+	ld -r simula.o sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o sim_world_api.o -o simula_combined.o
+	mv simula_combined.o simula.o
+	rm -f sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o sim_world_api.o
+	@echo "✓ Library object file created: simula.o"
+
+# Map generator (development mode - from sources)
+mapgen-dev: maps/generate.c sim_world_api.c
+	$(CC) maps/generate.c sim_world_api.c $(LIBSOURCES:sim_world_api.c=) $(CFLAGS) $(RELEASE_FLAGS) -o $(MAPGEN)
+	@echo "✓ Map generator compiled (development mode)"
+
+# Map generator (distribution mode - with simula.o)
+mapgen: $(LIBOBJECTS) maps/generate.c sim_world_api.h
+	$(CC) maps/generate.c simula.o $(CFLAGS) $(RELEASE_FLAGS) -o $(MAPGEN)
+	@echo "✓ Map generator compiled (distribution mode)"
+
+# Map viewer (development mode - from sources)
+viewmap-dev: maps/viewmap.c sim_world_api.c
+	$(CC) maps/viewmap.c sim_world_api.c $(LIBSOURCES:sim_world_api.c=) $(CFLAGS) $(RELEASE_FLAGS) -o $(VIEWMAP)
+	@echo "✓ Map viewer compiled (development mode)"
+
+# Map viewer (distribution mode - with simula.o)
+viewmap: $(LIBOBJECTS) maps/viewmap.c sim_world_api.h
+	$(CC) maps/viewmap.c simula.o $(CFLAGS) $(RELEASE_FLAGS) -o $(VIEWMAP)
+	@echo "✓ Map viewer compiled (distribution mode)"
+
 
 # Run the simulation
 run: $(TARGET)
@@ -66,17 +79,82 @@ run-map: $(TARGET)
 
 # Clean generated files
 clean:
-	rm -f $(TARGET) *.csv *.pgm log.csv stats.csv map.pgm
-	rm -f *.o simula.o
+	rm -f $(TARGET) $(MAPGEN) $(VIEWMAP)
+	rm -f *.o *.csv *.pgm
+	rm -f log.csv stats.csv map.pgm
 	@echo "✓ Cleaned build artifacts"
+
+# Documentation targets
+doc: doc-api doc-user doc-developer
+	@echo "✓ All documentation generated successfully"
+
+doc-api:
+	@echo "Generating API documentation (Doxygen)..."
+	@if [ -f docs/Doxyfile ]; then \
+		cd docs && doxygen Doxyfile > /dev/null 2>&1; \
+		echo "✓ API documentation generated in docs/html/"; \
+	else \
+		echo "⚠ Doxyfile not found in docs/"; \
+	fi
+
+doc-user:
+	@echo "Generating User Manual PDF..."
+	@if [ -f docs/usuario/manual_usuario.tex ]; then \
+		cd docs/usuario && pdflatex manual_usuario.tex > /dev/null 2>&1 && \
+		pdflatex manual_usuario.tex > /dev/null 2>&1 && \
+		rm -f manual_usuario.aux manual_usuario.log manual_usuario.out && \
+		echo "✓ User manual generated: docs/usuario/manual_usuario.pdf"; \
+	else \
+		echo "⚠ User manual .tex file not found"; \
+	fi
+
+doc-developer:
+	@echo "Generating Developer Manual PDF..."
+	@if [ -f docs/developer/manual_desarrollador.tex ]; then \
+		cd docs/developer && pdflatex manual_desarrollador.tex > /dev/null 2>&1 && \
+		pdflatex manual_desarrollador.tex > /dev/null 2>&1 && \
+		rm -f manual_desarrollador.aux manual_desarrollador.log manual_desarrollador.out && \
+		echo "✓ Developer manual generated: docs/developer/manual_desarrollador.pdf"; \
+	else \
+		echo "⚠ Developer manual .tex file not found"; \
+	fi
+
+doc-clean:
+	@echo "Cleaning documentation artifacts..."
+	rm -rf docs/html/
+	rm -f docs/usuario/*.aux docs/usuario/*.log docs/usuario/*.out
+	rm -f docs/developer/*.aux docs/developer/*.log docs/developer/*.out
+	rm -f docs/usuario/manual_usuario.pdf
+	rm -f docs/developer/manual_desarrollador.pdf
+	@echo "✓ Documentation artifacts cleaned"
 
 # Help
 help:
 	@echo "Roomba Student Project - Available targets:"
+	@echo ""
+	@echo "Build targets:"
 	@echo "  make         - Build the project"
-	@echo "  make run     - Build and run the simulation"
 	@echo "  make debug   - Build with debug symbols"
 	@echo "  make clean   - Remove generated files"
+	@echo "  make lib     - Create simula.o library for distribution"
+	@echo ""
+	@echo "Map generator:"
+	@echo "  make mapgen-dev  - Build map generator (development, from sources)"
+	@echo "  make mapgen      - Build map generator (with simula.o library)"
+	@echo ""
+	@echo "Map viewer:"
+	@echo "  make viewmap-dev - Build map viewer (development, from sources)"
+	@echo "  make viewmap     - Build map viewer (with simula.o library)"
+	@echo ""
+	@echo "Run targets:"
+	@echo "  make run     - Build and run the simulation"
 	@echo "  make run-map MAP=path/to/map.pgm - Run with specific map"
+	@echo ""
+	@echo "Documentation targets:"
+	@echo "  make doc           - Generate all documentation (API + manuals)"
+	@echo "  make doc-api       - Generate API documentation (Doxygen)"
+	@echo "  make doc-user      - Generate user manual PDF"
+	@echo "  make doc-developer - Generate developer manual PDF"
+	@echo "  make doc-clean     - Remove all generated documentation"
 
-.PHONY: all debug run run-map clean help simula
+.PHONY: all debug run run-map clean lib mapgen mapgen-dev viewmap viewmap-dev doc doc-api doc-user doc-developer doc-clean help

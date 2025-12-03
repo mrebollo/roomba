@@ -1,0 +1,112 @@
+/**
+ * @mainpage Simulador Roomba - Documentación Técnica
+ * 
+ * @section intro_sec Introducción
+ * 
+ * Este es un simulador educativo de un robot de limpieza tipo Roomba.
+ * Permite a los estudiantes programar comportamientos de navegación y limpieza
+ * sin necesidad de hardware físico.
+ * 
+ * @section features_sec Características
+ * 
+ * - ✓ Simulación de movimiento en un espacio 2D discreto
+ * - ✓ Detección de obstáculos mediante bumper
+ * - ✓ Sensor de infrarrojos para detectar suciedad
+ * - ✓ Gestión de batería con recarga en base
+ * - ✓ Visualización ASCII en tiempo real
+ * - ✓ Generación de estadísticas y logs en CSV
+ * - ✓ Mapas aleatorios o cargables desde archivo PGM
+ * 
+ * @section arch_sec Arquitectura
+ * 
+ * El simulador está dividido en módulos independientes:
+ * 
+ * - **simula.c** - Núcleo del simulador (configuración, ciclo principal)
+ * - **sim_robot.c** - Implementación de acciones del robot (rmb_*)
+ * - **sim_world.c** - Gestión del mapa (generación, carga, consultas)
+ * - **sim_visual.c** - Visualización ASCII de la simulación
+ * - **sim_io.c** - Entrada/salida de archivos (logs, estadísticas)
+ * 
+ * @section usage_sec Uso Básico
+ * 
+ * @subsection config_subsec Configuración
+ * 
+ * @code
+ * void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time);
+ * @endcode
+ * 
+ * Define las funciones de inicialización, comportamiento cíclico y finalización.
+ * 
+ * @subsection robot_subsec Control del Robot
+ * 
+ * API principal para estudiantes:
+ * 
+ * - rmb_awake() - Activa el robot en la base
+ * - rmb_turn() - Rota el robot
+ * - rmb_forward() - Avanza una celda
+ * - rmb_clean() - Limpia la celda actual
+ * - rmb_load() - Recarga batería en la base
+ * - rmb_state() - Lee todos los sensores
+ * - rmb_bumper() - Lee bumper
+ * - rmb_ifr() - Lee sensor infrarrojo
+ * - rmb_battery() - Lee nivel de batería
+ * 
+ * @subsection example_subsec Ejemplo Completo
+ * 
+ * @code
+ * #include "simula.h"
+ * 
+ * void init() {
+ *     int x, y;
+ *     rmb_awake(&x, &y);
+ * }
+ * 
+ * void behavior() {
+ *     if (rmb_bumper()) {
+ *         rmb_turn(M_PI / 2);  // Gira 90 grados
+ *     } else {
+ *         rmb_forward();        // Avanza
+ *     }
+ *     
+ *     if (rmb_ifr() > 0) {
+ *         rmb_clean();          // Limpia si hay suciedad
+ *     }
+ * }
+ * 
+ * int main() {
+ *     configure(init, behavior, NULL, 1000);
+ *     run();
+ *     visualize();
+ *     return 0;
+ * }
+ * @endcode
+ * 
+ * @section compile_sec Compilación
+ * 
+ * @code
+ * make
+ * ./roomba
+ * @endcode
+ * 
+ * @section files_sec Archivos Generados
+ * 
+ * - **log.csv** - Historial de posiciones y estado del robot
+ * - **stats.csv** - Estadísticas finales (celdas visitadas, suciedad limpiada, etc.)
+ * - **map.pgm** - Imagen del mapa en formato PGM
+ * 
+ * @section internal_sec Documentación Interna
+ * 
+ * Para desarrolladores que deseen extender o modificar el simulador:
+ * 
+ * - Ver simula_internal.h para estructuras internas
+ * - Consultar los diagramas de llamadas de cada módulo
+ * - Revisar las estadísticas en struct _stat
+ * 
+ * @section author_sec Autor
+ * 
+ * Proyecto educativo - Universidad (2025)
+ * 
+ * @section license_sec Licencia
+ * 
+ * Ver archivo LICENSE en el repositorio
+ */
