@@ -1,125 +1,83 @@
 # Simulador Roomba - Entorno de Programación para Estudiantes
 
-Bienvenido al simulador Roomba. Este paquete contiene todo lo necesario para programar tu robot limpiador.
+Bienvenido al simulador Roomba. Este directorio contiene todo lo necesario para programar tu robot limpiador autónomo.
 
-## Archivos del Proyecto
+## Estructura de Archivos
 
-### Tu Código
-- **`main.c`** - Programa aquí el comportamiento de tu robot (EDITAR AQUÍ)
+### Archivos del Estudiante
+- **`main.c`** - **EDITA ESTE ARCHIVO** - Programa aquí el comportamiento de tu robot
+- **`Makefile`** - Sistema de compilación (no modificar)
 
 ### Biblioteca del Simulador
-- **`simula.o`** - Biblioteca precompilada del simulador (NO MODIFICAR)
-- **`simula.h`** - API con todas las funciones disponibles (CONSULTAR)
+- **`simula.o`** - Biblioteca precompilada del simulador (no modificar)
+- **`simula.h`** - Documentación de funciones disponibles (consultar)
 
 ### Mapas de Prueba
-- **`maps/`** - Diferentes escenarios para probar tu robot:
-  - `noobs.pgm` - Mapa simple sin obstáculos
-  - `random1.pgm`, `random3.pgm`, `random5.pgm` - Obstáculos dispersos (1%, 3%, 5%)
-  - `walls1.pgm`, `walls2.pgm`, `walls3.pgm`, `walls4.pgm` - Muros verticales u horizontales
+- **`maps/`** - Diferentes escenarios para probar tu robot
+  - `noobs.pgm` - Mapa simple sin obstáculos (ideal para empezar)
+  - `random1.pgm`, `random3.pgm`, `random5.pgm` - Obstáculos aleatorios dispersos
+  - `walls1.pgm`, `walls2.pgm`, `walls3.pgm`, `walls4.pgm` - Muros verticales/horizontales
 
----
+## Inicio Rápido
 
-## Compilar y Ejecutar
-
-### Compilación básica
+### 1. Compilar tu código
 ```bash
-make            # Compilar el proyecto
-./roomba        # Ejecutar (genera mapa aleatorio)
+make
 ```
 
-### Usar un mapa específico
+### 2. Ejecutar el simulador
 ```bash
-./roomba MAP=maps/noobs.pgm
-./roomba MAP=maps/random3.pgm
-./roomba MAP=maps/walls2.pgm
+./roomba                        # Genera un mapa aleatorio
+./roomba MAP=maps/noobs.pgm    # Usa un mapa específico
 ```
 
-### Limpiar archivos generados
+### 3. Ver resultados
+Después de la ejecución se generan:
+- **Visualización animada** en la terminal (si está habilitada)
+- **`log.csv`** - Trayectoria completa del robot (posición, orientación, batería en cada paso)
+- **`stats.csv`** - Estadísticas finales (celdas visitadas, suciedad limpiada, consumo de batería)
+- **`map.pgm`** - Imagen del mundo final (abrir con GIMP/Photoshop/visualizador PGM)
+
+### 4. Limpiar archivos generados
 ```bash
 make clean
 ```
 
----
-
-## Archivos Generados
-
-Después de cada ejecución se crean:
-
-- **`log.csv`** - Trayectoria completa del robot
-  - Columnas: x, y, orientación, batería, suciedad, bumper, etc.
-  
-- **`stats.csv`** - Estadísticas finales del recorrido
-  - Celdas visitadas, suciedad limpiada, batería consumida, movimientos
-  
-- **`map.pgm`** - Imagen del mundo final (formato PGM P2)
-  - Se puede abrir con GIMP, Photoshop, o visualizadores de imágenes
-
----
-
 ## API del Simulador
 
-Todas las funciones están documentadas en `simula.h`. Resumen rápido:
+Consulta `simula.h` para documentación completa. Aquí un resumen:
 
-### Configuración del Simulador
-
+### Configuración Básica
 ```c
-void configure(void (*on_start)(), void (*exec_beh)(), void (*on_finish)(), int exec_time);
+void configure(void (*on_start)(), void (*exec_beh)(), 
+               void (*on_finish)(), int exec_time);
 void run();
 ```
 
-**Ejemplo:**
+### Funciones de Sensores
 ```c
-configure(inicializar, comportamiento, finalizar, 1000);
-run();
+sensor_t rmb_state();           // Estado completo: x, y, heading, battery, bumper, ifr
+float rmb_battery();            // Batería restante (0-1000)
+int rmb_bumper();               // 1 si detecta colisión, 0 si libre
+int rmb_ifr();                  // Nivel de suciedad en celda actual (0-5)
+void rmb_awake(int *x, int *y); // Obtener coordenadas de la base
 ```
 
-### Sensores
-
+### Funciones de Actuadores
 ```c
-sensor_t rmb_state();              // Estado completo del robot
-float rmb_battery();               // Batería actual (0-1000)
-int rmb_bumper();                  // ¿Ha chocado? (1=sí, 0=no)
-int rmb_ifr();                     // Nivel de suciedad en la celda (0-5)
-void rmb_awake(int *x, int *y);    // Obtener posición de la base
+void rmb_forward();             // Avanzar 1 celda en dirección actual
+void rmb_turn(float rad);       // Girar (en radianes, positivo=izquierda)
+void rmb_clean();               // Limpiar 1 unidad de suciedad
+void rmb_load();                // Recargar 1 unidad de batería (solo en la base)
 ```
 
-**Estructura sensor_t:**
+### Funciones de Utilidad
 ```c
-typedef struct {
-    int x, y;           // Posición (columna, fila)
-    float heading;      // Orientación en radianes (0=Este, π/2=Norte)
-    float battery;      // Batería restante
-    int bumper;         // Colisión detectada
-    int dirt;           // Nivel de suciedad
-} sensor_t;
+void visualize();               // Mostrar animación ASCII del recorrido
+void save_stats();              // Guardar estadísticas en stats.csv
 ```
 
-### Actuadores
-
-```c
-void rmb_forward();                // Avanzar 1 celda en la dirección actual
-void rmb_turn(float rad);          // Girar (ángulo en radianes)
-void rmb_clean();                  // Limpiar 1 unidad de suciedad
-void rmb_load();                   // Recargar 1 unidad de batería
-```
-
-**Constantes útiles:**
-- `M_PI` = π (3.14159...)
-- `M_PI / 2` = 90 grados
-- `M_PI / 4` = 45 grados
-- `-M_PI / 2` = -90 grados (girar a la derecha)
-
-### Utilidades
-
-```c
-void visualize();                  // Mostrar animación ASCII del recorrido
-void save_stats();                 // Guardar estadísticas (automático)
-int load_map(char *filename);      // Cargar un mapa PGM
-```
-
----
-
-## Estructura Básica de un Programa
+## Plantilla Básica
 
 ```c
 #include "simula.h"
@@ -130,23 +88,29 @@ int base_x, base_y;
 
 // Se ejecuta UNA VEZ al inicio
 void inicializar() {
-    rmb_awake(&base_x, &base_y);
-    // Tu código de inicialización
+    rmb_awake(&base_x, &base_y);  // Obtener posición de la base
+    // Tu código de inicialización aquí
 }
 
-// Se ejecuta EN CADA PASO (bucle principal)
+// Se ejecuta EN CADA PASO de la simulación
 void comportamiento() {
-    // Ejemplo: rebote simple
+    // Prioridad 1: Si hay suciedad, limpiar
+    if (rmb_ifr() > 0) {
+        rmb_clean();
+        return;
+    }
+    
+    // Prioridad 2: Si choca, girar
     if (rmb_bumper()) {
-        rmb_turn(M_PI / 2);  // Girar 90° si choca
+        rmb_turn(M_PI / 2);  // Girar 90 grados
     } else {
-        rmb_forward();       // Avanzar si no hay obstáculo
+        rmb_forward();       // Avanzar
     }
 }
 
 // Se ejecuta UNA VEZ al final
 void finalizar() {
-    visualize();  // Mostrar animación
+    visualize();  // Mostrar animación del recorrido
 }
 
 int main() {
@@ -156,161 +120,131 @@ int main() {
 }
 ```
 
----
+## Consejos para Programar
 
-## Ejemplos de Código
-
-### Ejemplo 1: Limpiador simple (rebote aleatorio)
-
+### Gestión de Batería
 ```c
-void comportamiento() {
-    // Prioridad: limpiar si hay suciedad
-    if (rmb_ifr() > 0) {
-        rmb_clean();
-        return;
-    }
-    
-    // Navegar con rebote aleatorio
-    if (rmb_bumper()) {
-        float angulo = (rand() % 180 - 90) * M_PI / 180.0;
-        rmb_turn(angulo);
-    } else {
-        rmb_forward();
-    }
+// Verificar batería antes de acciones costosas
+if (rmb_battery() < 200) {
+    // Regresar a la base para recargar
 }
 ```
 
-### Ejemplo 2: Gestión de batería
-
+### Limpieza Completa
 ```c
-typedef enum { EXPLORANDO, REGRESANDO, RECARGANDO } Estado;
-Estado estado = EXPLORANDO;
-
-void comportamiento() {
-    if (rmb_battery() < 200 && estado == EXPLORANDO) {
-        estado = REGRESANDO;
-    }
-    
-    switch(estado) {
-        case EXPLORANDO:
-            // Lógica de exploración
-            break;
-        case REGRESANDO:
-            // Navegar hacia (base_x, base_y)
-            break;
-        case RECARGANDO:
-            if (rmb_battery() < 900) {
-                rmb_load();
-            } else {
-                estado = EXPLORANDO;
-            }
-            break;
-    }
+// Limpiar hasta vaciar completamente la celda
+while (rmb_ifr() > 0) {
+    rmb_clean();
 }
 ```
 
-### Ejemplo 3: Seguir pared derecha
-
+### Navegación Dirigida
 ```c
-int pasos = 0;
+// Calcular ángulo hacia un objetivo (bx, by)
+sensor_t s = rmb_state();
+int dx = bx - s.x;
+int dy = by - s.y;
+float angulo = atan2(dy, dx);
 
-void comportamiento() {
-    if (rmb_bumper()) {
-        rmb_turn(M_PI / 2);  // Girar izquierda al chocar
-        pasos = 0;
-    } else {
-        rmb_forward();
-        pasos++;
-        
-        // Cada 3 pasos, girar derecha (seguir pared)
-        if (pasos > 3) {
-            rmb_turn(-M_PI / 4);
-            pasos = 0;
-        }
-    }
+// Normalizar diferencia de ángulos
+float dif = angulo - s.heading;
+while (dif > M_PI) dif -= 2 * M_PI;
+while (dif < -M_PI) dif += 2 * M_PI;
+
+// Girar hacia el objetivo
+if (fabs(dif) > 0.2) {
+    rmb_turn(dif * 0.5);
 }
 ```
 
----
+### Estrategias Comunes
 
-## Consejos de Programación
+**Rebote Aleatorio:**
+- Simple pero ineficiente
+- Bueno para empezar
 
-1. **Compila frecuentemente** - Detecta errores pronto con `make`
+**Seguimiento de Paredes:**
+- Mayor cobertura
+- Algoritmo: wall-following (pared derecha o izquierda)
 
-2. **Usa `visualize()`** - Ver la animación ayuda a entender el comportamiento
+**Espiral:**
+- Cobertura sistemática
+- Patrón: 1-1-2-2-3-3-4-4... pasos
 
-3. **Consulta `stats.csv`** - Métricas objetivas:
-   - `cell_visited / cell_total` = % de cobertura
-   - `dirt_cleaned / dirt_total` = % de limpieza
-   - `bat_total` = batería consumida
+**Comportamiento Adaptativo:**
+- Máquina de estados
+- Diferentes modos según batería/suciedad
 
-4. **Prueba en varios mapas** - Tu código debe funcionar en todos:
-   ```bash
-   for map in maps/*.pgm; do
-       echo "Probando $map"
-       ./roomba MAP=$map
-   done
-   ```
+## Pruebas y Depuración
 
-5. **Gestiona la batería** - Vuelve a la base antes de quedarte sin energía
-   - Cada `forward()` consume ~1 unidad
-   - Cada `turn()` consume ~0.5 unidades
-   - Cada `clean()` consume ~0.5 unidades
-   - Colisiones cuestan batería extra
+### 1. Compilar frecuentemente
+Detecta errores sintácticos pronto.
 
-6. **Usa máquinas de estados** - Más claro que muchos `if` anidados:
-   ```c
-   typedef enum { ESTADO1, ESTADO2, ESTADO3 } Estado;
-   Estado actual = ESTADO1;
-   
-   switch(actual) {
-       case ESTADO1: /* lógica */ break;
-       case ESTADO2: /* lógica */ break;
-       case ESTADO3: /* lógica */ break;
-   }
-   ```
+### 2. Usar visualize()
+Ver el comportamiento del robot es fundamental.
 
----
+### 3. Analizar stats.csv
+Métricas objetivas de rendimiento:
+```
+cell_total,cell_visited,dirt_total,dirt_cleaned,bat_total,bat_mean,...
+```
 
-## Solución de Problemas
+### 4. Probar en múltiples mapas
+Tu código debe funcionar en diferentes escenarios:
+```bash
+./roomba MAP=maps/noobs.pgm
+./roomba MAP=maps/random3.pgm
+./roomba MAP=maps/walls2.pgm
+```
+
+### 5. Iterar y mejorar
+1. Implementar versión básica
+2. Medir resultados (stats.csv)
+3. Identificar problemas
+4. Mejorar algoritmo
+5. Repetir
+
+## Errores Comunes
 
 ### Error: "undefined reference to..."
-- Verifica que estés compilando con `make` (no directamente con `gcc`)
-- El Makefile incluye automáticamente `simula.o`
+- Falta compilar con `-lm` (biblioteca matemática)
+- Solución: Usa `make` (ya incluye las flags necesarias)
 
-### El robot no se mueve
-- Verifica que estés llamando a `rmb_forward()` o `rmb_turn()`
-- Asegúrate de que el bucle no se detenga prematuramente
+### Robot se queda sin batería
+- Implementa recarga automática
+- Umbral recomendado: batería < 200 (20%)
 
-### Batería se agota muy rápido
-- Evita colisiones (cada choque cuesta batería)
-- Implementa recarga cuando `rmb_battery() < 200`
+### Robot gira infinitamente
+- Posible bucle en la lógica de giros
+- Revisa condiciones de los `if`/`while`
 
-### El robot gira continuamente
-- Verifica que no estés acumulando ángulos infinitamente
-- Normaliza ángulos si es necesario
-
-### La animación no se muestra
-- Asegúrate de llamar a `visualize()` en la función `finalizar()`
-- Presiona Ctrl+C para detener la animación si es muy larga
-
----
-
-## Documentación Adicional
-
-Para información más detallada, consulta:
-- **Manual de Usuario** (PDF) - Explicación completa del simulador
-- **Archivo `simula.h`** - Documentación de cada función
-- **Ejemplos en `samples/`** - Código funcional de referencia
-
----
+### Robot no limpia suficiente
+- Prioriza limpieza sobre exploración
+- Limpia completamente cada celda antes de moverse
 
 ## Métricas de Éxito
 
-Tu robot será evaluado según:
-1. **Cobertura** - % de celdas visitadas
-2. **Limpieza** - % de suciedad eliminada
-3. **Eficiencia** - Batería consumida / trabajo realizado
-4. **Autonomía** - Gestión de recarga automática
+Dependiendo del ejercicio, evalúa:
+- **Cobertura**: `cell_visited / cell_total` (%)
+- **Limpieza**: `dirt_cleaned / dirt_total` (%)
+- **Eficiencia**: Batería consumida para lograr objetivo
+- **Tiempo**: Número de pasos hasta completar tarea
 
-¡Buena suerte programando tu Roomba!
+## Recursos Adicionales
+
+- **Manual de Usuario (PDF)** - Explicaciones detalladas y ejemplos completos
+- **Carpeta `samples/`** (si disponible) - Ejemplos funcionando
+- **Archivo `simula.h`** - Documentación completa de API con comentarios
+
+## Soporte
+
+Si encuentras problemas:
+1. Revisa el **Manual de Usuario**
+2. Consulta los comentarios en **`simula.h`**
+3. Analiza los **ejemplos** (si disponibles)
+4. Verifica mensajes de error del compilador
+5. Usa **`visualize()`** para depurar visualmente
+
+---
+
+**¡Buena suerte programando tu robot Roomba!**

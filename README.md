@@ -38,3 +38,42 @@ The viewer displays maps in ASCII format:
 - Spaces = Empty cells
 
 See `maps/README.md` for more details.
+
+## For Teachers: Creating Student Distribution Package
+
+### Generate student package
+```bash
+make lib        # Compile simulator library (simula.o)
+make dist       # Create distribution package in dist/
+```
+
+The `dist/` directory contains everything students need:
+- **`simula.o`** - Precompiled simulator library
+- **`simula.h`** - Public API documentation
+- **`main.c`** - Clean template with guidance comments
+- **`maps/`** - Test maps (noobs, random1-5, walls1-4)
+- **`Makefile`** - Simplified build system for students
+- **`README.md`** - Quick start guide for students
+
+### Distribute to students
+```bash
+# Create compressed archive
+tar -czf roomba-student.tar.gz dist/
+# Or create zip file
+zip -r roomba-student.zip dist/
+
+# Upload to Moodle/Virtual Campus
+```
+
+Students simply extract and start coding:
+```bash
+tar -xzf roomba-student.tar.gz
+cd dist/
+make
+./roomba
+```
+
+### Clean distribution
+```bash
+make dist-clean  # Remove generated files, keep templates
+```

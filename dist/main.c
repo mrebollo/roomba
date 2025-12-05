@@ -1,20 +1,23 @@
 /**
- * Plantilla de Proyecto - Simulador Roomba
+ * @file main.c
+ * @brief Plantilla de Proyecto - Simulador Roomba
+ * @author Estudiante
+ * @date 2025
  * 
  * INSTRUCCIONES:
- * 1. Implementa tu logica en las funciones inicializar(), 
+ * 1. Implementa tu lógica en las funciones inicializar(), 
  *    comportamiento() y finalizar()
  * 2. Compila con: make
  * 3. Ejecuta con: ./roomba
  * 
- * FUNCIONES DISPONIBLES (consulta simula.h para mas detalles):
- * - Sensores: rmb_state(), rmb_battery(), rmb_bumper(), rmb_ifr(), rmb_awake()
+ * FUNCIONES DISPONIBLES (consulta simula.h para detalles):
+ * - Sensores: rmb_state(), rmb_battery(), rmb_bumper(), rmb_ifr()
  * - Actuadores: rmb_forward(), rmb_turn(), rmb_clean(), rmb_load()
  * - Utilidades: visualize(), save_stats()
  */
 
 #include "simula.h"
-#include <math.h>    // Para M_PI y funciones trigonometricas
+#include <math.h>    // Para M_PI y funciones trigonométricas
 #include <stdio.h>   // Para printf (opcional)
 #include <stdlib.h>  // Para rand() (opcional)
 #include <time.h>    // Para srand(time(NULL)) (opcional)
@@ -22,101 +25,139 @@
 // ============================================================================
 // VARIABLES GLOBALES (opcional)
 // ============================================================================
-// Puedes declarar aqui variables que necesites mantener entre llamadas
+/**
+ * Puedes declarar aquí variables que necesites mantener entre llamadas
+ * a la función comportamiento().
+ * 
+ * Ejemplo: posición de la base, contadores, estados, etc.
+ */
 
-int base_x, base_y;  // Ejemplo: posicion de la base
+int base_x, base_y;  // Ejemplo: posición de la base del robot
 
 
 // ============================================================================
-// FUNCION DE INICIALIZACION
+// FUNCIÓN DE INICIALIZACIÓN
 // ============================================================================
 /**
- * Se ejecuta UNA VEZ al inicio de la simulacion.
- * Usala para:
- * - Obtener la posicion inicial (base)
+ * @brief Función de inicialización del robot
+ * 
+ * Se ejecuta UNA VEZ al inicio de la simulación.
+ * 
+ * Úsala para:
+ * - Obtener la posición inicial de la base: rmb_awake(&x, &y)
  * - Inicializar variables globales
- * - Inicializar generador aleatorio (si lo usas)
+ * - Inicializar generador aleatorio: srand(time(NULL))
+ * - Configurar estados iniciales
  */
 void inicializar() {
-    // Obtener posicion de la base
+    // Obtener posición de la base
     rmb_awake(&base_x, &base_y);
     
-    // Inicializar generador de numeros aleatorios (opcional)
+    // Inicializar generador de números aleatorios (opcional)
     // srand(time(NULL));
     
-    // *** Tu codigo de inicializacion aqui ***
+    // --- Tu código de inicialización aquí ---
     
 }
 
 
 // ============================================================================
-// FUNCION DE COMPORTAMIENTO
+// FUNCIÓN DE COMPORTAMIENTO
 // ============================================================================
 /**
- * Se ejecuta EN CADA PASO de la simulacion (bucle principal).
+ * @brief Función de comportamiento cíclico del robot
  * 
- * IMPORTANTE: Esta funcion debe ser RAPIDA y ejecutar solo UNA accion
- * por llamada (un forward, un turn, un clean, etc.)
+ * Se ejecuta EN CADA PASO de la simulación (bucle principal).
  * 
- * Implementa aqui la logica de tu robot.
+ * IMPORTANTE: 
+ * - Esta función debe ser RÁPIDA
+ * - Ejecuta solo UNA acción por llamada (un forward, un turn, un clean, etc.)
+ * - Se llama repetidamente hasta alcanzar exec_time pasos
+ * 
+ * Implementa aquí la lógica de tu robot. Consulta simula.h para ver
+ * todas las funciones disponibles.
  */
 void comportamiento() {
-    // EJEMPLO BASICO: Rebote simple con limpieza
+    // ========================================================================
+    // EJEMPLO BÁSICO: Rebote aleatorio con limpieza
+    // ========================================================================
+    // Este es solo un ejemplo simple. REEMPLÁZALO con tu propia lógica.
     
-    // Si hay suciedad, limpiar
+    // Prioridad 1: Si hay suciedad en la celda actual, limpiar
     if (rmb_ifr() > 0) {
         rmb_clean();
-        return;
+        return;  // Importante: solo una acción por ciclo
     }
     
-    // Si choca con obstaculo, girar
+    // Prioridad 2: Si choca con obstáculo, girar
     if (rmb_bumper()) {
-        rmb_turn(M_PI / 2);  // Girar 90 grados
+        rmb_turn(M_PI / 2);  // Girar 90 grados a la izquierda
     } else {
-        // Si no hay obstaculo, avanzar
+        // Si no hay obstáculo, avanzar
         rmb_forward();
     }
     
-    // *** REEMPLAZA EL CODIGO ANTERIOR CON TU PROPIA LOGICA ***
+    // ========================================================================
+    // --- REEMPLAZA EL CÓDIGO ANTERIOR CON TU PROPIA LÓGICA ---
+    // ========================================================================
+    //
+    // Ideas para implementar:
+    // - Seguimiento de paredes (wall-following)
+    // - Patrón en espiral
+    // - Gestión de batería (regresar a base cuando < 200)
+    // - Máquina de estados (explorar, limpiar, recargar)
+    // - Navegación dirigida usando atan2()
+    // - Memoria de celdas visitadas
+    //
 }
 
 
 // ============================================================================
-// FUNCION DE FINALIZACION
+// FUNCIÓN DE FINALIZACIÓN
 // ============================================================================
 /**
- * Se ejecuta UNA VEZ al final de la simulacion.
- * Usala para:
- * - Mostrar estadisticas
- * - Visualizar el recorrido
- * - Guardar resultados
+ * @brief Función de finalización del robot
+ * 
+ * Se ejecuta UNA VEZ al final de la simulación.
+ * 
+ * Úsala para:
+ * - Mostrar estadísticas personalizadas
+ * - Visualizar el recorrido: visualize()
+ * - Guardar resultados adicionales
  */
 void finalizar() {
-    // Mostrar animacion del recorrido (recomendado)
+    // Mostrar animación del recorrido (recomendado)
     visualize();
     
-    // Guardar estadisticas en stats.csv (opcional, se hace automaticamente)
+    // Guardar estadísticas en stats.csv (opcional, se hace automáticamente)
     // save_stats();
     
-    // Imprimir informacion adicional (opcional)
+    // Imprimir información adicional (opcional)
     // printf("Simulacion terminada\n");
-    // printf("Base en: (%d, %d)\n", base_x, base_y);
     // printf("Bateria final: %.1f\n", rmb_battery());
 }
 
 
 // ============================================================================
-// FUNCION MAIN
+// FUNCIÓN MAIN
 // ============================================================================
 /**
- * NO MODIFICAR (excepto exec_time si quieres mas/menos pasos)
+ * @brief Función principal del programa
+ * 
+ * NO MODIFICAR (excepto exec_time si quieres cambiar la duración)
+ * 
+ * @return 0 si la ejecución fue exitosa
  */
 int main() {
-    // Configurar simulacion
-    // Parametros: on_start, exec_beh, on_finish, exec_time (pasos maximos)
+    // Configurar simulación
+    // Parámetros:
+    //   - on_start: función de inicialización
+    //   - exec_beh: función de comportamiento (se llama en cada paso)
+    //   - on_finish: función de finalización
+    //   - exec_time: número máximo de pasos a simular (1000 por defecto)
     configure(inicializar, comportamiento, finalizar, 1000);
     
-    // Ejecutar simulacion
+    // Ejecutar simulación
     run();
     
     return 0;
