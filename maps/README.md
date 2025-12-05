@@ -41,7 +41,7 @@ make viewmap      # Compila viewmap con simula.o
 ### Generar mapas
 
 ```bash
-./maps/mapgen
+./maps/generate
 ```
 
 Los mapas se generarán en el directorio `maps/`.

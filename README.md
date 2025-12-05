@@ -22,7 +22,7 @@ Tip: Press Ctrl-C during visualization to exit early.
 ### Generate test maps:
 ```bash
 make mapgen       # Compile map generator
-./maps/mapgen     # Generate 8 test maps
+./maps/generate   # Generate 8 test maps
 ```
 
 ### Visualize maps (without running simulation):

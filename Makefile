@@ -19,7 +19,7 @@ SOURCES = main.c simula.c sim_robot.c sim_visual.c sim_io.c sim_world.c sim_stat
 LIBSOURCES = simula.c sim_robot.c sim_visual.c sim_io.c sim_world.c sim_stats.c sim_world_api.c
 LIBOBJECTS = simula.o
 TARGET = roomba
-MAPGEN = maps/mapgen
+GENERATE = maps/generate
 VIEWMAP = maps/viewmap
 
 
@@ -49,12 +49,12 @@ $(LIBOBJECTS): $(LIBSOURCES) simula.h simula_internal.h sim_world_api.h
 
 # Map generator (development mode - from sources)
 mapgen-dev: maps/generate.c sim_world_api.c
-	$(CC) maps/generate.c sim_world_api.c $(LIBSOURCES:sim_world_api.c=) $(CFLAGS) $(RELEASE_FLAGS) -o $(MAPGEN)
+	$(CC) maps/generate.c sim_world_api.c $(LIBSOURCES:sim_world_api.c=) $(CFLAGS) $(RELEASE_FLAGS) -o $(GENERATE)
 	@echo "✓ Map generator compiled (development mode)"
 
 # Map generator (distribution mode - with simula.o)
 mapgen: $(LIBOBJECTS) maps/generate.c sim_world_api.h
-	$(CC) maps/generate.c simula.o $(CFLAGS) $(RELEASE_FLAGS) -o $(MAPGEN)
+	$(CC) maps/generate.c simula.o $(CFLAGS) $(RELEASE_FLAGS) -o $(GENERATE)
 	@echo "✓ Map generator compiled (distribution mode)"
 
 # Map viewer (development mode - from sources)
@@ -79,7 +79,7 @@ run-map: $(TARGET)
 
 # Clean generated files
 clean:
-	rm -f $(TARGET) $(MAPGEN) $(VIEWMAP)
+	rm -f $(TARGET) $(GENERATE) $(VIEWMAP)
 	rm -f *.o *.csv *.pgm
 	rm -f log.csv stats.csv map.pgm
 	@echo "✓ Cleaned build artifacts"
