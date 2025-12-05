@@ -122,8 +122,14 @@ doc-developer:
 doc-clean:
 	@echo "Cleaning documentation artifacts..."
 	rm -rf docs/html/
-	rm -f docs/usuario/*.aux docs/usuario/*.log docs/usuario/*.out
-	rm -f docs/developer/*.aux docs/developer/*.log docs/developer/*.out
+	rm -f docs/usuario/*.aux docs/usuario/*.log docs/usuario/*.out docs/usuario/*.toc
+	rm -f docs/usuario/*.fdb_latexmk docs/usuario/*.fls docs/usuario/*.synctex.gz
+	rm -f docs/usuario/*.bbl docs/usuario/*.blg docs/usuario/*.idx docs/usuario/*.ilg docs/usuario/*.ind
+	rm -f docs/usuario/*.lof docs/usuario/*.lot
+	rm -f docs/developer/*.aux docs/developer/*.log docs/developer/*.out docs/developer/*.toc
+	rm -f docs/developer/*.fdb_latexmk docs/developer/*.fls docs/developer/*.synctex.gz
+	rm -f docs/developer/*.bbl docs/developer/*.blg docs/developer/*.idx docs/developer/*.ilg docs/developer/*.ind
+	rm -f docs/developer/*.lof docs/developer/*.lot
 	rm -f docs/usuario/manual_usuario.pdf
 	rm -f docs/developer/manual_desarrollador.pdf
 	@echo "Documentation artifacts cleaned"
