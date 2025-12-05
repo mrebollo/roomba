@@ -47,6 +47,14 @@ $(LIBOBJECTS): $(LIBSOURCES) simula.h simula_internal.h sim_world_api.h
 	rm -f sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o sim_world_api.o
 	@echo "Library object file created: simula.o"
 
+# Build library for competition mode (single object file)
+lib-competition:
+	@echo "Building competition library..."
+	$(CC) -c simula.c sim_robot.c sim_visual.c sim_io.c sim_world.c sim_stats.c -Wall -Wextra -O2
+	$(CC) -r simula.o sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o -o competition/lib/simula.o -nostdlib
+	rm -f simula.o sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o
+	@echo "Competition library created: competition/lib/simula.o"
+
 # Map generator (development mode - from sources)
 mapgen-dev: maps/generate.c sim_world_api.c
 	$(CC) maps/generate.c sim_world_api.c $(LIBSOURCES:sim_world_api.c=) $(CFLAGS) $(RELEASE_FLAGS) -o $(GENERATE)

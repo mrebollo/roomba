@@ -10,7 +10,8 @@
 #include <stdio.h>
 #include "simula_internal.h"
 
-static struct _stat stats = {0};     ///< Estadísticas globales (encapsuladas)
+// Stats is now exported for competition_ext.c access
+struct _stat stats = {0};     ///< Estadísticas globales
 
 /* ============================================================================
  * API PÚBLICA DE ESTADÍSTICAS
