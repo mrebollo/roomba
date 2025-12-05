@@ -155,7 +155,16 @@ void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time){
 #ifndef COMPETITION_MODE
   if(stop != NULL) atexit(stop);
 #endif
-  density = rand()/(float)RAND_MAX * MAX_OBSTACLE_DENSITY;
+  
+  // Generar variedad de obstáculos:
+  // 50% de probabilidad: muros (1-4 muros aleatorios)
+  // 50% de probabilidad: obstáculos dispersos (densidad 0-5%)
+  if(rand() % 2 == 0) {
+    density = (rand() % 4) + 1;  // 1 a 4 muros
+  } else {
+    density = rand()/(float)RAND_MAX * MAX_OBSTACLE_DENSITY;  // 0 a 0.05
+  }
+  
   if(map.name[0] == '\0')
     sim_world_generate(&map, WORLDSIZE, WORLDSIZE, DEFAULT_DIRT_CELLS, density);
   if(map.name[0] == '\0')

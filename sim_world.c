@@ -23,6 +23,9 @@
  * FUNCIONES AUXILIARES PRIVADAS
  * ============================================================================ */
 
+// Forward declarations
+static void place_base_randomly(map_t* m);
+
 /**
  * @brief Calcula la orientación apropiada para la base según su posición
  * @param m Puntero al mapa
@@ -31,11 +34,15 @@
  * @return Ángulo en radianes (apunta hacia el centro del mapa)
  */
 static float base_heading(const map_t* m, int x, int y){
-  float head[4] = {M_PI / 2, 3 * M_PI / 2, 0, M_PI};
-  if(x == 1) return head[2];
-  else if(x == m->ncol-2) return head[3];
-  else if(y == 1) return head[0];
-  else return head[1];
+  // En sistema de coordenadas donde y crece hacia abajo:
+  // - y=1 (arriba) debe apuntar hacia abajo (3π/2 = 270°)
+  // - y=nrow-2 (abajo) debe apuntar hacia arriba (π/2 = 90°)
+  // - x=1 (izquierda) debe apuntar hacia derecha (0 = 0°)
+  // - x=ncol-2 (derecha) debe apuntar hacia izquierda (π = 180°)
+  if(x == 1) return 0;              // Pared Oeste → apunta al Este
+  else if(x == m->ncol-2) return M_PI;   // Pared Este → apunta al Oeste
+  else if(y == 1) return 3 * M_PI / 2;   // Pared Norte → apunta al Sur
+  else return M_PI / 2;                   // Pared Sur → apunta al Norte
 }
 
 /* ============================================================================
@@ -63,17 +70,27 @@ float sim_world_put_base(map_t* m, int x, int y){
  * @param y Puntero donde guardar la fila inicial
  * @param h Puntero donde guardar la orientación inicial
  * 
- * Por defecto coloca la base en (1,1) mirando al este (0 radianes).
+ * Si el mapa ya tiene una base definida (base_x, base_y > 0), usa esa posición.
+ * Si no, coloca la base aleatoriamente en una pared con orientación perpendicular.
  */
 void sim_world_set_base_origin(map_t* m, int *x, int *y, float *h){
   if(!x || !y || !h){
     fprintf(stderr, "Error: Invalid parameters for sim_world_set_base_origin\n");
     return;
   }
-  *x = 1;
-  *y = 1;
-  *h = 0;
-  m->cells[*y][*x] = 'B';
+  
+  // Si la base ya está definida en el mapa, usarla
+  if(m->base_x > 0 && m->base_y > 0){
+    *x = m->base_x;
+    *y = m->base_y;
+    *h = base_heading(m, *x, *y);
+  } else {
+    // Si no hay base definida, colocarla aleatoriamente
+    place_base_randomly(m);
+    *x = m->base_x;
+    *y = m->base_y;
+    *h = base_heading(m, *x, *y);
+  }
 }
 
 /**
@@ -185,9 +202,11 @@ int sim_world_clean_cell(map_t* m, int y, int x){
  * @param m Puntero al mapa
  */
 static void create_vertical_wall(map_t* m){
-  int len = rand()%m->nrow/2 + m->nrow/4;
-  int init = rand()%m->nrow/2 + BORDER_MARGIN;
-  int col = rand()%(m->ncol-WALL_MIN_OFFSET)+BORDER_MARGIN;
+  // Longitud máxima que cabe sin tocar paredes (dejando margen superior e inferior)
+  int max_len = m->nrow - 2*BORDER_MARGIN - 2;
+  int len = rand()%(max_len/2) + max_len/4;  // Entre 1/4 y 3/4 del espacio disponible
+  int init = rand()%(m->nrow - len - 2*BORDER_MARGIN) + BORDER_MARGIN;
+  int col = rand()%(m->ncol-2*BORDER_MARGIN-1)+BORDER_MARGIN;
   for(int i = 0; i < len; i++)
     m->cells[init + i][col] = WALL;
 }
@@ -197,9 +216,11 @@ static void create_vertical_wall(map_t* m){
  * @param m Puntero al mapa
  */
 static void create_horiz_wall(map_t* m){
-  int len = rand()%m->ncol/2 + m->ncol/4;
-  int init = rand()%m->ncol/2 + BORDER_MARGIN;
-  int row = rand()%(m->nrow-WALL_MIN_OFFSET)+BORDER_MARGIN;
+  // Longitud máxima que cabe sin tocar paredes (dejando margen izquierdo y derecho)
+  int max_len = m->ncol - 2*BORDER_MARGIN - 2;
+  int len = rand()%(max_len/2) + max_len/4;  // Entre 1/4 y 3/4 del espacio disponible
+  int init = rand()%(m->ncol - len - 2*BORDER_MARGIN) + BORDER_MARGIN;
+  int row = rand()%(m->nrow-2*BORDER_MARGIN-1)+BORDER_MARGIN;
   for(int i = 0; i < len; i++)
     m->cells[row][init + i] = WALL;
 }
@@ -214,7 +235,6 @@ static void create_random_obstacles(map_t* m, float prop){
     for(int j = BORDER_MARGIN; j < WORLDSIZE-BORDER_MARGIN; j++)
       if(rand()/(float)RAND_MAX < prop){
         m->cells[i][j] = WALL;
-        DEBUG_PRINT("%d, %d\n", i, j);
       }
 }
 
@@ -255,13 +275,52 @@ static void add_border_walls(map_t* m){
 static void add_obstacles(map_t* m, float nobs){
   if(nobs >= 1){
     int numobs = (int)nobs;
+    // Decidir orientación una sola vez: todos verticales o todos horizontales
+    int vertical = rand()%2;
     while(numobs-- > 0){
-      if(rand()%2) create_vertical_wall(m);
+      if(vertical) create_vertical_wall(m);
       else create_horiz_wall(m);
     }
   } else if(nobs > 0) {
     create_random_obstacles(m, nobs);
   }
+}
+
+/**
+ * @brief Coloca la base aleatoriamente en una pared del mapa
+ * @param m Puntero al mapa
+ * 
+ * Selecciona aleatoriamente una pared (norte, sur, este u oeste) y
+ * coloca la base en una posición aleatoria de esa pared (excluyendo esquinas).
+ */
+static void place_base_randomly(map_t* m){
+  // Seleccionar una pared aleatoria: 0=Norte, 1=Sur, 2=Este, 3=Oeste
+  int wall = rand() % 4;
+  int x, y;
+  
+  switch(wall){
+    case 0: // Pared Norte (y=1)
+      y = 1;
+      x = rand() % (m->ncol - 4) + 2;  // Evitar esquinas
+      break;
+    case 1: // Pared Sur (y=nrow-2)
+      y = m->nrow - 2;
+      x = rand() % (m->ncol - 4) + 2;
+      break;
+    case 2: // Pared Este (x=ncol-2)
+      x = m->ncol - 2;
+      y = rand() % (m->nrow - 4) + 2;  // Evitar esquinas
+      break;
+    case 3: // Pared Oeste (x=1)
+      x = 1;
+      y = rand() % (m->nrow - 4) + 2;
+      break;
+    default:
+      x = 1;
+      y = 1;
+  }
+  
+  sim_world_put_base(m, x, y);
 }
 
 /**
@@ -298,6 +357,7 @@ int sim_world_generate(map_t* m, int nrow, int ncol, int num_dirty, float nobs){
     return -1;
   init_empty_world(m, nrow, ncol);
   add_border_walls(m);
+  place_base_randomly(m);  // Coloca la base aleatoriamente en una pared
   add_obstacles(m, nobs);
   place_dirt(m, num_dirty);
   return 0;

@@ -1,123 +1,63 @@
 /**
- * @brief Genera mapas aleatorios para el roomba
+ * @brief Generador de mapas de prueba para el simulador Roomba
  * 
- * Genera un mapa al azar y lo guarda en format PBM
-*/
+ * Genera varios mapas con diferentes configuraciones.
+ * Todos los mapas incluyen base aleatoria en las paredes.
+ * 
+ * Compilación:
+ *   make mapgen-dev   (modo desarrollo, desde fuentes)
+ *   make lib && make mapgen   (modo distribución, con simula.o)
+ * 
+ * Uso:
+ *   ./maps/mapgen
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "simula.h"
-
-#define WALL 128
-#define EMPTY 255
-#define BASE 0
-#define MAXDIRT 5
-#define WORLDSIZE 50
-enum obstacle {NONE, VERT, HORIZ, RANDOM};
-
-
-void save(int m[][WORLDSIZE], int rows, int cols, char *filename){
-    FILE *fd = fopen(filename,"w");
-
-    fprintf(fd,"P2\n#roomba map\n%d %d\n%d\n", rows, cols, EMPTY);
-    for(int i = 0; i < rows; i++){
-        for(int j = 0; j < cols; j++)
-            fprintf(fd,"%d ", m[i][j]);
-        fprintf(fd,"\n");
-    }
-    fclose(fd);
-}
-
-
-
-void vertical_wall(int m[][WORLDSIZE], int nrow, int ncol){
-  int len, init, col, i;
-  len = rand() % nrow / 2 + nrow  / 4;
-  init = rand() % nrow / 2 + 2;
-  col = ncol / 2 + rand() % 10 - 5;
-  printf("*vert: len: %d, init: %d, col: %d\n", len, init, col);
-  for(i = 0; i < len; i++)
-    m[init + i][col] = WALL;
-}
-
-
-void horiz_wall(int m[][WORLDSIZE], int nrow, int ncol){
-  int len, init, row, i;
-  len = rand() % ncol / 2 + ncol  / 4;
-  init = rand() % ncol / 2 + 2;
-  row = nrow / 2 + rand() % 10 - 5;
-  for(i = 0; i < len; i++)
-    m[row][init + i] = WALL;
-}
-
-
-void random_obs(int m[][WORLDSIZE], int nrow, int ncol, int nobs){
-  int i, row, col;
-  for(i = 0; i < nobs; i++){
-    do{
-      row = rand() % (nrow - 4) + 2;
-      col = rand() % (ncol - 4) + 2;
-    }while(m[row][col] != EMPTY);
-    m[row][col] = WALL;
-  }
-}
-
-
-int gen_map(int m[][WORLDSIZE], int nrow, int ncol, int num_dirty, 
-            int obs, float density){
-  int i, j, row, col;
-  int numobs, len, orient, init; //obstacle
-  if( nrow > WORLDSIZE || ncol > WORLDSIZE)
-    return -1;
-  //empty
-
-  for(i = 0; i < WORLDSIZE; i++)
-    for(j = 0; j < WORLDSIZE; j++)
-      m[i][j] = EMPTY;
-  //wall around
-  for(i = 0; i < nrow; i++){
-    m[i][0] = WALL;
-    m[i][ncol-1] = WALL;
-  }
-  for(i = 0; i < ncol; i++){
-    m[0][i] = WALL;
-    m[nrow-1][i] = WALL;
-  }
-  //obstacles
-
-  switch(obs){
-    case VERT: vertical_wall(m, ncol, nrow); break;
-    case HORIZ: horiz_wall(m, ncol, nrow); break;
-    case RANDOM: random_obs(m, ncol, nrow, WORLDSIZE*WORLDSIZE*density); break;
-  }
-  //dirt positions
-  for(i = 0; i < num_dirty; i++){
-    //position avoiding walls
-    do{
-      row = rand() % (nrow - 2) + 1;
-      col = rand() % (ncol - 2) + 1;
-    }while(m[row][col] != EMPTY);
-    m[row][col] = rand() % MAXDIRT + 1;
-  }
-  return 0;
-}
-
+#include "../sim_world_api.h"
 
 int main(int argc, char *argv[]){
-  int m[WORLDSIZE][WORLDSIZE];
-
-  srand(time(0));
-  gen_map(m,WORLDSIZE,WORLDSIZE,50,NONE, 0);
-  save(m,WORLDSIZE,WORLDSIZE,"noobs.pgm");
-
-  gen_map(m,WORLDSIZE,WORLDSIZE,50,RANDOM, 0.01);
-  save(m,WORLDSIZE,WORLDSIZE,"random1.pgm");
-
-  gen_map(m,WORLDSIZE,WORLDSIZE,50,RANDOM, 0.03);
-  save(m,WORLDSIZE,WORLDSIZE,"random3.pgm");
-
-  gen_map(m,WORLDSIZE,WORLDSIZE,50,RANDOM, 0.05);
-  save(m,WORLDSIZE,WORLDSIZE,"random5.pgm");
-  return 0;
+    srand(time(NULL));
+    
+    printf("Generating test maps with random bases...\n\n");
+    
+    map_t* m = map_create();
+    if(!m){
+        fprintf(stderr, "Error: Cannot create map structure\n");
+        return 1;
+    }
+    
+    // Mapa 1: Sin obstáculos, solo suciedad
+    printf("Map 1: No obstacles...\n");
+    map_generate(m, WORLDSIZE, WORLDSIZE, 50, 0);
+    map_save(m, "maps/noobs.pgm");
+    
+    // Mapas 2-4: Obstáculos dispersos con diferentes densidades
+    printf("Map 2: Random obstacles (low density)...\n");
+    map_generate(m, WORLDSIZE, WORLDSIZE, 50, 0.01);
+    map_save(m, "maps/random1.pgm");
+    
+    printf("Map 3: Random obstacles (medium density)...\n");
+    map_generate(m, WORLDSIZE, WORLDSIZE, 50, 0.03);
+    map_save(m, "maps/random3.pgm");
+    
+    printf("Map 4: Random obstacles (high density)...\n");
+    map_generate(m, WORLDSIZE, WORLDSIZE, 50, 0.05);
+    map_save(m, "maps/random5.pgm");
+    
+    // Mapas 5-8: Con muros (1-4 muros de la misma orientación)
+    for(int i = 1; i <= 4; i++){
+        char filename[64];
+        printf("Map %d: %d wall(s)...\n", i+4, i);
+        snprintf(filename, sizeof(filename), "maps/walls%d.pgm", i);
+        map_generate(m, WORLDSIZE, WORLDSIZE, 50, (float)i);
+        map_save(m, filename);
+    }
+    
+    map_destroy(m);
+    
+    printf("\nMap generation complete\n");
+    printf("  All maps have random base positions on walls.\n");
+    return 0;
 }
