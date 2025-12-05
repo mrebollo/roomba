@@ -41,7 +41,7 @@ debug: $(SOURCES) simula.h
 lib: $(LIBOBJECTS)
 
 $(LIBOBJECTS): $(LIBSOURCES) simula.h simula_internal.h sim_world_api.h
-	$(CC) -c $(LIBSOURCES) $(CFLAGS) $(RELEASE_FLAGS)
+	$(CC) -c $(LIBSOURCES) -Wall -Wextra -O2
 	ld -r simula.o sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o sim_world_api.o -o simula_combined.o
 	mv simula_combined.o simula.o
 	rm -f sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o sim_world_api.o
@@ -134,6 +134,32 @@ doc-clean:
 	rm -f docs/developer/manual_desarrollador.pdf
 	@echo "Documentation artifacts cleaned"
 
+# Distribution target - Create student package
+dist: lib
+	@echo "Creating student distribution package..."
+	@mkdir -p dist/maps
+	@cp simula.o dist/
+	@cp simula.h dist/
+	@cp maps/*.pgm dist/maps/ 2>/dev/null || true
+	@echo ""
+	@echo "=========================================="
+	@echo "  Student Package Created"
+	@echo "=========================================="
+	@echo "Location: dist/"
+	@echo ""
+	@echo "Contents:"
+	@ls -lh dist/ | tail -n +2
+	@echo ""
+	@echo "To create distributable archive:"
+	@echo "  tar -czf roomba-student.tar.gz dist/"
+	@echo "  zip -r roomba-student.zip dist/"
+	@echo ""
+
+dist-clean:
+	@echo "Cleaning distribution package..."
+	rm -rf dist/maps/*.pgm dist/simula.o dist/simula.h
+	@echo "Distribution cleaned (keeping template files)"
+
 # Help
 help:
 	@echo "Roomba Student Project - Available targets:"
@@ -162,5 +188,9 @@ help:
 	@echo "  make doc-user      - Generate user manual PDF"
 	@echo "  make doc-developer - Generate developer manual PDF"
 	@echo "  make doc-clean     - Remove all generated documentation"
+	@echo ""
+	@echo "Distribution targets:"
+	@echo "  make dist       - Create student package in dist/ (includes simula.o)"
+	@echo "  make dist-clean - Clean distribution files (keep templates)"
 
-.PHONY: all debug run run-map clean lib mapgen mapgen-dev viewmap viewmap-dev doc doc-api doc-user doc-developer doc-clean help
+.PHONY: all debug run run-map clean lib mapgen mapgen-dev viewmap viewmap-dev doc doc-api doc-user doc-developer doc-clean dist dist-clean help
