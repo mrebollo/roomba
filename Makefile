@@ -29,12 +29,12 @@ all: $(TARGET)
 # Build student project
 $(TARGET): $(SOURCES) simula.h
 	$(CC) $(SOURCES) $(CFLAGS) $(RELEASE_FLAGS) -o $(TARGET)
-	@echo "✓ Student project compiled successfully"
+	@echo "Student project compiled successfully"
 
 # Build with debug symbols
 debug: $(SOURCES) simula.h
 	$(CC) $(SOURCES) $(CFLAGS) $(DEBUG_FLAGS) -o $(TARGET)
-	@echo "✓ Debug build completed"
+	@echo "Debug build completed"
 
 
 # Build library object file for distribution to students
@@ -45,27 +45,27 @@ $(LIBOBJECTS): $(LIBSOURCES) simula.h simula_internal.h sim_world_api.h
 	ld -r simula.o sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o sim_world_api.o -o simula_combined.o
 	mv simula_combined.o simula.o
 	rm -f sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o sim_world_api.o
-	@echo "✓ Library object file created: simula.o"
+	@echo "Library object file created: simula.o"
 
 # Map generator (development mode - from sources)
 mapgen-dev: maps/generate.c sim_world_api.c
 	$(CC) maps/generate.c sim_world_api.c $(LIBSOURCES:sim_world_api.c=) $(CFLAGS) $(RELEASE_FLAGS) -o $(GENERATE)
-	@echo "✓ Map generator compiled (development mode)"
+	@echo "Map generator compiled (development mode)"
 
 # Map generator (distribution mode - with simula.o)
 mapgen: $(LIBOBJECTS) maps/generate.c sim_world_api.h
 	$(CC) maps/generate.c simula.o $(CFLAGS) $(RELEASE_FLAGS) -o $(GENERATE)
-	@echo "✓ Map generator compiled (distribution mode)"
+	@echo "Map generator compiled (distribution mode)"
 
 # Map viewer (development mode - from sources)
 viewmap-dev: maps/viewmap.c sim_world_api.c
 	$(CC) maps/viewmap.c sim_world_api.c $(LIBSOURCES:sim_world_api.c=) $(CFLAGS) $(RELEASE_FLAGS) -o $(VIEWMAP)
-	@echo "✓ Map viewer compiled (development mode)"
+	@echo "Map viewer compiled (development mode)"
 
 # Map viewer (distribution mode - with simula.o)
 viewmap: $(LIBOBJECTS) maps/viewmap.c sim_world_api.h
 	$(CC) maps/viewmap.c simula.o $(CFLAGS) $(RELEASE_FLAGS) -o $(VIEWMAP)
-	@echo "✓ Map viewer compiled (distribution mode)"
+	@echo "Map viewer compiled (distribution mode)"
 
 
 # Run the simulation
@@ -82,19 +82,19 @@ clean:
 	rm -f $(TARGET) $(GENERATE) $(VIEWMAP)
 	rm -f *.o *.csv *.pgm
 	rm -f log.csv stats.csv map.pgm
-	@echo "✓ Cleaned build artifacts"
+	@echo "Cleaned build artifacts"
 
 # Documentation targets
 doc: doc-api doc-user doc-developer
-	@echo "✓ All documentation generated successfully"
+	@echo "All documentation generated successfully"
 
 doc-api:
 	@echo "Generating API documentation (Doxygen)..."
 	@if [ -f docs/Doxyfile ]; then \
 		cd docs && doxygen Doxyfile > /dev/null 2>&1; \
-		echo "✓ API documentation generated in docs/html/"; \
+		echo "API documentation generated in docs/html/"; \
 	else \
-		echo "⚠ Doxyfile not found in docs/"; \
+		echo "Warning: Doxyfile not found in docs/"; \
 	fi
 
 doc-user:
@@ -103,9 +103,9 @@ doc-user:
 		cd docs/usuario && pdflatex manual_usuario.tex > /dev/null 2>&1 && \
 		pdflatex manual_usuario.tex > /dev/null 2>&1 && \
 		rm -f manual_usuario.aux manual_usuario.log manual_usuario.out && \
-		echo "✓ User manual generated: docs/usuario/manual_usuario.pdf"; \
+		echo "User manual generated: docs/usuario/manual_usuario.pdf"; \
 	else \
-		echo "⚠ User manual .tex file not found"; \
+		echo "Warning: User manual .tex file not found"; \
 	fi
 
 doc-developer:
@@ -114,9 +114,9 @@ doc-developer:
 		cd docs/developer && pdflatex manual_desarrollador.tex > /dev/null 2>&1 && \
 		pdflatex manual_desarrollador.tex > /dev/null 2>&1 && \
 		rm -f manual_desarrollador.aux manual_desarrollador.log manual_desarrollador.out && \
-		echo "✓ Developer manual generated: docs/developer/manual_desarrollador.pdf"; \
+		echo "Developer manual generated: docs/developer/manual_desarrollador.pdf"; \
 	else \
-		echo "⚠ Developer manual .tex file not found"; \
+		echo "Warning: Developer manual .tex file not found"; \
 	fi
 
 doc-clean:
@@ -126,7 +126,7 @@ doc-clean:
 	rm -f docs/developer/*.aux docs/developer/*.log docs/developer/*.out
 	rm -f docs/usuario/manual_usuario.pdf
 	rm -f docs/developer/manual_desarrollador.pdf
-	@echo "✓ Documentation artifacts cleaned"
+	@echo "Documentation artifacts cleaned"
 
 # Help
 help:

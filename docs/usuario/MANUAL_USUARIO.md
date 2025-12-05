@@ -1,12 +1,12 @@
-# 🤖 Manual del Usuario - Simulador Roomba
+# Manual del Usuario - Simulador Roomba
 
-## 📘 Guía Paso a Paso para Programar tu Robot
+## Guía Paso a Paso para Programar tu Robot
 
 Este manual te enseñará a programar comportamientos para un robot de limpieza virtual. No necesitas experiencia previa en robótica, solo conocimientos básicos de programación en C.
 
 ---
 
-## 📑 Tabla de Contenidos
+## Tabla de Contenidos
 
 1. [Introducción](#1-introducción)
 2. [Tu Primer Programa](#2-tu-primer-programa)
@@ -17,7 +17,8 @@ Este manual te enseñará a programar comportamientos para un robot de limpieza 
 7. [Gestión de Batería](#7-gestión-de-batería)
 8. [Estrategias Completas](#8-estrategias-completas)
 9. [Compilación del Proyecto](#9-compilación-del-proyecto)
-10. [Depuración y Visualización](#10-depuración-y-visualización)
+10. [Generación y Visualización de Mapas](#10-generación-y-visualización-de-mapas)
+11. [Depuración y Visualización](#11-depuración-y-visualización)
 
 ---
 
@@ -26,11 +27,11 @@ Este manual te enseñará a programar comportamientos para un robot de limpieza 
 ### ¿Qué es el Simulador?
 
 El simulador te permite programar un robot de limpieza virtual que se mueve en un mundo 2D. El robot puede:
-- ✅ Moverse y girar
-- ✅ Detectar obstáculos con su bumper
-- ✅ Detectar suciedad con sensor infrarrojo
-- ✅ Limpiar celdas sucias
-- ✅ Recargar su batería en la base
+- Moverse y girar
+- Detectar obstáculos con su bumper
+- Detectar suciedad con sensor infrarrojo
+- Limpiar celdas sucias
+- Recargar su batería en la base
 
 ### Estructura de un Programa
 
@@ -96,7 +97,7 @@ int main() {
 - `run()` - Ejecuta la simulación
 - `visualize()` - Muestra el resultado animado
 
-**📝 Ejercicio:** Compila y ejecuta este programa. Observa dónde aparece el robot. Ver sección de **Compilación del Proyecto** más adelante para las opciones de compilación.
+**Ejercicio:** Compila y ejecuta este programa. Observa dónde aparece el robot. Ver sección de **Compilación del Proyecto** más adelante para las opciones de compilación.
 
 ---
 
@@ -204,7 +205,7 @@ rmb_turn(M_PI);         // Gira 180° (media vuelta)
 rmb_turn(M_PI / 4);     // Gira 45° a la izquierda
 ```
 
-**💡 Recuerda:** 
+Recuerda: 
 - Ángulos positivos = giro a la izquierda (antihorario)
 - Ángulos negativos = giro a la derecha (horario)
 - 2π radianes = 360° (vuelta completa)
@@ -287,7 +288,7 @@ int main() {
 }
 ```
 
-**💡 Estrategia:** Este es el comportamiento básico de un Roomba real - rebota aleatoriamente.
+Estrategia: Este es el comportamiento básico de un Roomba real - rebota aleatoriamente.
 
 ---
 
@@ -385,7 +386,7 @@ int main() {
 }
 ```
 
-**💡 Importante:** `rmb_clean()` reduce el nivel de suciedad en 1. Si una celda tiene nivel 3, necesitarás limpiar 3 veces.
+Importante: `rmb_clean()` reduce el nivel de suciedad en 1. Si una celda tiene nivel 3, necesitarás limpiar 3 veces.
 
 ---
 
@@ -427,7 +428,7 @@ int main() {
 }
 ```
 
-**⚠️ Cuidado:** Cada `rmb_clean()` consume batería (0.5 unidades). Asegúrate de tener suficiente.
+Cuidado: Cada `rmb_clean()` consume batería (0.5 unidades). Asegúrate de tener suficiente.
 
 ---
 
@@ -496,7 +497,7 @@ int main() {
 }
 ```
 
-**💡 Importante:** La función `finalizar()` es **OBLIGATORIA** y debe incluir `visualize()`. Se ejecuta automáticamente cuando termina `run()` mediante `atexit()`. También puedes usarla para mostrar estadísticas personalizadas.
+Importante: La función `finalizar()` es **OBLIGATORIA** y debe incluir `visualize()`. Se ejecuta automáticamente cuando termina `run()` mediante `atexit()`. También puedes usarla para mostrar estadísticas personalizadas.
 
 ---
 
@@ -641,7 +642,7 @@ gcc main.c simula.c sim_robot.c sim_visual.c sim_io.c sim_world.c sim_stats.c -l
 ./roomba
 ```
 
-**✅ Ventajas:**
+Ventajas:
 - Control total sobre el proceso de compilación
 - No requiere archivos adicionales
 - Útil para entender cómo funciona la compilación
@@ -676,7 +677,7 @@ make debug    # Compila con símbolos de depuración
 make clean    # Limpia archivos generados
 ```
 
-**✅ Ventajas:**
+Ventajas:
 - Comando corto y fácil de recordar
 - Recompila solo lo necesario (rápido)
 - Estándar en proyectos C/C++
@@ -692,20 +693,94 @@ gcc main.c simula.o -lm -o roomba
 ./roomba
 ```
 
-**✅ Ventajas:**
+Ventajas:
 - Compilación muy rápida (solo tu código)
 - No necesitas los fuentes del simulador
 - Útil para competiciones o exámenes
 
-**⚠️ Nota:** El archivo `simula.o` debe ser compatible con tu sistema operativo y versión de compilador.
+Nota: El archivo `simula.o` debe ser compatible con tu sistema operativo y versión de compilador.
 
 ---
 
-**💡 Consejo:** Para proyectos, usa **Opción 2 (make)**. Para aprender o depurar, usa **Opción 1**. Si te dan `simula.o`, usa **Opción 3**.
+Consejo: Para proyectos, usa **Opción 2 (make)**. Para aprender o depurar, usa **Opción 1**. Si te dan `simula.o`, usa **Opción 3**.
 
 ---
 
-## 10. Depuración y Visualización
+## 10. Generación y Visualización de Mapas
+
+### Generador de Mapas Aleatorios
+
+El simulador incluye una herramienta para generar mapas de prueba con diferentes configuraciones de obstáculos y suciedad.
+
+#### Compilar el Generador
+
+```bash
+make mapgen      # Compila con biblioteca precompilada (distribución)
+make mapgen-dev  # Compila desde fuentes (desarrollo)
+```
+
+#### Generar Mapas
+
+```bash
+./maps/generate
+```
+
+Esto creará 8 mapas de prueba en el directorio `maps/`:
+
+- **noobs.pgm** - Sin obstáculos, solo suciedad (ideal para principiantes)
+- **random1.pgm** - Obstáculos dispersos (densidad baja: 1%)
+- **random3.pgm** - Obstáculos dispersos (densidad media: 3%)
+- **random5.pgm** - Obstáculos dispersos (densidad alta: 5%)
+- **walls1.pgm** - 1 muro (vertical u horizontal)
+- **walls2.pgm** - 2 muros de la misma orientación
+- **walls3.pgm** - 3 muros de la misma orientación
+- **walls4.pgm** - 4 muros de la misma orientación
+
+Todos los mapas incluyen:
+- Base del robot en posición aleatoria en las paredes
+- Orientación perpendicular a la pared donde está la base
+- 50 celdas con suciedad distribuidas aleatoriamente
+- Garantía de que los muros no tocan los bordes del mapa
+
+### Visualizador de Mapas
+
+Puedes visualizar cualquier mapa sin necesidad de ejecutar el simulador completo.
+
+#### Compilar el Visualizador
+
+```bash
+make viewmap      # Compila con biblioteca precompilada (distribución)
+make viewmap-dev  # Compila desde fuentes (desarrollo)
+```
+
+#### Visualizar un Mapa
+
+```bash
+./maps/viewmap maps/walls2.pgm
+./maps/viewmap maps/random3.pgm
+./maps/viewmap maps/noobs.pgm
+```
+
+El visualizador muestra el mapa en formato ASCII:
+- `#` = Obstáculos/muros
+- `B` = Base del robot
+- `1`-`5` = Nivel de suciedad (1=bajo, 5=alto)
+- Espacios = Celdas vacías
+
+#### Ejemplo de Uso
+
+```bash
+# Generar mapas
+./maps/generate
+
+# Visualizar un mapa específico
+./maps/viewmap maps/walls3.pgm
+
+# Ejecutar el simulador con ese mapa
+./roomba maps/walls3.pgm
+```
+
+## 11. Depuración y Visualización
 
 ### Ver los Resultados
 
@@ -782,7 +857,7 @@ Ejecución:
 ./roomba maps/dificil.pgm   # Usa maps/dificil.pgm
 ```
 
-**💡 Ventaja:** La opción por línea de comandos te permite probar el mismo código en diferentes mapas sin recompilar.
+**Ventaja:** La opción por línea de comandos te permite probar el mismo código en diferentes mapas sin recompilar.
 
 ### Imprimir Información de Depuración
 
@@ -803,7 +878,7 @@ void comportamiento() {
 
 ---
 
-## 🎯 Desafíos y Ejercicios
+## Desafíos y Ejercicios
 
 ### Nivel Básico
 
@@ -825,7 +900,7 @@ void comportamiento() {
 
 ---
 
-## 📚 Referencia Rápida de Funciones
+## Referencia Rápida de Funciones
 
 | Función | Descripción | Coste Batería |
 |---------|-------------|---------------|
@@ -842,7 +917,7 @@ void comportamiento() {
 
 ---
 
-## 💡 Consejos Finales
+## Consejos Finales
 
 1. **Prueba Incrementalmente**: Empieza simple y añade complejidad gradualmente
 2. **Usa Estados**: Las máquinas de estados hacen el código más claro
@@ -852,7 +927,7 @@ void comportamiento() {
 
 ---
 
-## 🆘 Problemas Comunes
+## Problemas Comunes
 
 ### El robot no se mueve
 - ¿Llamaste a `rmb_awake()` en `inicializar()`?
@@ -874,7 +949,7 @@ void comportamiento() {
 
 ---
 
-## 🎓 Conclusión
+## Conclusión
 
 ¡Felicidades! Ahora tienes todas las herramientas para programar robots de limpieza inteligentes. Experimenta con diferentes estrategias y compara los resultados.
 
