@@ -1,8 +1,8 @@
 # Roomba Tools
 
-Herramientas de utilidad para el simulador Roomba. Independientes y reutilizables tanto para desarrollo, práctica de alumnos, como para gestión de competiciones.
+Herramientas de utilidad para el simulador Roomba. Independientes y reutilizables tanto para desarrollo, práctica de participantes, como para gestión de competiciones.
 
-## 🛠️ Herramientas Disponibles
+## Herramientas Disponibles
 
 ### 1. **generate_map** - Generador de Mapas
 
@@ -69,11 +69,11 @@ Valida código de equipos antes de la competición. Detecta problemas de compila
 
 **Uso:**
 ```bash
-# Auto-validación para estudiantes
+# Auto-validación para participantes
 cd mi_proyecto/
 ../tools/validate.sh .
 
-# Validación por profesor con reporte
+# Validación por organizador con reporte
 ./validate.sh ../competition/teams/team01 --output report.txt
 
 # Modo estricto (falla con warnings)
@@ -90,21 +90,21 @@ cd mi_proyecto/
 ```
 
 **Validaciones realizadas:**
-- ✅ Estructura del directorio correcta
-- ✅ Compilación exitosa (con/sin warnings)
-- ✅ Ejecución sin crashes en múltiples mapas
-- ✅ Generación de `stats.csv` válido
-- ✅ Límites de tiempo de ejecución
-- 📊 Reporte detallado con métricas
+- Estructura del directorio correcta
+- Compilación exitosa (con/sin warnings)
+- Ejecución sin crashes en múltiples mapas
+- Generación de `stats.csv` válido
+- Límites de tiempo de ejecución
+- Reporte detallado con métricas
 
 **Casos de uso:**
-1. **Estudiante:** Verificar código antes de enviar
+1. **Participante:** Verificar código antes de enviar
    ```bash
    cd mi_roomba/
    ../tools/validate.sh . --output mi_validacion.txt
    ```
 
-2. **Profesor:** Validar entregas
+2. **Organizador:** Validar entregas
    ```bash
    for team in teams/*/; do
        ./tools/validate.sh "$team" --output "reports/$(basename $team).txt"
@@ -118,7 +118,7 @@ cd mi_proyecto/
 
 ---
 
-## 📦 Compilación
+## Compilación
 
 ### Compilar todas las herramientas
 ```bash
@@ -140,9 +140,9 @@ make clean
 
 ---
 
-## 🎯 Casos de Uso Comunes
+## Casos de Uso Comunes
 
-### Para Estudiantes
+### Para Participantes
 
 **1. Validar mi código antes de entregar:**
 ```bash
@@ -167,7 +167,7 @@ cp ../maps/mi_mapa.pgm map.pgm
 
 ---
 
-### Para Profesores
+### Para Organizadores
 
 **1. Validar todas las entregas:**
 ```bash
@@ -197,7 +197,7 @@ cd tools/
 
 ---
 
-## 📝 Estructura de Directorios
+## Estructura de Directorios
 
 ```
 roomba/
@@ -220,7 +220,7 @@ roomba/
 
 ---
 
-## 🔧 Requisitos
+## Requisitos
 
 - **gcc** con soporte para C99
 - **make** para compilación
@@ -229,7 +229,7 @@ roomba/
 
 ---
 
-## 📚 Referencias
+## Referencias
 
 - Ver `../samples/` para ejemplos de uso del simulador
 - Ver `../competition/` para sistema de competición completo
@@ -237,9 +237,9 @@ roomba/
 
 ---
 
-## ⚡ Tips
+## Tips
 
-- **Para alumnos:** Ejecuta `./validate.sh .` frecuentemente durante desarrollo
-- **Para profesores:** Usa `--strict` para forzar compilación sin warnings
+- **Para participantes:** Ejecuta `./validate.sh .` frecuentemente durante desarrollo
+- **Para organizadores:** Usa `--strict` para forzar compilación sin warnings
 - **Para competiciones:** Combina con `competition/runner` para ejecución completa
 - **Debugging:** Usa `viewmap` para inspeccionar mapas problemáticos rápidamente

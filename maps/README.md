@@ -2,7 +2,7 @@
 
 Este directorio contiene mapas de prueba en formato PGM para el simulador Roomba.
 
-## 📁 Mapas Disponibles
+## Mapas Disponibles
 
 ### Mapas sin obstáculos
 - **noobs.pgm**: Sin obstáculos, solo suciedad - Ideal para principiantes
@@ -18,7 +18,7 @@ Este directorio contiene mapas de prueba en formato PGM para el simulador Roomba
 - **walls3.pgm**: 3 muros de la misma orientación
 - **walls4.pgm**: 4 muros de la misma orientación
 
-## 📝 Características de los mapas
+## Características de los mapas
 
 Todos los mapas incluyen:
 - Base del robot en posición aleatoria en las paredes
@@ -26,7 +26,7 @@ Todos los mapas incluyen:
 - Suciedad distribuida aleatoriamente (niveles 1-5)
 - Garantía de que los muros no tocan los bordes
 
-## 🛠️ Generar Mapas Personalizados
+## Generar Mapas Personalizados
 
 Para crear tus propios mapas, usa las herramientas en `../tools/`:
 
@@ -43,7 +43,7 @@ make generate_map
 
 Ver documentación completa en `../tools/README.md`
 
-## 👁️ Visualizar Mapas
+## Visualizar Mapas
 
 Para visualizar mapas en la terminal:
 
@@ -59,7 +59,7 @@ Leyenda:
 - `1`-`5` = Nivel de suciedad
 - ` ` = Celdas vacías
 
-## 🎮 Usar Mapas en el Simulador
+## Usar Mapas en el Simulador
 
 ```bash
 # Copiar mapa al directorio de trabajo
@@ -69,14 +69,14 @@ cp maps/walls2.pgm .
 ./roomba maps/random3.pgm
 ```
 
-## 📊 Formato PGM
+## Formato PGM
 
 Los mapas usan formato PGM (Portable Gray Map):
 - Valores 0-255 representan diferentes elementos
 - Formato de texto simple, fácil de generar/editar
 - Compatible con herramientas estándar de procesamiento de imágenes
 
-## 🔗 Referencias
+## Referencias
 
 - Generador de mapas: `../tools/generate_map`
 - Visualizador: `../tools/viewmap`

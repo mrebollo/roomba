@@ -56,3 +56,24 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# LaTeX temporary files
+*.aux
+*.log
+*.toc
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.pdf
+
+# Competition results and logs
+competition/logs/*.stderr
+competition/logs/*.stdout
+competition/results/*.txt
+competition/results/*.csv
+competition/teams/team*/
+
+# Keep directory structure
+!competition/logs/.gitkeep
+!competition/results/.gitkeep
+!competition/teams/.gitkeep

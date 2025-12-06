@@ -14,11 +14,12 @@ Este manual te enseñará a programar comportamientos para un robot de limpieza 
 4. [Movimiento Básico](#4-movimiento-básico)
 5. [Detección de Obstáculos](#5-detección-de-obstáculos)
 6. [Limpieza Inteligente](#6-limpieza-inteligente)
-7. [Gestión de Batería](#7-gestión-de-batería)
-8. [Estrategias Completas](#8-estrategias-completas)
-9. [Compilación del Proyecto](#9-compilación-del-proyecto)
-10. [Generación y Visualización de Mapas](#10-generación-y-visualización-de-mapas)
-11. [Depuración y Visualización](#11-depuración-y-visualización)
+7. [Herramientas de Evaluación](#7-herramientas-de-evaluación)
+8. [Gestión de Batería](#8-gestión-de-batería)
+9. [Estrategias Completas](#9-estrategias-completas)
+10. [Compilación del Proyecto](#10-compilación-del-proyecto)
+11. [Generación y Visualización de Mapas](#11-generación-y-visualización-de-mapas)
+12. [Depuración y Visualización](#12-depuración-y-visualización)
 
 ---
 
@@ -130,7 +131,7 @@ int main() {
 - Cuando choca con una pared, el bumper se activa
 - El robot intenta seguir avanzando contra la pared
 
-**🤔 Problema:** El robot no sabe evitar obstáculos todavía.
+**Problema:** El robot no sabe evitar obstáculos todavía.
 
 ---
 
@@ -247,7 +248,7 @@ int main() {
 }
 ```
 
-**📝 Ejercicio:** Modifica el programa para que haga un triángulo en lugar de un cuadrado.
+**Ejercicio:** Modifica el programa para que haga un triángulo en lugar de un cuadrado.
 
 ---
 
@@ -432,9 +433,242 @@ Cuidado: Cada `rmb_clean()` consume batería (0.5 unidades). Asegúrate de tener
 
 ---
 
-## 7. Gestión de Batería
+## 7. Herramientas de Evaluación
 
-### Costes de Batería
+### 7.1 Autoevaluación con myscore
+
+La herramienta `myscore` te permite evaluar el rendimiento de tu robot de forma local, usando los mismos criterios que se usarán en la competición oficial.
+
+**¿Qué hace myscore?**
+- Analiza el archivo `stats.csv` generado por tu robot
+- Calcula una puntuación basada en 4 métricas principales
+- Te muestra qué aspectos necesitas mejorar
+- Usa exactamente el mismo algoritmo que el sistema oficial de evaluación
+
+**Compilar myscore:**
+
+```bash
+cd competition
+make myscore
+```
+
+**Ejecutar tu robot y autoevaluarte:**
+
+```bash
+# 1. Ejecuta tu robot (genera stats.csv)
+./roomba map.pgm
+
+# 2. Evalúa el resultado
+./competition/myscore stats.csv
+```
+
+**Salida de myscore:**
+
+```
+=== AUTOEVALUACION ROOMBA ===
+Archivo: stats.csv
+
+Metricas Individuales:
+- Cobertura (30%): 45.23% -> 13.57 puntos
+- Eficiencia Limpieza (35%): 2.15% -> 12.25 puntos
+- Conservacion Bateria (20%): 38.50% -> 7.70 puntos
+- Calidad Movimiento (15%): 89.45% -> 13.42 puntos
+
+Bonificaciones:
++ Completitud: +5.00 (mapa completamente limpio)
++ Pocos choques: +3.00 (5 o menos colisiones)
+
+Penalizaciones:
+- Crashes: -10.00 (1 crash detectado)
+
+Puntuacion Final: 44.94 / 108
+
+=== CONSEJOS DE MEJORA ===
+- Cobertura: Explora más áreas del mapa
+- Eficiencia: Reduce movimientos innecesarios
+- Batería: Optimiza uso de energía
+```
+
+**Interpretación de resultados:**
+
+1. **Métricas principales (0-100 puntos base):**
+   - **Cobertura (30%)**: Porcentaje de celdas visitadas
+   - **Eficiencia de limpieza (35%)**: Suciedad limpiada vs movimientos
+   - **Conservación de batería (20%)**: Batería restante al final
+   - **Calidad de movimiento (15%)**: Minimizar colisiones
+
+2. **Bonificaciones (+8 máximo):**
+   - **+5 puntos**: Si limpiaste toda la suciedad del mapa
+   - **+3 puntos**: Si tuviste 5 o menos colisiones
+
+3. **Penalizaciones (-10 por crash):**
+   - **-10 puntos**: Por cada crash (batería agotada o error fatal)
+
+**Proceso de mejora iterativa:**
+
+```bash
+# Ciclo de desarrollo:
+# 1. Modifica tu código
+vim main.c
+
+# 2. Compila
+make
+
+# 3. Ejecuta
+./roomba map.pgm
+
+# 4. Evalúa
+./competition/myscore stats.csv
+
+# 5. Analiza resultados y vuelve al paso 1
+```
+
+**Estrategia de optimización:**
+
+1. **Primera iteración**: Enfócate en cobertura (explorar el mapa)
+2. **Segunda iteración**: Mejora limpieza (detectar y limpiar suciedad)
+3. **Tercera iteración**: Optimiza batería (gestión eficiente de energía)
+4. **Cuarta iteración**: Reduce colisiones (navegación inteligente)
+
+### 7.2 Generación de Estadísticas
+
+Cuando tu robot termina de ejecutarse, el simulador genera automáticamente el archivo `stats.csv` con estadísticas detalladas de la ejecución.
+
+**Estructura de stats.csv:**
+
+```csv
+map_id,rep_id,cell_total,cell_visited,dirt_total,dirt_cleaned,bat_init,bat_final,forward,turn,bumps,clean,load
+```
+
+**Significado de cada columna:**
+
+| Columna | Descripción | Ejemplo |
+|---------|-------------|--------|
+| `map_id` | Identificador del mapa | 0, 1, 2, 3 |
+| `rep_id` | Número de repetición | 0-4 |
+| `cell_total` | Total de celdas navegables | 2304 |
+| `cell_visited` | Celdas visitadas por el robot | 1245 |
+| `dirt_total` | Unidades de suciedad iniciales | 310 |
+| `dirt_cleaned` | Unidades de suciedad limpiadas | 285 |
+| `bat_init` | Batería inicial | 1000.0 |
+| `bat_final` | Batería final | 234.5 |
+| `forward` | Número de movimientos forward | 450 |
+| `turn` | Número de giros | 123 |
+| `bumps` | Número de colisiones | 45 |
+| `clean` | Número de acciones de limpieza | 285 |
+| `load` | Número de recargas | 2 |
+
+**Ejemplo de stats.csv:**
+
+```csv
+0,0,2304,1245,310,285,1000.0,234.5,450,123,45,285,2
+```
+
+**Interpretación del ejemplo:**
+- Mapa 0, repetición 0
+- De 2304 celdas totales, visitó 1245 (54% de cobertura)
+- De 310 unidades de suciedad, limpió 285 (92% de eficiencia)
+- Batería: empezó con 1000, terminó con 234.5 (23.5% conservado)
+- Acciones: 450 avances, 123 giros, 45 colisiones, 285 limpiezas, 2 recargas
+
+**Uso en competición:**
+
+Este archivo `stats.csv` es el que se usará para calcular tu puntuación oficial en la competición. El sistema ejecutará tu robot múltiples veces (4 mapas × 5 repeticiones = 20 ejecuciones) y agregará los resultados para obtener tu puntuación final.
+
+**Verificar stats.csv manualmente:**
+
+```bash
+# Ver contenido
+cat stats.csv
+
+# Verificar que se generó correctamente
+ls -lh stats.csv
+
+# Si no existe, revisa que tu robot:
+# 1. Se ejecutó completamente
+# 2. Llamó a rmb_awake() para iniciar
+# 3. No crasheó antes de terminar
+```
+
+### 7.3 Visualización de Resultados
+
+La función `visualize()` muestra una animación visual de lo que hizo tu robot durante la ejecución.
+
+**Uso obligatorio:**
+
+```c
+void finalizar() {
+    visualize();  // OBLIGATORIO - muestra animación
+}
+
+int main() {
+    configure(inicializar, comportamiento, finalizar, 1000);
+    run();
+    return 0;
+}
+```
+
+**¿Qué muestra la visualización?**
+
+1. **Trayectoria del robot**: Línea mostrando el camino recorrido
+2. **Celdas visitadas**: Áreas exploradas destacadas
+3. **Suciedad limpiada**: Animación de limpieza en tiempo real
+4. **Colisiones**: Indicadores visuales de choques con obstáculos
+5. **Nivel de batería**: Barra de estado de energía
+6. **Estadísticas finales**: Resumen al terminar la animación
+
+**Interpretación visual:**
+
+- **Líneas verdes**: Trayectoria exitosa
+- **Puntos rojos**: Colisiones detectadas
+- **Áreas amarillas**: Celdas con suciedad detectada
+- **Áreas azules**: Celdas limpias después de pasar el robot
+- **Cuadrado negro**: Posición de la base de carga
+
+**Desactivar visualización temporalmente:**
+
+Si necesitas ejecutar muchas pruebas rápidamente sin esperar la animación:
+
+```c
+void finalizar() {
+    // Comentar temporalmente para pruebas rápidas
+    // visualize();
+}
+```
+
+**Importante:** Recuerda volver a activar `visualize()` antes de la entrega final.
+
+**Análisis visual para optimización:**
+
+1. **Cobertura baja**: Si ves muchas áreas sin explorar (blancas), mejora tu estrategia de navegación
+2. **Muchas colisiones**: Si hay muchos puntos rojos, implementa mejor detección de obstáculos
+3. **Suciedad sin limpiar**: Áreas amarillas indican que detectaste suciedad pero no la limpiaste
+4. **Trayectoria errática**: Si la línea da muchas vueltas sin sentido, optimiza la lógica de movimiento
+5. **Batería crítica**: Si la barra llega a rojo, implementa gestión de batería con recargas
+
+**Comparar ejecuciones:**
+
+Para comparar dos versiones de tu código:
+
+```bash
+# Versión 1
+./roomba map.pgm
+mv visualization.gif v1.gif
+
+# Versión 2 (después de modificar código)
+make
+./roomba map.pgm  
+mv visualization.gif v2.gif
+
+# Comparar visualmente
+open v1.gif v2.gif
+```
+
+---
+
+## 8. Gestión de Batería
+
+### 8.1 Costes de Batería
 
 Cada acción consume batería:
 
@@ -499,11 +733,15 @@ int main() {
 
 Importante: La función `finalizar()` es **OBLIGATORIA** y debe incluir `visualize()`. Se ejecuta automáticamente cuando termina `run()` mediante `atexit()`. También puedes usarla para mostrar estadísticas personalizadas.
 
+### 8.2 Ejemplo de Gestión de Batería
+
+Ver sección 9 para ejemplos completos que incluyen gestión de batería con regreso a base y recarga automática.
+
 ---
 
-## 8. Estrategias Completas
+## 9. Estrategias Completas
 
-### Ejemplo 9: Robot Autónomo Completo
+### 9.1 Ejemplo: Robot Autónomo Completo
 
 ```c
 #include "simula.h"
@@ -629,11 +867,11 @@ int main() {
 
 ---
 
-## 9. Compilación del Proyecto
+## 10. Compilación del Proyecto
 
 Existen tres formas de compilar tu programa con el simulador:
 
-### Opción 1: Compilación Directa desde Fuentes
+### 10.1 Opción 1: Compilación Directa desde Fuentes
 
 Compila todos los archivos fuente directamente con `gcc`:
 
@@ -647,13 +885,13 @@ Ventajas:
 - No requiere archivos adicionales
 - Útil para entender cómo funciona la compilación
 
-**❌ Desventajas:**
+**Desventajas:**
 - Comando largo y propenso a errores
 - Recompila todo cada vez (lento)
 
 ---
 
-### Opción 2: Usar Makefile (Recomendado)
+### 10.2 Opción 2: Usar Makefile (Recomendado)
 
 La forma más simple y profesional es usar `make`:
 
@@ -684,7 +922,7 @@ Ventajas:
 
 ---
 
-### Opción 3: Compilación con Objeto Precompilado
+### 10.3 Opción 3: Compilación con Objeto Precompilado
 
 Si el profesor proporciona un archivo `simula.o` precompilado, puedes compilar solo tu `main.c`:
 
@@ -706,9 +944,9 @@ Consejo: Para proyectos, usa **Opción 2 (make)**. Para aprender o depurar, usa 
 
 ---
 
-## 10. Generación y Visualización de Mapas
+## 11. Generación y Visualización de Mapas
 
-### Generador de Mapas Aleatorios
+### 11.1 Generador de Mapas Aleatorios
 
 El simulador incluye una herramienta para generar mapas de prueba con diferentes configuraciones de obstáculos y suciedad.
 
@@ -742,7 +980,7 @@ Todos los mapas incluyen:
 - 50 celdas con suciedad distribuidas aleatoriamente
 - Garantía de que los muros no tocan los bordes del mapa
 
-### Visualizador de Mapas
+### 11.2 Visualizador de Mapas
 
 Puedes visualizar cualquier mapa sin necesidad de ejecutar el simulador completo.
 
@@ -780,17 +1018,19 @@ El visualizador muestra el mapa en formato ASCII:
 ./roomba maps/walls3.pgm
 ```
 
-## 11. Depuración y Visualización
+## 12. Depuración y Visualización
 
-### Ver los Resultados
+### 12.1 Ver los Resultadostados
 
 Después de ejecutar tu programa, se generan automáticamente:
 
-1. **`log.csv`** - Historial completo de posiciones
-2. **`stats.csv`** - Estadísticas finales
-3. **`map.pgm`** - Imagen del mapa
+1. **`log.csv`** - Historial completo de posiciones del robot
+2. **`stats.csv`** - Estadísticas finales (usado para puntuación)
+3. **`map.pgm`** - Imagen del mapa usado
 
-### Leer las Estadísticas
+### 12.2 Leer las Estadísticas
+
+El archivo `stats.csv` contiene toda la información necesaria para calcular tu puntuación. Ver **Sección 7.2** para detalles completos sobre el formato y significado de cada columna.
 
 ```bash
 cat stats.csv
@@ -798,20 +1038,23 @@ cat stats.csv
 
 Ejemplo de salida:
 ```
-cell_total, cell_visited, dirt_total, dirt_cleaned, bat_total, bat_mean, forward, turn, bumps, clean, load
-2285, 87, 310, 25, 850.5, 720.3, 87, 45, 12, 50, 3
+0,0,2304,1245,310,285,1000.0,234.5,450,123,45,285,2
 ```
 
-**Interpretación:**
-- `cell_total`: 2285 celdas totales en el mapa
-- `cell_visited`: 87 celdas visitadas (3.8% del mapa)
-- `dirt_total`: 310 unidades de suciedad iniciales
-- `dirt_cleaned`: 25 unidades limpiadas (8% del total)
-- `bat_total`: 850.5 unidades de batería consumidas
-- `bat_mean`: 720.3 promedio de batería por tick
-- Movimientos: 87 avances, 45 giros, 12 choques, 50 limpiezas, 3 recargas
+**Interpretación rápida:**
+- Cobertura: 1245/2304 = 54% de celdas visitadas
+- Limpieza: 285/310 = 92% de suciedad limpiada
+- Batería: 234.5/1000 = 23.5% conservada
+- Acciones: 450 avances, 123 giros, 45 colisiones, 285 limpiezas, 2 recargas
 
-### Cargar un Mapa Existente
+**Para autoevaluarte:**
+```bash
+./competition/myscore stats.csv
+```
+
+Ver **Sección 7.1** para más información sobre autoevaluación con `myscore`.
+
+### 12.3 Cargar un Mapa Existente
 
 Puedes cargar un mapa guardado para practicar en el mismo escenario. Hay dos formas:
 
@@ -859,7 +1102,7 @@ Ejecución:
 
 **Ventaja:** La opción por línea de comandos te permite probar el mismo código en diferentes mapas sin recompilar.
 
-### Imprimir Información de Depuración
+### 12.4 Imprimir Información de Depuración
 
 ```c
 void comportamiento() {

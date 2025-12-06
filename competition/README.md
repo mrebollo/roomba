@@ -1,214 +1,289 @@
-# Sistema de Competición de Roombas
+# Sistema de Competición Roomba
 
-Sistema automatizado para ejecutar y evaluar competiciones entre múltiples equipos de robots Roomba.
+Sistema completo de evaluación automática para competiciones de programación de robots Roomba.
 
-## Arquitectura
+## Descripción General
 
-El sistema de competición utiliza una arquitectura modular que separa:
+Este sistema permite a organizadores ejecutar competiciones de forma automática, evaluando múltiples equipos en diferentes escenarios y generando rankings basados en métricas objetivas.
 
-1. **Simulador base** (`simula.c` y módulos): Sin modificaciones
-2. **Extensiones de competición** (`competition_ext.c`): Lógica específica de competición
-3. **Biblioteca precompilada** (`lib/libsimula.a`): Versión unificada para todos los equipos
-4. **Runner** (`runner.c`): Orquestador de la competición
+## ¿Para quién es esto?
 
-### Ventajas de esta arquitectura:
+- **Organizadores/Profesores**: Usa `ORGANIZER_GUIDE.md` para configurar y ejecutar la competición
+- **Participantes**: Consulta `STUDENT_GUIDE.md` para preparar tu entrega
+- **Todos**: Lee `RULES.md` para entender los criterios de evaluación
 
-- ✅ Simulador base sin modificar (desarrollo normal no afectado)
-- ✅ Todos los equipos usan la **misma versión** del simulador (libsimula.a)
-- ✅ Compilación rápida (sin recompilar fuentes con cada equipo)
-- ✅ Extensible mediante `competition_ext.c`
-- ✅ Overrides de funciones mediante `simula_comp.c` con weak symbols
+## Quick Start (Organizadores)
 
-## Estructura de directorios
+```bash
+# 1. Compilar herramientas
+make all
+
+# 2. Validar código de un equipo
+./validate ../teams/team01
+
+# 3. Ejecutar competición completa
+./runner
+
+# 4. Generar ranking
+./score
+```
+
+## Estructura de Directorios
 
 ```
 competition/
-├── README.md                  # Esta documentación
-├── Makefile                   # Build system de competición
-├── runner.c                   # Programa orquestador
-├── runner                     # Ejecutable del runner
-├── competition_ext.h          # API de extensiones
-├── competition_ext.c          # Implementación de lógica de competición
-├── simula_comp.c             # Overrides de funciones (run, save_stats)
-├── lib/
-│   ├── simula.o              # Biblioteca precompilada (21KB)
-│   ├── simula.h              # Headers (copia desde raíz)
-│   ├── simula_internal.h
-│   └── README.md             # Documentación de la biblioteca
-├── teams/                    # Código fuente de equipos
+├── README.md              # Este archivo
+├── RULES.md              # Reglas oficiales de puntuación
+├── ORGANIZER_GUIDE.md    # Guía completa para organizadores
+├── STUDENT_GUIDE.md      # Guía para participantes
+│
+├── Makefile              # Compilación de herramientas
+├── scoring.conf          # Configuración de pesos y bonificaciones
+│
+├── runner.c              # Orquestador de ejecuciones
+├── score.c               # Generador de ranking oficial
+├── libscore.c/h          # Biblioteca compartida de puntuación
+├── myscore.c             # Herramienta de autoevaluación (participantes)
+├── competition_ext.c/h   # Extensiones de API
+│
+├── maps/                 # Mapas de prueba oficiales
+│   ├── noobs.pgm         # Sin obstáculos (0%)
+│   ├── random1.pgm       # Obstáculos al 1%
+│   ├── random3.pgm       # Obstáculos al 3%
+│   └── random5.pgm       # Obstáculos al 5%
+│
+├── teams/                # Directorio de equipos participantes
 │   ├── team01/
-│   │   ├── main.c
-│   │   ├── config.txt        # Generado automáticamente
-│   │   └── roomba           # Ejecutable compilado
+│   │   └── main.c
 │   ├── team02/
+│   │   └── main.c
 │   └── ...
-├── maps/                     # Mapas oficiales de competición
-│   ├── README.md
-│   └── (copiar mapas .pgm aquí)
-├── results/                  # Resultados por timestamp
-│   ├── run_20251205_143000/
-│   │   ├── stats.csv
-│   │   └── ranking.txt
-│   └── latest -> run_20251205_143000/
-├── scripts/                  # Scripts auxiliares
-│   └── (scripts de análisis)
-├── stats.csv                 # Estadísticas actuales
-└── ranking.txt               # Clasificación actual
+│
+├── results/              # Resultados de ejecuciones (generado)
+│   ├── team01/
+│   │   ├── map0_stats.csv
+│   │   ├── map1_stats.csv
+│   │   └── ...
+│   └── ...
+│
+├── logs/                 # Logs de ejecución (generado)
+└── lib/                  # Herramientas para distribuir a participantes
+    └── myscore           # Ejecutable de autoevaluación
 ```
 
-## Uso rápido
+## Herramientas Principales
 
-### Ejecutar competición completa:
+### Para Organizadores
 
-```bash
-cd competition
-make run         # O: make run-archived (guarda con timestamp)
-```
+| Herramienta | Propósito | Documentación |
+|-------------|-----------|---------------|
+| `runner` | Ejecuta todos los equipos en todos los mapas | ORGANIZER_GUIDE.md §4 |
+| `score` | Genera ranking oficial con puntuaciones | ORGANIZER_GUIDE.md §5 |
+| `validate` | Valida código antes de aceptar entregas | ORGANIZER_GUIDE.md §3 |
+| `analyze_csv.py` | Analiza resultados históricos | ORGANIZER_GUIDE.md §6 |
 
-El runner automáticamente:
-1. Construye `lib/simula.o` si no existe
-2. Descubre todos los equipos en `entregas/`
-3. Compila cada equipo con la biblioteca unificada
-4. Ejecuta 20 rondas por equipo (4 mapas × 5 repeticiones)
-5. Genera `stats.csv` y `ranking.txt`
+### Para Participantes
 
-### Reconstruir biblioteca manualmente:
+| Herramienta | Propósito | Documentación |
+|-------------|-----------|---------------|
+| `myscore` | Autoevaluación de rendimiento local | STUDENT_GUIDE.md §2 |
+| `validate` | Pre-validación antes de entregar | STUDENT_GUIDE.md §3 |
 
-```bash
-cd ..  # Ir al directorio raíz del proyecto
-make lib-competition
-```
+## Criterios de Puntuación
 
-Esto genera `competition/lib/simula.o` con todos los módulos del simulador.
+El sistema evalúa **4 métricas principales** (ver `RULES.md` para detalles):
 
-## Compilación manual de un equipo
+1. **Cobertura (30%)**: Porcentaje de celdas visitadas
+2. **Eficiencia de limpieza (35%)**: Suciedad limpiada por unidad de batería
+3. **Conservación de batería (20%)**: Batería media mantenida
+4. **Calidad de movimiento (15%)**: Ratio de movimientos exitosos sin colisiones
 
-Si quieres compilar un equipo manualmente:
+**Bonificaciones:**
+- +5 puntos por completar el mapa
+- +3 puntos por navegación limpia (<5 colisiones)
 
-```bash
-cd competition/teams/team01
-gcc -I../../lib main.c ../../lib/simula.o ../../competition_ext.c ../../simula_comp.c -lm -o roomba
-```
+**Penalizaciones:**
+- -10 puntos por cada crash del programa
 
-O usa el Makefile:
+**Detalles completos en `RULES.md`**
 
-```bash
-cd competition
-make test TEAM=team01
-```
-
-## Sistema de mapas rotatorio
-
-Cada equipo ejecuta 20 simulaciones:
-- **4 tipos de mapa** (configurables en `config.txt`)
-- **5 repeticiones** por mapa
-- Rotación automática gestionada por `competition_ext.c`
-
-El archivo `config.txt` se genera y actualiza automáticamente:
+## Flujo de Evaluación
 
 ```
-map_file=0        # 0-3: tipo de mapa actual
-map_type=0        # Mismo valor
-run_counter=1     # 1-5: repetición actual
+┌─────────────┐
+│ Equipos     │
+│ (main.c)    │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐    ┌──────────────┐
+│   runner    │───▶│ Ejecuta en   │
+│             │    │ 4 mapas      │
+└──────┬──────┘    └──────────────┘
+       │
+       ▼
+┌─────────────┐
+│ results/    │
+│ stats.csv   │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐    ┌──────────────┐
+│   score     │───▶│ Calcula      │
+│             │    │ puntuaciones │
+└──────┬──────┘    └──────────────┘
+       │
+       ▼
+┌─────────────┐
+│ ranking.txt │
+│ scores.csv  │
+└─────────────┘
 ```
 
-## Formato de estadísticas
+## Configuración
 
-`stats.csv` contiene todas las métricas:
+### `scoring.conf` - Configuración de Puntuación
 
+```ini
+# Pesos de métricas (deben sumar 100)
+coverage_weight=30
+dirt_efficiency_weight=35
+battery_conservation_weight=20
+movement_quality_weight=15
+
+# Bonificaciones
+completion_bonus=5
+low_bumps_bonus=3
+bumps_threshold=5
+
+# Penalizaciones
+crash_penalty=10
+```
+
+## Archivos Generados
+
+### `stats.csv` (por equipo y mapa)
+```
+cell_total,cell_visited,dirt_total,dirt_cleaned,bat_total,bat_mean,...
+2304,1543,230,198,1000,456.2,...
+```
+
+### `ranking.txt` (ranking oficial)
+```
+=== RANKING FINAL ===
+Pos | Equipo  | Puntuación | Coverage | DirtEff | BatCons | Movement
+  1 | team15  |      67.24 |    89.2% |   2.45% |   45.6% |    92.3%
+  2 | team08  |      64.18 |    86.1% |   2.31% |   48.2% |    88.7%
+...
+```
+
+### `scores.csv` (datos para análisis)
 ```csv
-team,map_type,cell_total,cell_visited,dirt_total,dirt_cleaned,bat_total,bat_mean,forward,turn,bumps,clean,load
-team01,0,2400,1523,127,95,100.0,67.3,1245,89,23,95,1
-team01,1,2400,1687,134,121,100.0,52.1,1534,102,18,121,2
+team,score
+team15,67.24
+team08,64.18
 ...
 ```
 
-## Clasificación
+## Guías Específicas
 
-El ranking se calcula según:
-- **Celdas visitadas** (cobertura del mapa)
-- **Suciedad limpiada** (eficacia)
-- **Batería utilizada** (eficiencia)
+### Soy Organizador
+**Lee:** `ORGANIZER_GUIDE.md`
 
-Fórmula de puntuación: `score = cells_visited + (dirt_cleaned * 10) - (battery_used * 5)`
+Aprenderás a:
+- Configurar el sistema de competición
+- Agregar y validar equipos
+- Ejecutar evaluaciones masivas
+- Interpretar y publicar resultados
+- Resolver problemas comunes
 
-Ejemplo de `ranking.txt`:
+### Soy Participante
+**Lee:** `STUDENT_GUIDE.md`
 
-```
-Rank  Team            Score    Cells    Dirt    Battery
------------------------------------------------------------
-1     team07          8734     2145     189     32.5
-2     team13          8521     2087     201     35.2
-3     team04          8234     1989     176     28.9
-...
-```
+Aprenderás a:
+- Preparar tu código para entrega
+- Usar `myscore` para autoevaluarte
+- Interpretar el feedback
+- Validar antes de entregar
+- Estrategias de optimización
 
-## Configuración de la competición
+### Quiero Entender las Reglas
+**Lee:** `RULES.md`
 
-Editar `competition_ext.h` para ajustar:
+Entenderás:
+- Cómo se calculan las puntuaciones
+- Qué comportamientos dan más puntos
+- Qué está permitido y prohibido
+- Criterios de desempate
 
-```c
-#define COMP_MAPS_COUNT 4           // Número de mapas diferentes
-#define COMP_REPS_PER_MAP 5         // Repeticiones por mapa
-#define COMP_STATS_FILE "../stats.csv"  // Archivo de estadísticas
-```
+## Troubleshooting Rápido
 
-## Solución de problemas
-
-### Error: `simula.o not found`
-
+### Problema: `runner` no ejecuta ningún equipo
 ```bash
-cd /path/to/roomba
-make lib-competition
+# Verificar estructura de directorios
+ls teams/*/main.c
+
+# Verificar compilación
+make all
 ```
 
-### Error: Compilación de equipo falla
-
-Verificar que el archivo del equipo use la API correcta:
-- Usar `rob.heading` (no `rob.head` - versión antigua)
-- Incluir `simula.h` correctamente
-
-### Limpiar y reconstruir todo
-
+### Problema: `score` no encuentra resultados
 ```bash
-cd competition
-rm -f lib/simula.o runner stats.csv ranking.txt
-rm -f teams/*/roomba teams/*/config.txt
-make lib         # Regenera la biblioteca
-make runner      # Recompila el runner
-make run         # Ejecuta competición
+# Verificar que runner se ejecutó
+ls results/*/map0_stats.csv
+
+# Ejecutar runner primero
+./runner
 ```
 
-## Desarrollo y mantenimiento
-
-### Modificar el simulador base
-
-Si modificas `simula.c`, `sim_robot.c`, etc.:
-
+### Problema: Un equipo no aparece en ranking
 ```bash
-make lib-competition  # Reconstruir biblioteca
+# Verificar logs
+cat logs/teamXX.stdout
+cat logs/teamXX.stderr
+
+# Validar código
+./validate teams/teamXX
 ```
 
-### Añadir funcionalidad de competición
+## Documentación Completa
 
-Editar `competition_ext.c` para nueva lógica sin tocar el simulador base.
+- **Manual del Usuario** (participantes): `docs/usuario/MANUAL_USUARIO.md`
+- **Manual del Organizador**: `docs/organizer/MANUAL_ORGANIZADOR.md`
+- **Manual del Desarrollador**: `docs/developer/manual_desarrollador.tex`
 
-### Debugging
+## Arquitectura Técnica (Desarrolladores)
 
-Compilar runner con símbolos de depuración:
+El sistema usa arquitectura modular:
 
-```bash
-gcc runner.c -o runner -Wall -Wextra -g
-```
+1. **Simulador base** (`simula.c` y módulos): Sin modificaciones
+2. **Extensiones de competición** (`competition_ext.c`): Lógica específica
+3. **Biblioteca compartida** (`libscore`): Puntuación consistente
+4. **Runner** (`runner.c`): Orquestador de la competición
 
-Ejecutar un equipo individual con valgrind:
+**Ventajas:**
+- Simulador base sin modificar
+- Todos los equipos usan la misma versión
+- Compilación rápida
+- Extensible mediante `competition_ext.c`
+- Puntuación consistente via `libscore`
 
-```bash
-cd entregas/team01
-valgrind ./roomba
-```
+## Contribuir
 
-## Créditos
+Para modificar o extender el sistema:
+1. Consulta `docs/developer/manual_desarrollador.tex`
+2. La arquitectura de `libscore` permite añadir métricas fácilmente
+3. El formato de `stats.csv` es extensible
 
-Sistema de competición desarrollado para IPR-GIIROB-ETSINF-UPV
-Fecha: Diciembre 2025
+## Soporte
+
+Para dudas:
+- **Organizadores**: Consulta ORGANIZER_GUIDE.md §8 (Troubleshooting)
+- **Participantes**: Consulta STUDENT_GUIDE.md §5 (FAQ)
+- **Desarrolladores**: Consulta manual del desarrollador
+
+---
+
+**Sistema de competición IPR-GIIROB-ETSINF-UPV | Diciembre 2025**
+
+**¡Éxito en tu competición Roomba!**

@@ -4,7 +4,7 @@ Esta carpeta contiene los **ejercicios propuestos** del Manual de Usuario del Si
 
 Se asume que el simulador se encuentra precompilado en un fichero `simula.o` para incluirlo con cada ejercicio sin necesidad de recompilar los fuentes completos cada vez.
 
-## 📚 Estructura de los Ejercicios
+## Estructura de los Ejercicios
 
 Cada ejercicio tiene:
 - **Descripción del objetivo** en los comentarios del encabezado
@@ -13,7 +13,7 @@ Cada ejercicio tiene:
 - **Esqueleto de código** con las funciones principales
 - **Sección TODO** donde debes implementar tu solución
 
-## 🎯 Lista de Ejercicios
+## Lista de Ejercicios
 
 ### Nivel Básico
 
@@ -199,7 +199,7 @@ gcc ejercicio9_robot_inteligente.c simula.o -lm -o ejercicio9
 
 ---
 
-## 🎓 Orden de Aprendizaje Recomendado
+## Orden de Aprendizaje Recomendado
 
 1. **Ejercicio 1** - Cuadrado Perfecto (control básico)
 2. **Ejercicio 2** - Limpiador Simple (sensores básicos)
@@ -213,7 +213,7 @@ gcc ejercicio9_robot_inteligente.c simula.o -lm -o ejercicio9
 
 ---
 
-## 📊 Verificación de Resultados
+## Verificación de Resultados
 
 Después de ejecutar cada ejercicio, revisa:
 
@@ -238,7 +238,7 @@ Ejecuta `visualize()` en `finalizar()` para ver:
 
 ---
 
-## 💡 Consejos Generales
+## Consejos Generales
 
 ### Para Todos los Ejercicios
 - **Comienza simple:** Primero haz que funcione, luego optimiza
@@ -282,7 +282,7 @@ while (angulo >= 2*M_PI) angulo -= 2*M_PI;
 
 ---
 
-## 🏆 Desafíos Adicionales
+## Desafíos Adicionales
 
 Una vez completados todos los ejercicios, intenta:
 
@@ -294,7 +294,7 @@ Una vez completados todos los ejercicios, intenta:
 
 ---
 
-## 📚 Recursos Relacionados
+## Recursos Relacionados
 
 - **Ejemplos resueltos:** Ver `ejemplo1_inmovil.c` a `ejemplo9_autonomo.c`
 - **Manual de Usuario:** `docs/usuario/manual_usuario.pdf`
@@ -303,7 +303,7 @@ Una vez completados todos los ejercicios, intenta:
 
 ---
 
-## 🤝 Compartir Soluciones
+## Compartir Soluciones
 
 Guarda tus soluciones con nombres descriptivos:
 ```bash
@@ -314,7 +314,7 @@ Compara diferentes estrategias viendo las estadísticas y visualizaciones.
 
 ---
 
-## ✅ Checklist de Validación
+## Checklist de Validación
 
 Antes de considerar un ejercicio completo, verifica:
 
@@ -327,4 +327,4 @@ Antes de considerar un ejercicio completo, verifica:
 
 ---
 
-¡Buena suerte con los ejercicios! 🤖🧹
+¡Buena suerte con los ejercicios!

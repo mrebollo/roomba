@@ -2,9 +2,9 @@
 
 Esta carpeta contiene **ejemplos resueltos** y **ejercicios propuestos** del Manual de Usuario del Simulador Roomba.
 
-## 📂 Contenido
+## Contenido
 
-### 📘 Ejemplos Resueltos (9 archivos)
+### Ejemplos Resueltos (9 archivos)
 Implementaciones completas que demuestran conceptos del manual:
 
 - `ejemplo1_inmovil.c` - Robot inmóvil (estructura básica)
@@ -19,7 +19,7 @@ Implementaciones completas que demuestran conceptos del manual:
 
 **Ver detalles:** [`README_EJEMPLOS.md`](README_EJEMPLOS.md)
 
-### 📝 Ejercicios Propuestos (9 archivos)
+### Ejercicios Propuestos (9 archivos)
 Plantillas con objetivos específicos para que implementes tu solución:
 
 **Nivel Básico:**
@@ -39,7 +39,7 @@ Plantillas con objetivos específicos para que implementes tu solución:
 
 **Ver detalles:** [`README_EJERCICIOS.md`](README_EJERCICIOS.md)
 
-## 🚀 Inicio Rápido
+## Inicio Rápido
 
 ### Requisitos
 Necesitas el simulador precompilado (`simula.o`) en esta carpeta o en una ruta accesible.
@@ -65,7 +65,7 @@ make
 ./roomba
 ```
 
-## 📊 Verificar Resultados
+## Verificar Resultados
 
 Después de ejecutar, revisa:
 
@@ -85,7 +85,7 @@ cell_total,cell_visited,dirt_total,dirt_cleaned,bat_total,bat_mean,forward,turn,
 ### Log de ejecución (`log.csv`)
 Registro tick a tick del estado del robot.
 
-## 🎓 Ruta de Aprendizaje Recomendada
+## Ruta de Aprendizaje Recomendada
 
 ### Para Principiantes
 1. Estudia `ejemplo1_inmovil.c` a `ejemplo3_cuadrado.c`
@@ -101,7 +101,7 @@ Registro tick a tick del estado del robot.
 1. Estudia `ejemplo9_autonomo.c`
 2. Intenta `ejercicio7_cobertura_completa.c` a `ejercicio9_robot_inteligente.c`
 
-## 🛠️ Estructura de un Programa Típico
+## Estructura de un Programa Típico
 
 ```c
 #include "simula.h"
@@ -141,7 +141,7 @@ int main() {
 }
 ```
 
-## 📚 Referencia de API
+## Referencia de API
 
 ### Acciones del Robot
 - `rmb_awake(&x, &y)` - Activar robot (devuelve posición inicial)
@@ -161,7 +161,7 @@ int main() {
 - `run()` - Ejecutar simulación
 - `visualize()` - Mostrar animación (en `finalizar()`)
 
-## 💡 Consejos Útiles
+## Consejos Útiles
 
 ### Depuración
 ```c
@@ -196,19 +196,19 @@ void comportamiento() {
 }
 ```
 
-## 🔍 Archivos Adicionales
+## Archivos Adicionales
 
 - `main_template.c` - Plantilla básica vacía
 - `eses.c`, `main.c`, `random.c`, `rob.c`, `roomba.c` - Ejemplos legacy
 
-## 📖 Documentación Completa
+## Documentación Completa
 
 - **Manual de Usuario:** `../docs/usuario/manual_usuario.pdf`
 - **Manual del Desarrollador:** `../docs/developer/manual_desarrollador.pdf`
 - **API Completa:** `../simula.h`
 - **README Principal:** `../README.md`
 
-## 🤝 Contribuir
+## Contribuir
 
 Si creas una solución interesante:
 ```bash
@@ -221,4 +221,4 @@ Comparte tus estrategias comparando `stats.csv` con otros estudiantes.
 
 **¿Dudas?** Consulta los manuales en `docs/` o revisa los ejemplos resueltos como referencia.
 
-¡Feliz programación! 🤖🧹✨
+¡Feliz programación!

@@ -558,6 +558,238 @@ void comportamiento() {
 Cada \code{rmb\_clean()} consume batería (0.5 unidades). Asegúrate de tener suficiente batería antes de limpiar.
 \end{warningbox}
 
+\section{Herramientas de Evaluación}
+
+\subsection{Autoevaluación con myscore}
+
+La herramienta \code{myscore} te permite evaluar el rendimiento de tu robot de forma local, usando los mismos criterios que se usarán en la competición oficial.
+
+\subsubsection{¿Qué hace myscore?}
+
+\begin{itemize}
+    \item Analiza el archivo \texttt{stats.csv} generado por tu robot
+    \item Calcula una puntuación basada en 4 métricas principales
+    \item Te muestra qué aspectos necesitas mejorar
+    \item Usa exactamente el mismo algoritmo que el sistema oficial de evaluación
+\end{itemize}
+
+\subsubsection{Compilar y Ejecutar}
+
+Compilar \code{myscore}:
+
+\begin{verbatim}
+cd competition
+make myscore
+\end{verbatim}
+
+Ejecutar tu robot y autoevaluarte:
+
+\begin{verbatim}
+# 1. Ejecuta tu robot (genera stats.csv)
+./roomba map.pgm
+
+# 2. Evalúa el resultado
+./competition/myscore stats.csv
+\end{verbatim}
+
+\subsubsection{Interpretación de Resultados}
+
+Salida de \code{myscore}:
+
+\begin{verbatim}
+=== AUTOEVALUACION ROOMBA ===
+Archivo: stats.csv
+
+Metricas Individuales:
+- Cobertura (30%): 45.23% -> 13.57 puntos
+- Eficiencia Limpieza (35%): 2.15% -> 12.25 puntos
+- Conservacion Bateria (20%): 38.50% -> 7.70 puntos  
+- Calidad Movimiento (15%): 89.45% -> 13.42 puntos
+
+Bonificaciones:
++ Completitud: +5.00 (mapa completamente limpio)
++ Pocos choques: +3.00 (5 o menos colisiones)
+
+Penalizaciones:
+- Crashes: -10.00 (1 crash detectado)
+
+Puntuacion Final: 44.94 / 108
+\end{verbatim}
+
+\textbf{Métricas principales (0-100 puntos base):}
+\begin{itemize}
+    \item \textbf{Cobertura (30\%):} Porcentaje de celdas visitadas
+    \item \textbf{Eficiencia de limpieza (35\%):} Suciedad limpiada vs movimientos
+    \item \textbf{Conservación de batería (20\%):} Batería restante al final
+    \item \textbf{Calidad de movimiento (15\%):} Minimizar colisiones
+\end{itemize}
+
+\textbf{Bonificaciones (+8 máximo):}
+\begin{itemize}
+    \item \textbf{+5 puntos:} Si limpiaste toda la suciedad del mapa
+    \item \textbf{+3 puntos:} Si tuviste 5 o menos colisiones
+\end{itemize}
+
+\textbf{Penalizaciones (-10 por crash):}
+\begin{itemize}
+    \item \textbf{-10 puntos:} Por cada crash (batería agotada o error fatal)
+\end{itemize}
+
+\subsubsection{Proceso de Mejora Iterativa}
+
+\begin{verbatim}
+# Ciclo de desarrollo:
+# 1. Modifica tu código
+vim main.c
+
+# 2. Compila  
+make
+
+# 3. Ejecuta
+./roomba map.pgm
+
+# 4. Evalúa
+./competition/myscore stats.csv
+
+# 5. Analiza resultados y vuelve al paso 1
+\end{verbatim}
+
+\begin{tipbox}{Estrategia de Optimización}
+\begin{enumerate}
+    \item \textbf{Primera iteración:} Enfócate en cobertura (explorar el mapa)
+    \item \textbf{Segunda iteración:} Mejora limpieza (detectar y limpiar suciedad)
+    \item \textbf{Tercera iteración:} Optimiza batería (gestión eficiente de energía)
+    \item \textbf{Cuarta iteración:} Reduce colisiones (navegación inteligente)
+\end{enumerate}
+\end{tipbox}
+
+\subsection{Generación de Estadísticas}
+
+Cuando tu robot termina de ejecutarse, el simulador genera automáticamente el archivo \texttt{stats.csv} con estadísticas detalladas de la ejecución.
+
+\subsubsection{Estructura de stats.csv}
+
+El archivo contiene una línea con las siguientes columnas:
+
+\begin{verbatim}
+map_id,rep_id,cell_total,cell_visited,dirt_total,
+dirt_cleaned,bat_init,bat_final,forward,turn,bumps,
+clean,load
+\end{verbatim}
+
+\begin{table}[h]
+\centering
+\caption{Columnas del archivo stats.csv}
+\label{tab:stats_columns}
+\small
+\begin{tabular}{|l|p{7cm}|l|}
+\hline
+\textbf{Columna} & \textbf{Descripción} & \textbf{Ejemplo} \\
+\hline
+\code{map\_id} & Identificador del mapa & 0, 1, 2, 3 \\
+\code{rep\_id} & Número de repetición & 0-4 \\
+\code{cell\_total} & Total de celdas navegables & 2304 \\
+\code{cell\_visited} & Celdas visitadas por el robot & 1245 \\
+\code{dirt\_total} & Unidades de suciedad iniciales & 310 \\
+\code{dirt\_cleaned} & Unidades de suciedad limpiadas & 285 \\
+\code{bat\_init} & Batería inicial & 1000.0 \\
+\code{bat\_final} & Batería final & 234.5 \\
+\code{forward} & Número de movimientos forward & 450 \\
+\code{turn} & Número de giros & 123 \\
+\code{bumps} & Número de colisiones & 45 \\
+\code{clean} & Número de acciones de limpieza & 285 \\
+\code{load} & Número de recargas & 2 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Ejemplo de stats.csv}
+
+\begin{verbatim}
+0,0,2304,1245,310,285,1000.0,234.5,450,123,45,285,2
+\end{verbatim}
+
+\textbf{Interpretación del ejemplo:}
+\begin{itemize}
+    \item Mapa 0, repetición 0
+    \item De 2304 celdas totales, visitó 1245 (54\% de cobertura)
+    \item De 310 unidades de suciedad, limpió 285 (92\% de eficiencia)
+    \item Batería: empezó con 1000, terminó con 234.5 (23.5\% conservado)
+    \item Acciones: 450 avances, 123 giros, 45 colisiones, 285 limpiezas, 2 recargas
+\end{itemize}
+
+\begin{infobox}{Uso en Competición}
+Este archivo \texttt{stats.csv} es el que se usará para calcular tu puntuación oficial en la competición. El sistema ejecutará tu robot múltiples veces (4 mapas $\times$ 5 repeticiones = 20 ejecuciones) y agregará los resultados para obtener tu puntuación final.
+\end{infobox}
+
+\subsubsection{Verificar stats.csv Manualmente}
+
+\begin{verbatim}
+# Ver contenido
+cat stats.csv
+
+# Verificar que se generó correctamente  
+ls -lh stats.csv
+
+# Si no existe, revisa que tu robot:
+# 1. Se ejecutó completamente
+# 2. Llamó a rmb_awake() para iniciar
+# 3. No crasheó antes de terminar
+\end{verbatim}
+
+\subsection{Visualización de Resultados}
+
+La función \code{visualize()} muestra una animación visual de lo que hizo tu robot durante la ejecución.
+
+\subsubsection{Uso Obligatorio}
+
+\begin{lstlisting}[caption={Función visualize()}]
+void finalizar() {
+    visualize();  // OBLIGATORIO - muestra animacion
+}
+
+int main() {
+    configure(inicializar, comportamiento, finalizar, 1000);
+    run();
+    return 0;
+}
+\end{lstlisting}
+
+\subsubsection{Qué Muestra la Visualización}
+
+\begin{enumerate}
+    \item \textbf{Trayectoria del robot:} Línea mostrando el camino recorrido
+    \item \textbf{Celdas visitadas:} Áreas exploradas destacadas
+    \item \textbf{Suciedad limpiada:} Animación de limpieza en tiempo real
+    \item \textbf{Colisiones:} Indicadores visuales de choques con obstáculos
+    \item \textbf{Nivel de batería:} Barra de estado de energía
+    \item \textbf{Estadísticas finales:} Resumen al terminar la animación
+\end{enumerate}
+
+\subsubsection{Interpretación Visual}
+
+\begin{itemize}
+    \item \textbf{Líneas verdes:} Trayectoria exitosa
+    \item \textbf{Puntos rojos:} Colisiones detectadas
+    \item \textbf{Áreas amarillas:} Celdas con suciedad detectada
+    \item \textbf{Áreas azules:} Celdas limpias después de pasar el robot
+    \item \textbf{Cuadrado negro:} Posición de la base de carga
+\end{itemize}
+
+\subsubsection{Análisis Visual para Optimización}
+
+\begin{enumerate}
+    \item \textbf{Cobertura baja:} Si ves muchas áreas sin explorar (blancas), mejora tu estrategia de navegación
+    \item \textbf{Muchas colisiones:} Si hay muchos puntos rojos, implementa mejor detección de obstáculos
+    \item \textbf{Suciedad sin limpiar:} Áreas amarillas indican que detectaste suciedad pero no la limpiaste
+    \item \textbf{Trayectoria errática:} Si la línea da muchas vueltas sin sentido, optimiza la lógica de movimiento
+    \item \textbf{Batería crítica:} Si la barra llega a rojo, implementa gestión de batería con recargas
+\end{enumerate}
+
+\begin{warningbox}{Importante}
+Recuerda volver a activar \code{visualize()} antes de la entrega final si la desactivaste temporalmente para pruebas rápidas.
+\end{warningbox}
+
 \section{Gestión de Batería}
 
 \subsection{Costes de Batería}
@@ -636,11 +868,13 @@ int main() {
 La función \code{finalizar()} es \textbf{OBLIGATORIA} y se ejecuta automáticamente cuando termina \code{run()}. Debe incluir la llamada a \code{visualize()} para mostrar la animación. También puedes usarla para mostrar estadísticas o guardar datos antes de la visualización.
 \end{infobox}
 
+\subsection{Ejemplo de Gestión de Batería}
 
+Ver sección~9 (Estrategias Completas) para ejemplos completos que incluyen gestión de batería con regreso a base y recarga automática.
 
 \section{Estrategias Completas}
 
-\subsection{Ejemplo 9: Robot Autónomo Completo}
+\subsection{Ejemplo: Robot Autónomo Completo}
 
 Este ejemplo implementa un robot completo con:
 \begin{itemize}
@@ -855,28 +1089,34 @@ Para proyectos, usa \textbf{Opción 2 (make)}. Para aprender o depurar, usa \tex
 Después de ejecutar tu programa, se generan automáticamente:
 
 \begin{enumerate}
-    \item \texttt{log.csv} --- Historial completo de posiciones
-    \item \texttt{stats.csv} --- Estadísticas finales
-    \item \texttt{map.pgm} --- Imagen del mapa
+    \item \texttt{log.csv} --- Historial completo de posiciones del robot
+    \item \texttt{stats.csv} --- Estadísticas finales (usado para puntuación)
+    \item \texttt{map.pgm} --- Imagen del mapa usado
 \end{enumerate}
 
 \subsection{Leer las Estadísticas}
 
+El archivo \texttt{stats.csv} contiene toda la información necesaria para calcular tu puntuación. Ver \textbf{Sección~7.2} para detalles completos sobre el formato y significado de cada columna.
+
 \begin{verbatim}
 $ cat stats.csv
-cell_total, cell_visited, dirt_total, dirt_cleaned, 
-bat_total, bat_mean, forward, turn, bumps, clean, load
-2285, 87, 310, 25, 850.5, 720.3, 87, 45, 12, 50, 3
+0,0,2304,1245,310,285,1000.0,234.5,450,123,45,285,2
 \end{verbatim}
 
-\textbf{Interpretación:}
+\textbf{Interpretación rápida:}
 \begin{itemize}
-    \item \texttt{cell\_total}: 2285 celdas totales en el mapa
-    \item \texttt{cell\_visited}: 87 celdas visitadas (3.8\% del mapa)
-    \item \texttt{dirt\_total}: 310 unidades de suciedad iniciales
-    \item \texttt{dirt\_cleaned}: 25 unidades limpiadas (8\% del total)
-    \item \texttt{bat\_total}: 850.5 unidades de batería consumidas
+    \item Cobertura: 1245/2304 = 54\% de celdas visitadas
+    \item Limpieza: 285/310 = 92\% de suciedad limpiada
+    \item Batería: 234.5/1000 = 23.5\% conservada
+    \item Acciones: 450 avances, 123 giros, 45 colisiones, 285 limpiezas, 2 recargas
 \end{itemize}
+
+\textbf{Para autoevaluarte:}
+\begin{verbatim}
+./competition/myscore stats.csv
+\end{verbatim}
+
+Ver \textbf{Sección~7.1} para más información sobre autoevaluación con \code{myscore}.
 
 \subsection{Cargar un Mapa Existente}
 
