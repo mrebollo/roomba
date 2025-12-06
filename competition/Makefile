@@ -11,12 +11,27 @@ LIB_DIR = lib
 RESULTS_DIR = results
 
 # Default target: build everything
-all: runner check-lib
+all: runner score myscore check-lib
 
 # Build competition runner
 $(RUNNER): runner.c competition_ext.c simula_comp.c
 	$(CC) runner.c $(CFLAGS) -o $(RUNNER)
 	@echo "✓ Competition runner compiled successfully"
+
+# Build scoring calculator (organizer tool)
+score: score.c libscore.o
+	$(CC) score.c libscore.o $(CFLAGS) -o score
+	@echo "✓ Scoring calculator compiled successfully"
+
+# Build participant scoring tool
+myscore: myscore.c libscore.o
+	$(CC) myscore.c libscore.o $(CFLAGS) -o myscore
+	@echo "✓ Participant scoring tool compiled successfully"
+
+# Build scoring library
+libscore.o: libscore.c libscore.h
+	$(CC) -c libscore.c $(CFLAGS)
+	@echo "✓ Scoring library compiled"
 
 # Check if library exists, warn if not
 check-lib:
@@ -32,6 +47,10 @@ lib:
 	@echo "Building competition library from project root..."
 	@cd .. && $(MAKE) lib-competition
 	@echo "✓ Library built: $(LIB_DIR)/simula.o"
+	@echo "Copying participant tools to lib/..."
+	@cp myscore $(LIB_DIR)/ 2>/dev/null || echo "Run 'make myscore' first"
+	@cp scoring.conf $(LIB_DIR)/ 2>/dev/null || echo "scoring.conf not found"
+	@echo "✓ Participant tools ready"
 
 # Sync headers from project root
 sync-headers:
@@ -77,7 +96,7 @@ init:
 
 # Clean competition files
 clean:
-	rm -f $(RUNNER)
+	rm -f $(RUNNER) score myscore libscore.o
 	rm -f $(TEAMS_DIR)/*/roomba
 	rm -f $(TEAMS_DIR)/*/config.txt
 	rm -f stats.csv ranking.txt
@@ -93,8 +112,10 @@ clean-all: clean
 help:
 	@echo "Roomba Competition System - Available targets:"
 	@echo ""
-	@echo "  make              - Build runner and check library"
+	@echo "  make              - Build runner, score calculator and check library"
 	@echo "  make runner       - Build competition runner"
+	@echo "  make score        - Build scoring calculator (organizer)"
+	@echo "  make myscore      - Build scoring tool (participants)"
 	@echo "  make lib          - Build competition library from root"
 	@echo "  make sync-headers - Sync headers from project root"
 	@echo "  make run          - Run full competition"
@@ -104,10 +125,24 @@ help:
 	@echo "  make clean        - Remove generated files"
 	@echo "  make clean-all    - Deep clean (includes library)"
 	@echo ""
+	@echo "Organizer workflow:"
+	@echo "  1. make lib       - Build competition library (once)"
+	@echo "  2. make           - Build runner and score calculator"
+	@echo "  3. ./runner       - Run competition, generates stats.csv"
+	@echo "  4. ./score        - Calculate rankings from stats.csv"
+	@echo ""
+	@echo "Participant workflow:"
+	@echo "  1. Edit main.c    - Modify robot behavior"
+	@echo "  2. make run       - Test your robot"
+	@echo "  3. ./myscore      - Check your score"
+	@echo "  4. Iterate!"
+	@echo ""
 	@echo "Directory structure:"
-	@echo "  teams/     - Team source code (main.c)"
+	@echo "  teams/     - Participant source code (main.c + stats.csv)"
 	@echo "  lib/       - Competition library (simula.o)"
 	@echo "  maps/      - Official competition maps"
+	@echo "  results/   - Generated rankings and scores"
+	@echo "  logs/      - Execution logs per team/map/run"
 	@echo "  results/   - Competition results by timestamp"
 	@echo "  scripts/   - Auxiliary scripts"
 
