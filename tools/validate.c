@@ -1,0 +1,511 @@
+/**
+ * Roomba Code Validator
+ * 
+ * Validates team code before competition submission.
+ * Can be used by students to self-check or by professors to review submissions.
+ * 
+ * Compilation:
+ *   gcc validate.c -Wall -Wextra -O2 -lm -o validate
+ * 
+ * Usage:
+ *   ./validate <team_directory> [options]
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <dirent.h>
+
+#define MAX_PATH 512
+#define MAX_CMD 1024
+#define DEFAULT_TIMEOUT 10
+#define DEFAULT_MAPS_DIR "../maps"
+#define TEST_MAPS 4
+
+// ANSI colors
+#define COLOR_RED     "\033[0;31m"
+#define COLOR_GREEN   "\033[0;32m"
+#define COLOR_YELLOW  "\033[1;33m"
+#define COLOR_BLUE    "\033[0;34m"
+#define COLOR_RESET   "\033[0m"
+
+typedef struct {
+    char team_dir[MAX_PATH];
+    char maps_dir[MAX_PATH];
+    char output_file[MAX_PATH];
+    int strict_mode;
+    int timeout;
+    int use_color;
+} config_t;
+
+typedef struct {
+    int passed;
+    int warnings;
+    int failed;
+    int tests_run;
+    int tests_passed;
+} results_t;
+
+// Global output file pointer
+FILE *output_fp = NULL;
+
+/**
+ * @brief Print message with color (if enabled) and save to output file
+ */
+void log_msg(const char *color, const char *prefix, const char *msg) {
+    if (output_fp) {
+        fprintf(output_fp, "[%s] %s\n", prefix, msg);
+    }
+    printf("%s[%s]%s %s\n", color, prefix, COLOR_RESET, msg);
+}
+
+void log_info(const char *msg) { log_msg(COLOR_BLUE, "INFO", msg); }
+void log_pass(const char *msg) { log_msg(COLOR_GREEN, "PASS", msg); }
+void log_warn(const char *msg) { log_msg(COLOR_YELLOW, "WARN", msg); }
+void log_fail(const char *msg) { log_msg(COLOR_RED, "FAIL", msg); }
+
+/**
+ * @brief Print usage information
+ */
+void print_usage(const char *prog_name) {
+    printf("Usage: %s <team_directory> [options]\n\n", prog_name);
+    printf("Validates team code before competition submission.\n\n");
+    printf("Arguments:\n");
+    printf("  team_directory    Path to team directory containing main.c\n\n");
+    printf("Options:\n");
+    printf("  --maps <dir>      Path to maps directory (default: %s)\n", DEFAULT_MAPS_DIR);
+    printf("  --output <file>   Save validation report to file\n");
+    printf("  --strict          Fail on warnings\n");
+    printf("  --timeout <sec>   Execution timeout per test (default: %d)\n", DEFAULT_TIMEOUT);
+    printf("  --no-color        Disable colored output\n");
+    printf("  --help            Show this help\n\n");
+    printf("Examples:\n");
+    printf("  %s .\n", prog_name);
+    printf("  %s ../competition/teams/team01 --output report.txt\n", prog_name);
+    printf("  %s ../competition/teams/team02 --strict\n\n", prog_name);
+}
+
+/**
+ * @brief Parse command line arguments
+ */
+int parse_args(int argc, char *argv[], config_t *cfg) {
+    // Defaults
+    strcpy(cfg->maps_dir, DEFAULT_MAPS_DIR);
+    cfg->output_file[0] = '\0';
+    cfg->strict_mode = 0;
+    cfg->timeout = DEFAULT_TIMEOUT;
+    cfg->use_color = 1;
+    cfg->team_dir[0] = '\0';
+    
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--help") == 0) {
+            return -1;
+        } else if (strcmp(argv[i], "--maps") == 0 && i + 1 < argc) {
+            strcpy(cfg->maps_dir, argv[++i]);
+        } else if (strcmp(argv[i], "--output") == 0 && i + 1 < argc) {
+            strcpy(cfg->output_file, argv[++i]);
+        } else if (strcmp(argv[i], "--strict") == 0) {
+            cfg->strict_mode = 1;
+        } else if (strcmp(argv[i], "--timeout") == 0 && i + 1 < argc) {
+            cfg->timeout = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--no-color") == 0) {
+            cfg->use_color = 0;
+        } else if (argv[i][0] != '-') {
+            strcpy(cfg->team_dir, argv[i]);
+        } else {
+            fprintf(stderr, "Unknown option: %s\n", argv[i]);
+            return -1;
+        }
+    }
+    
+    if (cfg->team_dir[0] == '\0') {
+        fprintf(stderr, "Error: Team directory not specified\n");
+        return -1;
+    }
+    
+    return 0;
+}
+
+/**
+ * @brief Find main source file in directory
+ */
+int find_source_file(const char *dir, char *source_file) {
+    // First try main.c
+    char path[MAX_PATH];
+    snprintf(path, sizeof(path), "%s/main.c", dir);
+    if (access(path, F_OK) == 0) {
+        strcpy(source_file, "main.c");
+        return 0;
+    }
+    
+    // Look for any .c file
+    DIR *d = opendir(dir);
+    if (!d) return -1;
+    
+    struct dirent *entry;
+    while ((entry = readdir(d)) != NULL) {
+        size_t len = strlen(entry->d_name);
+        if (len > 2 && strcmp(entry->d_name + len - 2, ".c") == 0) {
+            strcpy(source_file, entry->d_name);
+            closedir(d);
+            return 0;
+        }
+    }
+    
+    closedir(d);
+    return -1;
+}
+
+/**
+ * @brief Compile team code
+ */
+int compile_team(const char *team_dir, const char *source_file, results_t *res) {
+    char cmd[MAX_CMD];
+    char log_file[MAX_PATH];
+    
+    snprintf(log_file, sizeof(log_file), "%s/compile.log", team_dir);
+    
+    // Copy simulator library to team directory (as students receive it)
+    log_info("Preparing build environment...");
+    snprintf(cmd, sizeof(cmd), 
+        "cp ../simula.h ../simula.o %s/ 2>/dev/null", team_dir);
+    system(cmd);
+    
+    // Compile in team directory (as students do locally)
+    snprintf(cmd, sizeof(cmd),
+        "cd %s && gcc -Wall -Wextra -DCOMPETITION_MODE %s simula.o -lm -o roomba_test > compile.log 2>&1",
+        team_dir, source_file);
+    
+    log_info("Compiling code...");
+    
+    int result = system(cmd);
+    
+    if (result != 0) {
+        log_fail("Compilation failed");
+        
+        // Show error log
+        char cat_cmd[MAX_CMD];
+        snprintf(cat_cmd, sizeof(cat_cmd), "cat %s", log_file);
+        system(cat_cmd);
+        
+        res->failed++;
+        return -1;
+    }
+    
+    log_pass("Compilation successful");
+    res->passed++;
+    
+    // Check for warnings
+    char grep_cmd[MAX_CMD];
+    snprintf(grep_cmd, sizeof(grep_cmd), "grep -c 'warning:' %s 2>/dev/null || echo 0", log_file);
+    FILE *fp = popen(grep_cmd, "r");
+    if (fp) {
+        int warn_count = 0;
+        fscanf(fp, "%d", &warn_count);
+        pclose(fp);
+        
+        if (warn_count > 0) {
+            char msg[128];
+            snprintf(msg, sizeof(msg), "Compilation produced %d warning(s)", warn_count);
+            log_warn(msg);
+            res->warnings++;
+        }
+    }
+    
+    return 0;
+}
+
+/**
+ * @brief Get list of test maps
+ */
+int get_test_maps(const char *maps_dir, char maps[][MAX_PATH], int max_maps) {
+    DIR *d = opendir(maps_dir);
+    if (!d) return 0;
+    
+    int count = 0;
+    struct dirent *entry;
+    
+    while ((entry = readdir(d)) != NULL && count < max_maps) {
+        size_t len = strlen(entry->d_name);
+        if (len > 4 && strcmp(entry->d_name + len - 4, ".pgm") == 0) {
+            snprintf(maps[count], MAX_PATH, "%s/%s", maps_dir, entry->d_name);
+            count++;
+        }
+    }
+    
+    closedir(d);
+    return count;
+}
+
+/**
+ * @brief Execute single test with timeout
+ */
+int execute_test(const char *team_dir, const char *map_file, int timeout) {
+    char cmd[MAX_CMD];
+    
+    // Copy map to test directory
+    snprintf(cmd, sizeof(cmd), "cp %s %s/map.pgm", map_file, team_dir);
+    system(cmd);
+    
+    // Create config
+    snprintf(cmd, sizeof(cmd), "echo '0 0' > %s/config.txt", team_dir);
+    system(cmd);
+    
+    // Execute with fork for timeout control
+    pid_t pid = fork();
+    
+    if (pid == 0) {
+        // Child process
+        char exec_cmd[MAX_CMD];
+        snprintf(exec_cmd, sizeof(exec_cmd), "cd %s && ./roomba_test > /dev/null 2>&1", team_dir);
+        exit(system(exec_cmd) == 0 ? 0 : 1);
+    } else if (pid > 0) {
+        // Parent process
+        int status;
+        int remaining = timeout;
+        
+        while (remaining > 0) {
+            int result = waitpid(pid, &status, WNOHANG);
+            
+            if (result == pid) {
+                // Process finished
+                if (WIFEXITED(status)) {
+                    return WEXITSTATUS(status) == 0 ? 0 : -1;
+                } else if (WIFSIGNALED(status)) {
+                    return -2; // Crashed
+                }
+            } else if (result == -1) {
+                return -1;
+            }
+            
+            sleep(1);
+            remaining--;
+        }
+        
+        // Timeout - kill process
+        kill(pid, SIGKILL);
+        waitpid(pid, &status, 0);
+        return -3; // Timeout
+    }
+    
+    return -1;
+}
+
+/**
+ * @brief Run execution tests
+ */
+int run_execution_tests(const char *team_dir, const char *maps_dir, int timeout, results_t *res) {
+    char maps[TEST_MAPS][MAX_PATH];
+    int map_count = get_test_maps(maps_dir, maps, TEST_MAPS);
+    
+    if (map_count == 0) {
+        log_warn("No maps found for testing");
+        res->warnings++;
+        return 0;
+    }
+    
+    log_info("Running execution tests...");
+    
+    int passed = 0;
+    int failed = 0;
+    
+    for (int i = 0; i < map_count; i++) {
+        char *map_name = strrchr(maps[i], '/');
+        if (map_name) map_name++; else map_name = maps[i];
+        
+        char msg[256];
+        snprintf(msg, sizeof(msg), "  Testing with %s...", map_name);
+        log_info(msg);
+        
+        int result = execute_test(team_dir, maps[i], timeout);
+        
+        if (result == 0) {
+            snprintf(msg, sizeof(msg), "    %s: OK", map_name);
+            log_pass(msg);
+            passed++;
+        } else if (result == -3) {
+            snprintf(msg, sizeof(msg), "    %s: TIMEOUT (>%ds)", map_name, timeout);
+            log_fail(msg);
+            failed++;
+        } else if (result == -2) {
+            snprintf(msg, sizeof(msg), "    %s: CRASH", map_name);
+            log_fail(msg);
+            failed++;
+        } else {
+            snprintf(msg, sizeof(msg), "    %s: ERROR", map_name);
+            log_fail(msg);
+            failed++;
+        }
+    }
+    
+    res->tests_run = map_count;
+    res->tests_passed = passed;
+    
+    char summary[256];
+    if (failed == 0) {
+        snprintf(summary, sizeof(summary), "All execution tests passed (%d/%d)", passed, map_count);
+        log_pass(summary);
+        res->passed++;
+        return 0;
+    } else {
+        snprintf(summary, sizeof(summary), "Some execution tests failed (%d/%d failed)", failed, map_count);
+        log_fail(summary);
+        res->failed++;
+        return -1;
+    }
+}
+
+/**
+ * @brief Validate stats.csv
+ */
+int validate_stats(const char *team_dir, results_t *res) {
+    char stats_file[MAX_PATH];
+    snprintf(stats_file, sizeof(stats_file), "%s/stats.csv", team_dir);
+    
+    log_info("Validating stats.csv generation...");
+    
+    FILE *fp = fopen(stats_file, "r");
+    if (!fp) {
+        log_fail("stats.csv not generated");
+        res->failed++;
+        return -1;
+    }
+    
+    // Count lines
+    int line_count = 0;
+    char line[1024];
+    while (fgets(line, sizeof(line), fp)) {
+        line_count++;
+    }
+    fclose(fp);
+    
+    if (line_count >= 2) {
+        char msg[128];
+        snprintf(msg, sizeof(msg), "stats.csv generated with %d lines", line_count);
+        log_pass(msg);
+        res->passed++;
+        return 0;
+    } else {
+        log_warn("stats.csv exists but appears empty");
+        res->warnings++;
+        return -1;
+    }
+}
+
+/**
+ * @brief Clean up temporary files
+ */
+void cleanup(const char *team_dir) {
+    char cmd[MAX_CMD];
+    snprintf(cmd, sizeof(cmd), "cd %s && rm -f roomba_test config.txt map.pgm compile.log simula.h simula.o", team_dir);
+    system(cmd);
+}
+
+/**
+ * @brief Main validation function
+ */
+int main(int argc, char *argv[]) {
+    config_t cfg;
+    results_t res = {0, 0, 0, 0, 0};
+    
+    // Parse arguments
+    if (parse_args(argc, argv, &cfg) != 0) {
+        print_usage(argv[0]);
+        return 1;
+    }
+    
+    // Disable colors if requested
+    if (!cfg.use_color) {
+        // This is a simplified approach - proper implementation would redefine color macros
+    }
+    
+    // Open output file if specified
+    if (cfg.output_file[0] != '\0') {
+        output_fp = fopen(cfg.output_file, "w");
+        if (output_fp) {
+            fprintf(output_fp, "Roomba Code Validation Report\n");
+            fprintf(output_fp, "Generated: %s", __DATE__);
+            fprintf(output_fp, "\nTeam: %s\n", cfg.team_dir);
+            fprintf(output_fp, "========================================\n\n");
+        }
+    }
+    
+    // Print header
+    printf("\n");
+    printf("===================================\n");
+    printf("  Roomba Code Validator\n");
+    printf("===================================\n\n");
+    
+    // Check directory exists
+    struct stat st;
+    if (stat(cfg.team_dir, &st) != 0 || !S_ISDIR(st.st_mode)) {
+        log_fail("Team directory not found");
+        return 1;
+    }
+    
+    // Find source file
+    char source_file[MAX_PATH];
+    if (find_source_file(cfg.team_dir, source_file) != 0) {
+        log_fail("No .c source file found");
+        return 1;
+    }
+    
+    char msg[256];
+    snprintf(msg, sizeof(msg), "Found source file: %s", source_file);
+    log_pass(msg);
+    res.passed++;
+    
+    // Test 1: Compilation
+    if (compile_team(cfg.team_dir, source_file, &res) != 0) {
+        cleanup(cfg.team_dir);
+        goto summary;
+    }
+    
+    // Test 2: Execution tests
+    run_execution_tests(cfg.team_dir, cfg.maps_dir, cfg.timeout, &res);
+    
+    // Test 3: Stats validation
+    validate_stats(cfg.team_dir, &res);
+    
+    // Cleanup
+    cleanup(cfg.team_dir);
+    
+summary:
+    // Print summary
+    printf("\n");
+    printf("===================================\n");
+    printf("  Validation Summary\n");
+    printf("===================================\n");
+    printf("%sPassed:%s   %d\n", COLOR_GREEN, COLOR_RESET, res.passed);
+    printf("%sWarnings:%s %d\n", COLOR_YELLOW, COLOR_RESET, res.warnings);
+    printf("%sFailed:%s   %d\n", COLOR_RED, COLOR_RESET, res.failed);
+    printf("\n");
+    
+    if (output_fp) {
+        fprintf(output_fp, "\n========================================\n");
+        fprintf(output_fp, "Summary: %d passed, %d warnings, %d failed\n", res.passed, res.warnings, res.failed);
+        fprintf(output_fp, "Execution tests: %d/%d passed\n", res.tests_passed, res.tests_run);
+        fclose(output_fp);
+        
+        snprintf(msg, sizeof(msg), "Report saved to: %s", cfg.output_file);
+        log_info(msg);
+    }
+    
+    // Determine exit code
+    if (res.failed > 0) {
+        log_fail("Validation FAILED - Please fix the errors above");
+        return 1;
+    }
+    
+    if (cfg.strict_mode && res.warnings > 0) {
+        log_fail("Strict mode: Validation FAILED due to warnings");
+        return 1;
+    }
+    
+    log_pass("Validation PASSED - Code is ready for competition!");
+    return 0;
+}

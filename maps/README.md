@@ -1,78 +1,85 @@
-# Generador de Mapas para Roomba
+# Mapas de Prueba para Roomba
 
-Este directorio contiene el generador de mapas de prueba para el simulador Roomba.
+Este directorio contiene mapas de prueba en formato PGM para el simulador Roomba.
 
-## Descripción
+## 📁 Mapas Disponibles
 
-El generador crea automáticamente 8 mapas diferentes con diversas configuraciones:
+### Mapas sin obstáculos
+- **noobs.pgm**: Sin obstáculos, solo suciedad - Ideal para principiantes
 
-- **noobs.pgm**: Sin obstáculos, solo suciedad
+### Mapas con obstáculos aleatorios
 - **random1.pgm**: Obstáculos dispersos (densidad baja: 1%)
 - **random3.pgm**: Obstáculos dispersos (densidad media: 3%)
 - **random5.pgm**: Obstáculos dispersos (densidad alta: 5%)
+
+### Mapas con muros
 - **walls1.pgm**: 1 muro (vertical u horizontal)
 - **walls2.pgm**: 2 muros de la misma orientación
 - **walls3.pgm**: 3 muros de la misma orientación
 - **walls4.pgm**: 4 muros de la misma orientación
 
+## 📝 Características de los mapas
+
 Todos los mapas incluyen:
 - Base del robot en posición aleatoria en las paredes
 - Orientación perpendicular a la pared
-- 50 celdas con suciedad distribuidas aleatoriamente
+- Suciedad distribuida aleatoriamente (niveles 1-5)
 - Garantía de que los muros no tocan los bordes
 
-## Compilación
+## 🛠️ Generar Mapas Personalizados
 
-### Modo desarrollo (desde fuentes):
-```bash
-make mapgen-dev   # Generador de mapas
-make viewmap-dev  # Visualizador de mapas
-```
-
-### Modo distribución (con simula.o):
-```bash
-make lib          # Genera simula.o
-make mapgen       # Compila mapgen con simula.o
-make viewmap      # Compila viewmap con simula.o
-```
-
-## Uso
-
-### Generar mapas
+Para crear tus propios mapas, usa las herramientas en `../tools/`:
 
 ```bash
-./maps/generate
+cd ../tools
+make generate_map
+
+# Crear mapa personalizado
+./generate_map <filas> <columnas> <obstáculos%> <suciedad%> <salida.pgm>
+
+# Ejemplo
+./generate_map 60 60 10 50 ../maps/mi_mapa.pgm
 ```
 
-Los mapas se generarán en el directorio `maps/`.
+Ver documentación completa en `../tools/README.md`
 
-### Visualizar mapas
+## 👁️ Visualizar Mapas
+
+Para visualizar mapas en la terminal:
 
 ```bash
-./maps/viewmap maps/walls2.pgm
-./maps/viewmap maps/random3.pgm
-./maps/viewmap maps/noobs.pgm
+cd ../tools
+make viewmap
+./viewmap ../maps/walls2.pgm
 ```
 
-El visualizador muestra el mapa en formato ASCII:
+Leyenda:
 - `#` = Obstáculos/muros
 - `B` = Base del robot
 - `1`-`5` = Nivel de suciedad
-- Espacios = Celdas vacías
+- ` ` = Celdas vacías
 
-## Probar los mapas generados
+## 🎮 Usar Mapas en el Simulador
 
 ```bash
-./roomba maps/walls2.pgm
+# Copiar mapa al directorio de trabajo
+cp maps/walls2.pgm .
+
+# O especificar ruta (si el simulador lo permite)
 ./roomba maps/random3.pgm
 ```
 
-## API
+## 📊 Formato PGM
 
-El generador utiliza la API limpia definida en `sim_world_api.h`:
+Los mapas usan formato PGM (Portable Gray Map):
+- Valores 0-255 representan diferentes elementos
+- Formato de texto simple, fácil de generar/editar
+- Compatible con herramientas estándar de procesamiento de imágenes
 
-- `map_create()` - Crea un nuevo mapa
-- `map_generate()` - Genera un mapa aleatorio
-- `map_save()` - Guarda el mapa en formato PGM
-- `map_destroy()` - Libera la memoria del mapa
+## 🔗 Referencias
+
+- Generador de mapas: `../tools/generate_map`
+- Visualizador: `../tools/viewmap`
+- Documentación técnica: `../docs/`
+
 
