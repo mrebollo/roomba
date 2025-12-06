@@ -244,10 +244,19 @@ int execute_team_rounds(const char *teams_dir, const char *team_name) {
     char cmd[512];
     char log_stdout[256];
     char log_stderr[256];
+    char team_stats[512];
     int total_runs = MAPS_COUNT * REPS_PER_MAP;
     int successful_runs = 0;
     int crashes = 0;
     int errors = 0;
+    
+    // Initialize team's stats.csv with header
+    snprintf(team_stats, sizeof(team_stats), "%s/%s/stats.csv", teams_dir, team_name);
+    FILE *stats_fd = fopen(team_stats, "w");
+    if(stats_fd) {
+        fprintf(stats_fd, "cell_total, cell_visited, dirt_total, dirt_cleaned, bat_total, bat_mean, forward, turn, bumps, clean, load\n");
+        fclose(stats_fd);
+    }
     
     printf("  Executing %d rounds for %s:\n", total_runs, team_name);
     
@@ -353,9 +362,13 @@ void consolidate_team_stats(const char *teams_dir, const char *team_name, const 
         return;
     }
     
-    // Copy all data lines
+    // Copy all data lines, prepending team name
+    int line_num = 0;
     while(fgets(line, sizeof(line), src)) {
-        fputs(line, dest);
+        // Each line is a different execution, calculate map type
+        int map_type = line_num / REPS_PER_MAP;
+        fprintf(dest, "%s,%d,%s", team_name, map_type, line);
+        line_num++;
     }
     
     fclose(src);

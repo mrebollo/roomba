@@ -51,6 +51,9 @@ void save_log(const sensor_t *hist, int len){
  * Genera un archivo CSV con las métricas de la simulación:
  * celdas totales/visitadas, suciedad total/limpiada, batería total/media,
  * y contadores de movimientos por tipo.
+ * 
+ * En modo competición, agrega líneas al archivo existente.
+ * En modo normal, crea/sobrescribe el archivo con header.
  */
 void save_stats(const struct _stat *st){
   if(!st) {
@@ -58,6 +61,21 @@ void save_stats(const struct _stat *st){
     return;
   }
   
+#ifdef COMPETITION_MODE
+  // En modo competición, agregar línea sin header
+  FILE *file = fopen(STATS_FILE,"a");
+  if(!file) {
+    fprintf(stderr, "Error: Cannot open %s for appending\n", STATS_FILE);
+    return;
+  }
+  
+  // Solo datos, sin header
+  fprintf(file, "%d, %d, %d, %d, %.1f, %.1f, %d, %d, %d, %d, %d\n",
+    st->cell_total, st->cell_visited, st->dirt_total, st->dirt_cleaned,
+    st->bat_total, st->bat_mean,
+    st->moves[FWD], st->moves[TURN], st->moves[BUMP], st->moves[CLEAN], st->moves[LOAD]);
+#else
+  // Modo normal: crear/sobrescribir con header
   FILE *file = fopen(STATS_FILE,"w");
   if(!file) {
     fprintf(stderr, "Error: Cannot open %s for writing\n", STATS_FILE);
@@ -69,5 +87,7 @@ void save_stats(const struct _stat *st){
     st->cell_total, st->cell_visited, st->dirt_total, st->dirt_cleaned,
     st->bat_total, st->bat_mean,
     st->moves[FWD], st->moves[TURN], st->moves[BUMP], st->moves[CLEAN], st->moves[LOAD]);
+#endif
+  
   fclose(file);
 }
