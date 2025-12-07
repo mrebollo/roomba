@@ -1,11 +1,7 @@
-/**
- * @file sim_visual.c
- * @brief Visualización ASCII de la simulación
- * 
- * Proporciona representación visual en terminal del recorrido del robot,
- * incluyendo mapa, camino, estado de sensores y batería.
- */
+// Backup de sim_visual.c antes de activar alternate screen buffer
+// Fecha: 2025-12-07
 
+/* --- INICIO DEL ARCHIVO ORIGINAL --- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,15 +14,6 @@
 #define VISUALIZATION_DELAY_MS 100          ///< Retardo entre frames (ms)
 #define COMPASS_BUF_SIZE 4                  ///< Tamaño buffer para puntos cardinales
 
-/* ============================================================================
- * FUNCIONES AUXILIARES DE VISUALIZACIÓN
- * ============================================================================ */
-
-/**
- * @brief Genera una barra de progreso ASCII
- * @param perc Porcentaje (0-100)
- * @return String estático con la barra de progreso [====    ]
- */
 static char* ascii_progress(int perc){
   static char bar[PROGBARLEN+3];
   int i;
@@ -38,11 +25,6 @@ static char* ascii_progress(int perc){
   return bar;
 }
 
-/**
- * @brief Convierte un ángulo en radianes a punto cardinal
- * @param angle Ángulo en radianes
- * @return String con la dirección (E, SE, S, SW, W, NW, N, NE)
- */
 static char *compass(float angle){
   static char dir[COMPASS_BUF_SIZE];
   if(angle >= 15*M_PI_8 || angle < M_PI_8) strcpy(dir, "E");
@@ -56,24 +38,18 @@ static char *compass(float angle){
   return dir;
 }
 
-/**
- * @brief Imprime el mapa en formato ASCII
- * @param view Matriz de caracteres con el mapa a imprimir
- */
 static void print_map_ascii(char view[WORLDSIZE][WORLDSIZE]){
+  int max_width = map.ncol > PROGBARLEN ? map.ncol : PROGBARLEN;
   for(int i = 0; i < map.nrow; i++){
-    for(int j = 0; j < map.ncol; j++)
+    int j = 0;
+    for(; j < map.ncol; j++)
       printf("%c", view[i][j]);
+    for(; j < max_width; j++)
+      printf(" ");
     printf("\n");
   }
 }
 
-/**
- * @brief Añade marcadores de suciedad al mapa
- * @param view Matriz donde añadir los marcadores
- * 
- * Marca cada celda sucia con un dígito indicando su nivel de suciedad.
- */
 static void annotate_dirt_to_map(char view[WORLDSIZE][WORLDSIZE]){
   for(int i = 0; i < map.ndirt; i++){
     dirt_t d = map.dirt[i];
@@ -83,14 +59,6 @@ static void annotate_dirt_to_map(char view[WORLDSIZE][WORLDSIZE]){
   }
 }
 
-/**
- * @brief Superpone el camino recorrido sobre el mapa
- * @param view Matriz donde dibujar el camino
- * @param h Array con el historial de posiciones
- * @param len Número de posiciones en el historial
- * 
- * Marca con '.' cada celda visitada por el robot.
- */
 static void overlay_path_on_map(char view[WORLDSIZE][WORLDSIZE], sensor_t h[], int len){
   for(int i = 0; i < len; i++){
     if(h[i].y >= 0 && h[i].y < map.nrow && h[i].x >= 0 && h[i].x < map.ncol){
@@ -99,14 +67,6 @@ static void overlay_path_on_map(char view[WORLDSIZE][WORLDSIZE], sensor_t h[], i
   }
 }
 
-/**
- * @brief Marca la base y posición final del robot
- * @param view Matriz donde añadir las marcas
- * @param h Array con el historial de posiciones
- * @param len Número de posiciones en el historial
- * 
- * Marca con 'B' la posición inicial (base) y con 'o' la posición final.
- */
 static void mark_base_and_end(char view[WORLDSIZE][WORLDSIZE], sensor_t h[], int len){
   if(len > 0){
     if(h[0].y >= 0 && h[0].y < map.nrow && h[0].x >= 0 && h[0].x < map.ncol){
@@ -118,13 +78,6 @@ static void mark_base_and_end(char view[WORLDSIZE][WORLDSIZE], sensor_t h[], int
   }
 }
 
-/**
- * @brief Imprime la línea de estado del robot
- * @param s Puntero al estado del sensor a mostrar
- * 
- * Muestra batería con barra de progreso, posición, orientación,
- * estado del bumper y nivel de suciedad detectado.
- */
 static void print_status_line(sensor_t *s){
   int bat = s->battery / MAXBAT * 100;
   printf("\nBATT: %s %d%%", ascii_progress(bat), bat);
@@ -138,23 +91,13 @@ static void print_status_line(sensor_t *s){
     s->infrared > 0 ? "...cleaning" : " ");
 }
 
-static volatile sig_atomic_t g_stop_vis = 0;  ///< Flag para interrumpir visualización
+static volatile sig_atomic_t g_stop_vis = 0;
 
-/**
- * @brief Manejador de SIGINT para detener visualización
- * @param signo Número de señal (no usado)
- */
 static void sigint_vis_handler(int signo){
   (void)signo;
   g_stop_vis = 1;
 }
 
-/**
- * @brief Dibuja el mapa con el camino hasta el tick especificado
- * @param view Buffer del mapa
- * @param h Historial de posiciones
- * @param len Número de ticks a mostrar
- */
 static void print_path(char view[WORLDSIZE][WORLDSIZE], sensor_t h[], int len){
   annotate_dirt_to_map(view);
   overlay_path_on_map(view, h, len);
@@ -165,14 +108,6 @@ static void print_path(char view[WORLDSIZE][WORLDSIZE], sensor_t h[], int len){
   }
 }
 
-/**
- * @brief Visualiza la simulación de forma animada
- * 
- * Reproduce el recorrido del robot frame a frame, mostrando el mapa
- * actualizado con el camino recorrido y el estado de los sensores.
- * Solo está activa si ENABLE_VISUALIZATION está definido.
- * Se puede interrumpir con Ctrl-C.
- */
 void visualize(){
 #if ENABLE_VISUALIZATION
   if(!hist){
@@ -181,34 +116,40 @@ void visualize(){
   }
   g_stop_vis = 0;
   void (*prev)(int) = signal(SIGINT, sigint_vis_handler);
-  
-  // Hide cursor and clear screen once at start
-  printf("\033[?25l\033[2J");
+  // Activar alternate screen buffer y ocultar cursor
+  printf("\033[?1049h\033[?25l\033[2J");
   fflush(stdout);
-  
   for(int t = 0; t < timer && !g_stop_vis; t++){
     // Move cursor to home position (top-left) without clearing
+    printf("\033[2J");
     printf("\033[H");
-    
     char view[WORLDSIZE][WORLDSIZE];
-    // copy current map to a local view buffer
     for(int i = 0; i < map.nrow; i++)
       for(int j = 0; j < map.ncol; j++)
         view[i][j] = map.cells[i][j];
     print_path(view, hist, t);
     printf("Ctrl-C para salir\n");
-    
-    // Flush output once after all drawing is done
     fflush(stdout);
-    
     const long ms = VISUALIZATION_DELAY_MS;
     struct timespec ts = { ms/1000, (ms%1000)*1000000L };
     nanosleep(&ts, NULL);
   }
-  
-  // Restore cursor and clean up
-  printf("\033[?25h");
+  // Antes de restaurar el buffer normal, guardar el último frame
+  int last_tick = (timer < 1) ? 0 : (timer-1);
+  char view[WORLDSIZE][WORLDSIZE];
+  for(int i = 0; i < map.nrow; i++)
+    for(int j = 0; j < map.ncol; j++)
+      view[i][j] = map.cells[i][j];
+
+  // Restaurar buffer normal y cursor
+  printf("\033[?25h\033[?1049l");
   fflush(stdout);
   signal(SIGINT, prev);
-#endif
+
+  // Imprimir el último frame en el buffer normal
+  print_path(view, hist, last_tick);
+  printf("\n--- Simulación finalizada ---\n");
+  fflush(stdout);
+  #endif
 }
+/* --- FIN DEL ARCHIVO ORIGINAL --- */
