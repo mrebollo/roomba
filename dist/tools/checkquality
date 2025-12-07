@@ -1,0 +1,246 @@
+#!/bin/bash
+# checkquality - Analiza la calidad del código con cppcheck y reglas CERT C
+# Uso: ./checkquality archivo.c
+
+if [ $# -eq 0 ]; then
+    echo "Uso: $0 archivo.c"
+    echo ""
+    echo "Analiza la calidad del código fuente usando cppcheck con:"
+    echo "  - Todas las verificaciones habilitadas"
+    echo "  - Reglas CERT C Coding Standard"
+    echo "  - Análisis de warnings, style, performance, portability"
+    echo ""
+    echo "Ejemplo:"
+    echo "  $0 main.c"
+    exit 1
+fi
+
+SOURCE_FILE="$1"
+
+if [ ! -f "$SOURCE_FILE" ]; then
+    echo "Error: El archivo '$SOURCE_FILE' no existe"
+    exit 1
+fi
+
+# Verificar que cppcheck está instalado
+if ! command -v cppcheck &> /dev/null; then
+    echo "Error: cppcheck no está instalado"
+    echo ""
+    echo "Para instalar en macOS:"
+    echo "  brew install cppcheck"
+    echo ""
+    echo "Para instalar en Linux:"
+    echo "  sudo apt-get install cppcheck"
+    exit 1
+fi
+
+echo "========================================="
+echo "  Análisis de Calidad de Código"
+echo "========================================="
+echo "Archivo: $SOURCE_FILE"
+echo "Fecha: $(date '+%Y-%m-%d %H:%M:%S')"
+echo ""
+
+# Ejecutar cppcheck con todas las verificaciones
+echo "Ejecutando análisis..."
+echo ""
+
+# Ejecutar cppcheck y capturar salida (redirigir todo a archivo)
+cppcheck --enable=all \
+         --suppress=missingIncludeSystem \
+         --suppress=missingInclude \
+         --suppress=checkersReport \
+         --suppress=staticFunction \
+         --template='{file}|{line}|{severity}|{id}|{message}' \
+         --quiet \
+         --force \
+         "$SOURCE_FILE" 2>/tmp/checkquality_raw_$$.txt
+
+# Procesar y traducir mensajes
+TOTAL=0
+
+while IFS='|' read -r file linea severidad id mensaje; do
+    # Verificar que la línea tiene el formato correcto
+    if [ -z "$linea" ] || [ -z "$id" ]; then
+        continue
+    fi
+    
+    TOTAL=$((TOTAL + 1))
+    
+    # Traducir y explicar problemas comunes
+    case "$id" in
+        unusedVariable)
+            echo "→ Línea $linea: Variable declarada pero nunca utilizada"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Elimina la declaración si no la necesitas, o úsala en tu código."
+            echo ""
+            ;;
+        unreadVariable)
+            echo "→ Línea $linea: Variable con valor asignado que nunca se lee"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Usa la variable en tu lógica o elimina la asignación innecesaria."
+            echo ""
+            ;;
+        unusedStructMember)
+            echo "→ Línea $linea: Campo de estructura nunca utilizado"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Elimina el campo si no lo necesitas o incorpóralo en tu lógica."
+            echo ""
+            ;;
+        staticFunction)
+            echo "→ Línea $linea: La función debería ser 'static'"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Añade 'static' antes de 'void':"
+            echo "            static void nombre_funcion(void) { ... }"
+            echo "  Razón: La función solo se usa en este archivo, no necesita ser visible externamente."
+            echo ""
+            ;;
+        variableScope)
+            echo "→ Línea $linea: Variable con ámbito demasiado amplio"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Declara la variable más cerca de donde la usas (dentro del if/while/for)."
+            echo ""
+            ;;
+        constParameter)
+            echo "→ Línea $linea: Parámetro que podría ser 'const'"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Si no modificas el parámetro, decláralo como 'const tipo *param'."
+            echo ""
+            ;;
+        constVariable)
+            echo "→ Línea $linea: Variable que podría ser 'const'"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Si el valor no cambia, declárala como 'const tipo variable = valor;'."
+            echo ""
+            ;;
+        uninitvar)
+            echo "→ Línea $linea: [!] Variable sin inicializar (ERROR GRAVE)"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Inicializa la variable al declararla: int variable = 0;"
+            echo "  Peligro: Usar variables sin inicializar causa comportamiento impredecible."
+            echo ""
+            ;;
+        arrayIndexOutOfBounds)
+            echo "→ Línea $linea: [!] Acceso fuera de límites del array (ERROR GRAVE)"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Verifica que el índice esté entre 0 y tamaño-1."
+            echo "  Peligro: Puede causar crashes o corromper memoria."
+            echo ""
+            ;;
+        nullPointer)
+            echo "→ Línea $linea: [!] Posible acceso a puntero nulo (ERROR GRAVE)"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Verifica que el puntero no sea NULL antes de usarlo."
+            echo "  Peligro: Causará un crash del programa."
+            echo ""
+            ;;
+        memleak)
+            echo "→ Línea $linea: [!] Fuga de memoria detectada (ERROR GRAVE)"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Asegúrate de liberar la memoria con free() antes de que termine el programa."
+            echo "  Peligro: El programa consumirá más y más memoria hasta agotarla."
+            echo ""
+            ;;
+        uninitdata)
+            echo "→ Línea $linea: [!] Uso de dato sin inicializar (ERROR GRAVE)"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Inicializa la variable antes de usarla."
+            echo "  Peligro: Resultados impredecibles y difíciles de depurar."
+            echo ""
+            ;;
+        duplicateCondition)
+            echo "→ Línea $linea: Condición duplicada en if/else"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Revisa la lógica, probablemente una condición está mal."
+            echo ""
+            ;;
+        knownConditionTrueFalse)
+            echo "→ Línea $linea: Condición que siempre es verdadera o falsa"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Simplifica el código eliminando el if/else innecesario."
+            echo ""
+            ;;
+        identicalConditionAfterEarlyExit)
+            echo "→ Línea $linea: Condición redundante después de return/break"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Elimina la comprobación redundante."
+            echo ""
+            ;;
+        unusedFunction)
+            echo "→ Línea $linea: Función definida pero nunca llamada"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Elimina la función si no la necesitas."
+            echo ""
+            ;;
+        unusedAllocatedMemory)
+            echo "→ Línea $linea: Memoria reservada pero nunca usada"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Elimina el malloc/calloc innecesario o usa la memoria reservada."
+            echo ""
+            ;;
+        memsetClassFloat)
+            echo "→ Línea $linea: Uso incorrecto de memset con float"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Inicializa los floats en un bucle o individualmente."
+            echo ""
+            ;;
+        clarifyCalculation)
+            echo "→ Línea $linea: Cálculo ambiguo - usa paréntesis"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Añade paréntesis para aclarar el orden: (a + b) * c"
+            echo ""
+            ;;
+        redundantAssignment)
+            echo "→ Línea $linea: Asignación redundante"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Elimina una de las asignaciones duplicadas."
+            echo ""
+            ;;
+        shadowVariable)
+            echo "→ Línea $linea: Variable local oculta otra con el mismo nombre"
+            echo "  Detalles: $mensaje"
+            echo "  Solución: Usa nombres diferentes para evitar confusión."
+            echo ""
+            ;;
+        normalCheckLevelMaxBranches)
+            # Mensaje informativo, no es un problema real
+            echo "→ Código complejo: El análisis de todas las ramificaciones está limitado"
+            echo "  Detalles: Tu código tiene muchas condiciones if/else anidadas."
+            echo "  Recomendación: Considera simplificar la lógica o dividir en funciones más pequeñas."
+            echo ""
+            ;;
+        *)
+            # Para otros problemas no traducidos
+            echo "→ Línea $linea: $id"
+            echo "  Detalles: $mensaje"
+            echo "  Nivel: $severidad"
+            echo ""
+            ;;
+    esac
+done < /tmp/checkquality_raw_$$.txt
+
+echo "========================================="
+echo "  Resumen"
+echo "========================================="
+
+if [ "$TOTAL" -eq 0 ]; then
+    echo ""
+    echo "✓ ¡Excelente! No se encontraron problemas de calidad"
+    echo "  Tu código cumple con los estándares de buenas prácticas."
+    echo ""
+else
+    echo "Total de problemas detectados: $TOTAL"
+    echo ""
+    echo "¿Qué significa esto?"
+    echo "  Los problemas detectados NO impiden que tu código funcione,"
+    echo "  pero mejorar estos aspectos hará tu código más:"
+    echo "    • Fácil de leer y mantener"
+    echo "    • Eficiente (sin código innecesario)"
+    echo "    • Profesional (mejores prácticas de programación)"
+    echo ""
+    echo "Recomendación: Revisa cada problema indicado arriba y aplica las soluciones sugeridas."
+    echo ""
+fi
+
+rm -f /tmp/checkquality_$$.txt /tmp/checkquality_raw_$$.txt
+exit 0

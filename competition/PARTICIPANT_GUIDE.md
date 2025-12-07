@@ -628,7 +628,7 @@ Antes de entregar, verifica:
 
 ### 10.1 Documentación
 
-- **Manual del Usuario:** `docs/usuario/MANUAL_USUARIO.md`
+- **Manual del Usuario:** `docs/user/MANUAL_USUARIO.md`
 - **Ejemplos de código:** `samples/ejemplo*.c`
 - **Ejercicios:** `samples/ejercicio*.c`
 

@@ -1,7 +1,7 @@
 /**
  * @file main.c
  * @brief Plantilla de Proyecto - Simulador Roomba
- * @author Estudiante
+ * @author Miguel Rebollo (@mrebollo)
  * @date 2025
  * 
  * INSTRUCCIONES:
@@ -13,7 +13,7 @@
  * FUNCIONES DISPONIBLES (consulta simula.h para detalles):
  * - Sensores: rmb_state(), rmb_battery(), rmb_bumper(), rmb_ifr()
  * - Actuadores: rmb_forward(), rmb_turn(), rmb_clean(), rmb_load()
- * - Utilidades: visualize(), save_stats()
+ * - Utilidades: visualize()
  */
 
 #include "simula.h"
@@ -52,9 +52,6 @@ int base_x, base_y;  // Ejemplo: posición de la base del robot
 void inicializar() {
     // Obtener posición de la base
     rmb_awake(&base_x, &base_y);
-    
-    // Inicializar generador de números aleatorios (opcional)
-    // srand(time(NULL));
     
     // --- Tu código de inicialización aquí ---
     
@@ -103,7 +100,6 @@ void comportamiento() {
     //
     // Ideas para implementar:
     // - Seguimiento de paredes (wall-following)
-    // - Patrón en espiral
     // - Gestión de batería (regresar a base cuando < 200)
     // - Máquina de estados (explorar, limpiar, recargar)
     // - Navegación dirigida usando atan2()
@@ -129,10 +125,10 @@ void finalizar() {
     // Mostrar animación del recorrido (recomendado)
     visualize();
     
-    // Guardar estadísticas en stats.csv (opcional, se hace automáticamente)
-    // save_stats();
-    
-    // Imprimir información adicional (opcional)
+    // Otras tareas
+    // - Guardar estadísticas
+    // - Guardar el recorrido (si se ha creado un mapa propio)
+    // - Imprimir información adicional (opcional)
     // printf("Simulacion terminada\n");
     // printf("Bateria final: %.1f\n", rmb_battery());
 }
@@ -148,14 +144,19 @@ void finalizar() {
  * 
  * @return 0 si la ejecución fue exitosa
  */
-int main() {
+int main(int argc, char *argv[]) {
+    // Cargar mapa si se proporciona como argumento
+    if (argc > 1) {
+        load_map(argv[1]);
+    }
+
     // Configurar simulación
     // Parámetros:
     //   - on_start: función de inicialización
     //   - exec_beh: función de comportamiento (se llama en cada paso)
     //   - on_finish: función de finalización
-    //   - exec_time: número máximo de pasos a simular (1000 por defecto)
-    configure(inicializar, comportamiento, finalizar, 1000);
+    //   - exec_time: número máximo de pasos a simular (ajustable)
+    configure(inicializar, comportamiento, finalizar, 100);
     
     // Ejecutar simulación
     run();

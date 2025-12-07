@@ -32,13 +32,12 @@ Para crear tus propios mapas, usa las herramientas en `../tools/`:
 
 ```bash
 cd ../tools
-make generate_map
+make generate
 
 # Crear mapa personalizado
-./generate_map <filas> <columnas> <obstáculos%> <suciedad%> <salida.pgm>
+./generate   # Genera 8 mapas de prueba en maps/
 
 # Ejemplo
-./generate_map 60 60 10 50 ../maps/mi_mapa.pgm
 ```
 
 Ver documentación completa en `../tools/README.md`

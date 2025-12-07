@@ -248,7 +248,7 @@ cat logs/teamXX.stderr
 
 ## Documentación Completa
 
-- **Manual del Usuario** (participantes): `docs/usuario/MANUAL_USUARIO.md`
+- **Manual del Usuario** (participantes): `docs/user/MANUAL_USUARIO.md`
 - **Manual del Organizador**: `docs/organizer/MANUAL_ORGANIZADOR.md`
 - **Manual del Desarrollador**: `docs/developer/manual_desarrollador.tex`
 

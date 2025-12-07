@@ -8,14 +8,7 @@
 
 void on_start(){
   int basex, basey;
-  
   rmb_awake(&basex, &basey);
-  //sale de la pared con un ángulo aleatorio +/-90º
-  /*
-  sensor_t rob = rmb_state();
-  float desv = rand() / (RAND_MAX * M_PI - M_PI_2); 
-  rmb_turn(rob.heading + desv);
-  */
 }
 
 

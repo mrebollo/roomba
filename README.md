@@ -1,43 +1,43 @@
-# roomba
-roomba simulator for IPR-GIIROB-ETSINF-UPV
 
-## Quick Start
-- Build and run the project:
-	- `make clean`
-	- `make`
-	- `./roomba`
+# Simulador Roomba - IPR-GIIROB-ETSINF-UPV
 
-- Run with a specific map:
-	- `make run-map MAP=maps/sample_map.pgm`
+## Inicio rápido
+- Compila y ejecuta el proyecto:
+   - `make clean`
+   - `make`
+   - `./roomba`
 
-- Generated files:
-	- `log.csv`: robot trajectory
-	- `stats.csv`: execution statistics
-	- `map.pgm`: world snapshot (PGM image)
+- Ejecuta con un mapa específico:
+   - `make run-map MAP=maps/sample_map.pgm`
 
-Tip: Press Ctrl-C during visualization to exit early.
+- Archivos generados:
+   - `log.csv`: trayectoria del robot
+   - `stats.csv`: estadísticas de ejecución
+   - `map.pgm`: imagen del mundo (PGM)
 
-## Map Tools
+Consejo: Pulsa Ctrl-C durante la visualización para salir antes.
 
-### Generate test maps:
+## Herramientas de mapas
+
+### Generar mapas de prueba:
 ```bash
-make mapgen       # Compile map generator
-./maps/generate   # Generate 8 test maps
+make mapgen       # Compila el generador de mapas
+./maps/generate   # Genera 8 mapas de prueba
 ```
 
-### Visualize maps (without running simulation):
+### Visualizar mapas (sin simular):
 ```bash
-make viewmap                    # Compile map viewer
-./maps/viewmap maps/walls2.pgm  # View a specific map
+make viewmap                    # Compila el visor de mapas
+./maps/viewmap maps/walls2.pgm  # Visualiza un mapa concreto
 ```
 
-The viewer displays maps in ASCII format:
-- `#` = Walls/obstacles
-- `B` = Robot base
-- `1`-`5` = Dirt level
-- Spaces = Empty cells
+El visor muestra mapas en formato ASCII:
+- `#` = Muros/obstáculos
+- `B` = Base del robot
+- `1`-`5` = Nivel de suciedad
+- Espacios = Celdas vacías
 
-See `maps/README.md` for more details.
+Consulta `maps/README.md` para más detalles.
 
 ## For Teachers: Creating Student Distribution Package
 
@@ -139,8 +139,8 @@ See `competition/PARTICIPANT_GUIDE.md` for detailed optimization strategies.
 ## Documentation
 
 ### User Manuals
-- **User Manual (MD):** `docs/usuario/MANUAL_USUARIO.md` - Step-by-step programming guide
-- **User Manual (LaTeX):** `docs/usuario/manual_usuario.tex` - Comprehensive PDF documentation
+- **User Manual (MD):** `docs/user/MANUAL_USUARIO.md` - Step-by-step programming guide
+- **User Manual (LaTeX):** `docs/user/manual_usuario.tex` - Comprehensive PDF documentation
 - **Examples:** `samples/README.md` - 9 solved examples + 9 exercises
 - **Exercises:** `samples/README_EJERCICIOS.md` - Guided exercises with solutions
 
@@ -196,7 +196,7 @@ roomba/
 │   ├── viewmap             # Map visualizer
 │   └── validate.sh         # Code validator
 └── docs/                   # Documentation
-    ├── usuario/            # User manuals (MD + LaTeX)
+   ├── user/               # User manuals (MD + LaTeX)
     ├── developer/          # Developer manual (LaTeX)
     └── README.md           # Documentation index
 ```

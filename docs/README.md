@@ -7,7 +7,7 @@ Este directorio contiene toda la documentación generada para el simulador de Ro
 ```
 docs/
 ├── html/             Documentación de la API (Doxygen)
-├── usuario/          Manual del usuario/estudiante
+├── user/             Manual del usuario/estudiante
 ├── developer/        Manual técnico del desarrollador
 ├── Doxyfile          Configuración de Doxygen
 ├── mainpage.dox      Página principal de Doxygen
@@ -27,7 +27,7 @@ Documentación técnica completa generada con Doxygen.
 
 **Para visualizar**: Abre `html/index.html` en tu navegador web.
 
-### 2. Manual del Usuario (`usuario/`)
+### 2. Manual del Usuario (`user/`)
 Guía paso a paso para programar un robot usando la API de `simula.h`.
 
 #### Formatos disponibles:
@@ -37,7 +37,7 @@ Guía paso a paso para programar un robot usando la API de `simula.h`.
 
 **Para regenerar el PDF**:
 ```bash
-cd usuario/
+cd user/
 pdflatex manual_usuario.tex
 pdflatex manual_usuario.tex  # Segunda pasada para referencias
 ```
@@ -86,7 +86,7 @@ Para regenerar toda la documentación:
 doxygen Doxyfile
 
 # 2. PDF del manual del usuario
-cd usuario/
+cd user/
 pdflatex manual_usuario.tex
 pdflatex manual_usuario.tex
 cd ..
