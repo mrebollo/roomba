@@ -1,11 +1,25 @@
 /**
  * @mainpage Simulador Roomba - Documentación Técnica
+
+@section quicknav_sec Navegación rápida
+
+- [Arquitectura principal](#arch_sec): Estructura y módulos principales
+- [Competición](#competition_sec): Sistema de competición y ranking
+- [Herramientas](#tools_sec): Utilidades externas y scripts
+- [API pública y ejemplos](#usage_sec): Ejemplos y funciones para estudiantes
+- [Archivos generados](#files_sec): Logs, estadísticas y mapas
+- [Documentación interna](#internal_sec): Estructuras y detalles para desarrolladores
+- [Manuales](#docs_sec): Manuales de usuario y organizador
  * 
+
+
+
  * @section intro_sec Introducción
  * 
  * Este es un simulador educativo de un robot de limpieza tipo Roomba.
  * Permite a los estudiantes programar comportamientos de navegación y limpieza
  * sin necesidad de hardware físico.
+
  * 
  * @section features_sec Características
  * 
@@ -19,6 +33,16 @@
  * 
  * @section arch_sec Arquitectura
  * 
+@subsection srcfiles_sec Archivos fuente destacados
+
+- [simula.c](simula_8c.html)
+- [competition_ext.c](competition__ext_8c.html)
+- [libscore.c](libscore_8c.html)
+- [runner.c](runner_8c.html)
+- [tools/generate.c](generate_8c.html)
+- [tools/viewmap.c](viewmap_8c.html)
+- [tools/validate.c](validate_8c.html)
+
  * El simulador está dividido en módulos independientes:
  * 
  * - **simula.c** - Núcleo del simulador (configuración, ciclo principal)
@@ -26,6 +50,26 @@
  * - **sim_world.c** - Gestión del mapa (generación, carga, consultas)
  * - **sim_visual.c** - Visualización ASCII de la simulación
  * - **sim_io.c** - Entrada/salida de archivos (logs, estadísticas)
+
+@section competition_sec Módulos de Competición
+
+- **competition_ext.c/h** - Extensiones de la API para competición
+- **libscore.c/h** - Biblioteca de puntuación y ranking
+- **runner.c** - Orquestador de ejecuciones masivas
+- **score.c** - Generador de ranking oficial
+- **myscore.c** - Herramienta de autoevaluación para participantes
+- **simula_comp.c** - Adaptador de simulador para competición
+
+Consulta la documentación de cada archivo para detalles de funciones y estructuras.
+
+@section tools_sec Herramientas Externas
+
+- **tools/generate.c** - Generador de mapas PGM
+- **tools/viewmap.c** - Visualizador ASCII de mapas
+- **tools/validate.c** - Validador de código y entregas
+
+Estas herramientas permiten crear, visualizar y validar mapas y entregas de equipos.
+
  * 
  * @section usage_sec Uso Básico
  * 
@@ -101,12 +145,28 @@
  * - Ver simula_internal.h para estructuras internas
  * - Consultar los diagramas de llamadas de cada módulo
  * - Revisar las estadísticas en struct _stat
+
+@section docs_sec Documentación y manuales
+
+- [Manual del Usuario (Markdown)](../usuario/MANUAL_USUARIO.md)
+- [Manual del Organizador (Markdown)](../organizer/MANUAL_ORGANIZADOR.md)
+
+
  * 
  * @section author_sec Autor
  * 
- * Proyecto educativo - Universidad (2025)
+ * 2025, Miguel Rebollo (@mrebollo)
+ * Universitat Politècnica de València
  * 
  * @section license_sec Licencia
  * 
- * Ver archivo LICENSE en el repositorio
+Este proyecto está licenciado bajo la [GNU General Public License v3.0](../../LICENSE). Consulta el archivo LICENSE para los términos completos.
+ 
+
+@section changelog_sec Novedades y Cambios Recientes
+
+- Se ha integrado el sistema de competición completo (`competition/`)
+- Nuevas herramientas externas en `tools/` para generación y validación de mapas
+- Documentación ampliada para todos los módulos y scripts
+- Índice mejorado con navegación rápida y enlaces directos
  */

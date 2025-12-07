@@ -27,10 +27,23 @@ INPUT                  = mainpage.dox \
                          ../sim_robot.c \
                          ../sim_world.c \
                          ../sim_visual.c \
-                         ../sim_io.c
+                         ../sim_io.c \
+                         ../sim_stats.c \
+                         ../sim_world_api.c \
+                         ../competition/competition_ext.h \
+                         ../competition/competition_ext.c \
+                         ../competition/libscore.h \
+                         ../competition/libscore.c \
+                         ../competition/runner.c \
+                         ../competition/score.c \
+                         ../competition/myscore.c \
+                         ../competition/simula_comp.c \
+                         ../tools/generate.c \
+                         ../tools/viewmap.c \
+                         ../tools/validate.c
 FILE_PATTERNS          = *.c *.h
 RECURSIVE              = NO
-EXCLUDE                = ../competition/ ../samples/ ../maps/
+EXCLUDE                = ../samples/ ../maps/
 
 #---------------------------------------------------------------------------
 # Configuration options related to source browsing
