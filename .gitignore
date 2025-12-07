@@ -1,3 +1,5 @@
+# Ignorar archivos temporales de macOS
+.DS_Store
 # Prerequisites
 *.d
 

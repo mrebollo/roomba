@@ -15,12 +15,13 @@ SIM_WORLD = ../sim_world.c ../sim_world_api.c
 GENERATE = generate
 VIEWMAP = viewmap
 VALIDATE = validate
+MYSCORE = myscore
 
 
 .PHONY: all clean help
 
 # Default target: build all tools
-all: $(GENERATE) $(VIEWMAP) $(VALIDATE)
+all: $(GENERATE) $(VIEWMAP) $(VALIDATE) $(MYSCORE)
 	@echo ""
 	@echo "=== Tools compiled successfully ==="
 	@echo ""
@@ -28,6 +29,7 @@ all: $(GENERATE) $(VIEWMAP) $(VALIDATE)
 	@echo "  ./$(GENERATE) <options>"
 	@echo "  ./$(VIEWMAP) <map.pgm>"
 	@echo "  ./$(VALIDATE) [<team_dir>] [--output report.txt] [--strict]"
+	@echo "  ./$(MYSCORE) [stats.csv]"
 	@echo ""
 
 
@@ -48,11 +50,15 @@ $(VALIDATE): validate.c
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 	@echo "✓ Code validator compiled: $(VALIDATE)"
 
+# Mi sistema de puntuacion
+$(MYSCORE): myscore.c libscore.c libscore.h
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+	@echo "✓ Custom score system compiled: $(MYSCORE)"
 
 # Clean compiled binaries
 
 clean:
-	rm -f $(GENERATE) $(VIEWMAP) $(VALIDATE)
+	rm -f $(GENERATE) $(VIEWMAP) $(VALIDATE) $(MYSCORE)	
 	@echo "✓ Tools cleaned"
 
 # Help
@@ -69,3 +75,4 @@ help:
 	@echo "  generate     - Generate random maps with walls and dirt"
 	@echo "  viewmap      - Visualize PGM maps in terminal"
 	@echo "  validate     - Validate team code before competition"
+	@echo "  myscore      - Custom scoring system for competition results"

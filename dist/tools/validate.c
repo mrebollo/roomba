@@ -1,14 +1,15 @@
+
 /**
- * Roomba Code Validator
- * 
- * Validates team code before competition submission.
- * Can be used by students to self-check or by professors to review submissions.
- * 
- * Compilation:
+ * @file validate.c
+ * @brief Valida el código de los equipos antes de la entrega en la competición.
+ *
+ * Puede ser usado por estudiantes para auto-chequeo o por profesores para revisar entregas.
+ *
+ * Compilación:
  *   gcc validate.c -Wall -Wextra -O2 -lm -o validate
- * 
- * Usage:
- *   ./validate <team_directory> [options]
+ *
+ * Uso:
+ *   ./validate <team_directory> [opciones]
  */
 
 #include <stdio.h>
@@ -34,28 +35,39 @@
 #define COLOR_BLUE    "\033[0;34m"
 #define COLOR_RESET   "\033[0m"
 
+
+/**
+ * @brief Estructura de configuración para la validación
+ */
 typedef struct {
-    char team_dir[MAX_PATH];
-    char maps_dir[MAX_PATH];
-    char output_file[MAX_PATH];
-    int strict_mode;
-    int timeout;
-    int use_color;
+    char team_dir[MAX_PATH];      ///< Directorio del equipo
+    char maps_dir[MAX_PATH];      ///< Directorio de mapas
+    char output_file[MAX_PATH];   ///< Archivo de salida
+    int strict_mode;              ///< Modo estricto
+    int timeout;                  ///< Tiempo máximo de ejecución
+    int use_color;                ///< Uso de colores en la salida
 } config_t;
 
+
+/**
+ * @brief Estructura para almacenar resultados de los tests
+ */
 typedef struct {
-    int passed;
-    int warnings;
-    int failed;
-    int tests_run;
-    int tests_passed;
+    int passed;         ///< Tests pasados
+    int warnings;       ///< Advertencias
+    int failed;         ///< Tests fallidos
+    int tests_run;      ///< Total de tests ejecutados
+    int tests_passed;   ///< Total de tests aprobados
 } results_t;
 
 // Global output file pointer
 FILE *output_fp = NULL;
 
 /**
- * @brief Print message with color (if enabled) and save to output file
+ * @brief Imprime un mensaje con color (si está habilitado) y lo guarda en el archivo de salida
+ * @param color Código ANSI del color
+ * @param prefix Prefijo del mensaje
+ * @param msg Mensaje a imprimir
  */
 void log_msg(const char *color, const char *prefix, const char *msg) {
     if (output_fp) {
@@ -64,13 +76,35 @@ void log_msg(const char *color, const char *prefix, const char *msg) {
     printf("%s[%s]%s %s\n", color, prefix, COLOR_RESET, msg);
 }
 
-void log_info(const char *msg) { log_msg(COLOR_BLUE, "INFO", msg); }
-void log_pass(const char *msg) { log_msg(COLOR_GREEN, "PASS", msg); }
-void log_warn(const char *msg) { log_msg(COLOR_YELLOW, "WARN", msg); }
-void log_fail(const char *msg) { log_msg(COLOR_RED, "FAIL", msg); }
 
 /**
- * @brief Print usage information
+ * @brief Imprime un mensaje informativo
+ * @param msg Mensaje a imprimir
+ */
+void log_info(const char *msg) { log_msg(COLOR_BLUE, "INFO", msg); }
+
+/**
+ * @brief Imprime un mensaje de éxito
+ * @param msg Mensaje a imprimir
+ */
+void log_pass(const char *msg) { log_msg(COLOR_GREEN, "PASS", msg); }
+
+/**
+ * @brief Imprime una advertencia
+ * @param msg Mensaje a imprimir
+ */
+void log_warn(const char *msg) { log_msg(COLOR_YELLOW, "WARN", msg); }
+
+/**
+ * @brief Imprime un mensaje de error
+ * @param msg Mensaje a imprimir
+ */
+void log_fail(const char *msg) { log_msg(COLOR_RED, "FAIL", msg); }
+
+
+/**
+ * @brief Imprime la ayuda de uso del validador
+ * @param prog_name Nombre del programa
  */
 void print_usage(const char *prog_name) {
     printf("Usage: %s [team_directory] [options]\n\n", prog_name);
@@ -91,8 +125,13 @@ void print_usage(const char *prog_name) {
     printf("  %s ../competition/teams/team02 --strict\n\n", prog_name);
 }
 
+
 /**
- * @brief Parse command line arguments
+ * @brief Parsea los argumentos de línea de comandos
+ * @param argc Número de argumentos
+ * @param argv Vector de argumentos
+ * @param cfg Puntero a la configuración a rellenar
+ * @return 0 si OK, -1 si error o ayuda
  */
 int parse_args(int argc, char *argv[], config_t *cfg) {
     // Defaults
@@ -133,8 +172,12 @@ int parse_args(int argc, char *argv[], config_t *cfg) {
     return 0;
 }
 
+
 /**
- * @brief Find main source file in directory
+ * @brief Busca el archivo fuente principal en el directorio
+ * @param dir Directorio a buscar
+ * @param source_file Buffer para el nombre del archivo encontrado
+ * @return 0 si OK, -1 si no se encuentra
  */
 int find_source_file(const char *dir, char *source_file) {
     // First try main.c
@@ -163,8 +206,13 @@ int find_source_file(const char *dir, char *source_file) {
     return -1;
 }
 
+
 /**
- * @brief Compile team code
+ * @brief Compila el código del equipo
+ * @param team_dir Directorio del equipo
+ * @param source_file Archivo fuente principal
+ * @param res Puntero a resultados
+ * @return 0 si OK, -1 si error
  */
 int compile_team(const char *team_dir, const char *source_file, results_t *res) {
     char cmd[MAX_CMD];
@@ -222,8 +270,13 @@ int compile_team(const char *team_dir, const char *source_file, results_t *res) 
     return 0;
 }
 
+
 /**
- * @brief Get list of test maps
+ * @brief Obtiene la lista de mapas de prueba
+ * @param maps_dir Directorio de mapas
+ * @param maps Array de buffers para rutas de mapas
+ * @param max_maps Máximo de mapas a buscar
+ * @return Número de mapas encontrados
  */
 int get_test_maps(const char *maps_dir, char maps[][MAX_PATH], int max_maps) {
     // If maps_dir is empty, use default map
@@ -250,8 +303,13 @@ int get_test_maps(const char *maps_dir, char maps[][MAX_PATH], int max_maps) {
     return count;
 }
 
+
 /**
- * @brief Execute single test with timeout
+ * @brief Ejecuta un test individual con control de tiempo
+ * @param team_dir Directorio del equipo
+ * @param map_file Ruta al mapa de prueba
+ * @param timeout Tiempo máximo de ejecución (segundos)
+ * @return 0 si OK, -1 si error, -2 si crash, -3 si timeout
  */
 int execute_test(const char *team_dir, const char *map_file, int timeout) {
     char cmd[MAX_CMD];
@@ -307,8 +365,14 @@ int execute_test(const char *team_dir, const char *map_file, int timeout) {
     return -1;
 }
 
+
 /**
- * @brief Run execution tests
+ * @brief Ejecuta todos los tests de ejecución sobre los mapas
+ * @param team_dir Directorio del equipo
+ * @param maps_dir Directorio de mapas
+ * @param timeout Tiempo máximo por test
+ * @param res Puntero a resultados
+ * @return 0 si todos OK, -1 si alguno falla
  */
 int run_execution_tests(const char *team_dir, const char *maps_dir, int timeout, results_t *res) {
     char maps[TEST_MAPS][MAX_PATH];
@@ -371,8 +435,12 @@ int run_execution_tests(const char *team_dir, const char *maps_dir, int timeout,
     }
 }
 
+
 /**
- * @brief Validate stats.csv
+ * @brief Valida la generación de stats.csv
+ * @param team_dir Directorio del equipo
+ * @param res Puntero a resultados
+ * @return 0 si OK, -1 si error
  */
 int validate_stats(const char *team_dir, results_t *res) {
     char stats_file[MAX_PATH];
@@ -408,8 +476,10 @@ int validate_stats(const char *team_dir, results_t *res) {
     }
 }
 
+
 /**
- * @brief Clean up temporary files
+ * @brief Elimina archivos temporales generados durante la validación
+ * @param team_dir Directorio del equipo
  */
 void cleanup(const char *team_dir) {
     char cmd[MAX_CMD];
@@ -417,8 +487,14 @@ void cleanup(const char *team_dir) {
     system(cmd);
 }
 
+
 /**
- * @brief Main validation function
+ * @brief Función principal del validador
+ *
+ * Parsea argumentos, compila el código, ejecuta tests y muestra el resumen.
+ * @param argc Número de argumentos
+ * @param argv Vector de argumentos
+ * @return 0 si OK, 1 si error
  */
 int main(int argc, char *argv[]) {
     config_t cfg;
