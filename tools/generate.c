@@ -2,16 +2,18 @@
 
 #include <string.h>
 
+
 /**
+ * @file generate.c
  * @brief Generador de mapas de prueba para el simulador Roomba
- * 
+ *
  * Genera varios mapas con diferentes configuraciones.
  * Todos los mapas incluyen base aleatoria en las paredes.
- * 
+ *
  * Compilación:
  *   make mapgen-dev   (modo desarrollo, desde fuentes)
  *   make lib && make mapgen   (modo distribución, con simula.o)
- * 
+ *
  * Uso:
  *   ./maps/mapgen
  */
@@ -26,6 +28,14 @@
 #include <sys/types.h>
 
 
+/**
+ * @brief Función principal del generador de mapas
+ *
+ * Crea varios mapas de prueba con diferentes configuraciones de obstáculos y suciedad,
+ * y los guarda en el directorio 'maps'.
+ *
+ * @return 0 si OK, 1 si error
+ */
 int main(void){
     srand(time(NULL));
 

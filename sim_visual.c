@@ -1,7 +1,10 @@
-// Backup de sim_visual.c antes de activar alternate screen buffer
-// Fecha: 2025-12-07
-
-/* --- INICIO DEL ARCHIVO ORIGINAL --- */
+/**
+ * @file sim_visual.c
+ * @brief Visualización de mapas y trayectorias para el simulador Roomba
+ *
+ * Proporciona funciones para mostrar el mapa, el recorrido del robot y el estado
+ * de la simulación en modo texto (ASCII) y animado en consola.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +17,11 @@
 #define VISUALIZATION_DELAY_MS 100          ///< Retardo entre frames (ms)
 #define COMPASS_BUF_SIZE 4                  ///< Tamaño buffer para puntos cardinales
 
+/**
+ * @brief Genera una barra de progreso ASCII
+ * @param perc Porcentaje de progreso (0-100)
+ * @return Cadena estática con la barra de progreso
+ */
 static char* ascii_progress(int perc){
   static char bar[PROGBARLEN+3];
   int i;
@@ -25,6 +33,11 @@ static char* ascii_progress(int perc){
   return bar;
 }
 
+/**
+ * @brief Devuelve la dirección cardinal según el ángulo
+ * @param angle Ángulo en radianes
+ * @return Cadena con la dirección cardinal (E, SE, S, ...)
+ */
 static char *compass(float angle){
   static char dir[COMPASS_BUF_SIZE];
   if(angle >= 15*M_PI_8 || angle < M_PI_8) strcpy(dir, "E");
@@ -38,6 +51,10 @@ static char *compass(float angle){
   return dir;
 }
 
+/**
+ * @brief Imprime el mapa en formato ASCII
+ * @param view Matriz de caracteres a mostrar
+ */
 static void print_map_ascii(char view[WORLDSIZE][WORLDSIZE]){
   int max_width = map.ncol > PROGBARLEN ? map.ncol : PROGBARLEN;
   for(int i = 0; i < map.nrow; i++){
@@ -50,6 +67,10 @@ static void print_map_ascii(char view[WORLDSIZE][WORLDSIZE]){
   }
 }
 
+/**
+ * @brief Anota la suciedad en el mapa de visualización
+ * @param view Matriz de caracteres a modificar
+ */
 static void annotate_dirt_to_map(char view[WORLDSIZE][WORLDSIZE]){
   for(int i = 0; i < map.ndirt; i++){
     dirt_t d = map.dirt[i];
@@ -59,6 +80,12 @@ static void annotate_dirt_to_map(char view[WORLDSIZE][WORLDSIZE]){
   }
 }
 
+/**
+ * @brief Dibuja el recorrido del robot sobre el mapa
+ * @param view Matriz de caracteres a modificar
+ * @param h Historial de posiciones
+ * @param len Longitud del historial
+ */
 static void overlay_path_on_map(char view[WORLDSIZE][WORLDSIZE], sensor_t h[], int len){
   for(int i = 0; i < len; i++){
     if(h[i].y >= 0 && h[i].y < map.nrow && h[i].x >= 0 && h[i].x < map.ncol){
@@ -67,6 +94,12 @@ static void overlay_path_on_map(char view[WORLDSIZE][WORLDSIZE], sensor_t h[], i
   }
 }
 
+/**
+ * @brief Marca la base y el final del recorrido en el mapa
+ * @param view Matriz de caracteres a modificar
+ * @param h Historial de posiciones
+ * @param len Longitud del historial
+ */
 static void mark_base_and_end(char view[WORLDSIZE][WORLDSIZE], sensor_t h[], int len){
   if(len > 0){
     if(h[0].y >= 0 && h[0].y < map.nrow && h[0].x >= 0 && h[0].x < map.ncol){
@@ -78,6 +111,10 @@ static void mark_base_and_end(char view[WORLDSIZE][WORLDSIZE], sensor_t h[], int
   }
 }
 
+/**
+ * @brief Imprime el estado actual del robot (batería, posición, sensores)
+ * @param s Puntero a la estructura de sensores actual
+ */
 static void print_status_line(sensor_t *s){
   int bat = s->battery / MAXBAT * 100;
   printf("\nBATT: %s %d%%", ascii_progress(bat), bat);
@@ -93,11 +130,21 @@ static void print_status_line(sensor_t *s){
 
 static volatile sig_atomic_t g_stop_vis = 0;
 
+/**
+ * @brief Manejador de señal SIGINT para detener la visualización
+ * @param signo Número de señal (no usado)
+ */
 static void sigint_vis_handler(int signo){
   (void)signo;
   g_stop_vis = 1;
 }
 
+/**
+ * @brief Imprime el mapa con el recorrido y estado actual
+ * @param view Matriz de caracteres a mostrar
+ * @param h Historial de posiciones
+ * @param len Longitud del historial
+ */
 static void print_path(char view[WORLDSIZE][WORLDSIZE], sensor_t h[], int len){
   annotate_dirt_to_map(view);
   overlay_path_on_map(view, h, len);
@@ -108,6 +155,12 @@ static void print_path(char view[WORLDSIZE][WORLDSIZE], sensor_t h[], int len){
   }
 }
 
+/**
+ * @brief Visualiza la simulación paso a paso en consola
+ *
+ * Muestra el mapa, el recorrido y el estado del robot en modo animado.
+ * Requiere que ENABLE_VISUALIZATION esté activado.
+ */
 void visualize(){
 #if ENABLE_VISUALIZATION
   if(!hist){

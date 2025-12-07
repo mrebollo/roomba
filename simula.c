@@ -1,9 +1,10 @@
 /**
  * @file simula.c
  * @brief Núcleo del simulador de Roomba
- * 
+ *
  * Contiene la lógica principal de control del simulador, incluyendo
- * configuración, ciclo de ejecución y gestión del historial.
+ * configuración, ciclo de ejecución, gestión del historial y funciones
+ * auxiliares para la simulación y limpieza de recursos.
  */
 
 #include <stdio.h>
@@ -24,12 +25,40 @@
  * ESTADO GLOBAL
  * ============================================================================ */
 
+/**
+ * @var map_t map
+ * @brief Mapa global de la simulación
+ */
 map_t map = {0};                      ///< Mapa del mundo
+/**
+ * @var robot_t r
+ * @brief Estado interno del robot
+ */
 robot_t r;                            ///< Estado interno del robot
+/**
+ * @var sensor_t* hist
+ * @brief Historial de posiciones del robot (dinámico)
+ */
 sensor_t *hist = NULL;                ///< Historial de posiciones (memoria dinámica)
+/**
+ * @var config_t config
+ * @brief Configuración de la simulación
+ */
 config_t config;                      ///< Configuración de la simulación
+/**
+ * @var int timer
+ * @brief Contador de ticks de simulación
+ */
 int timer;                            ///< Contador de ticks
+/**
+ * @var struct sensor* rob
+ * @brief Puntero público a los sensores del robot
+ */
 struct sensor *rob = (struct sensor*)&r.sensor;  ///< Puntero público a sensores
+/**
+ * @var int sim_should_stop
+ * @brief Flag para solicitar la detención de la simulación
+ */
 int sim_should_stop = 0;              ///< Flag de detención
 
 /* ============================================================================
@@ -42,6 +71,12 @@ int sim_should_stop = 0;              ///< Flag de detención
  * Establece el flag sim_should_stop para que el bucle principal
  * termine en la siguiente iteración.
  */
+/**
+ * @brief Solicita la detención de la simulación
+ *
+ * Establece el flag sim_should_stop para que el bucle principal
+ * termine en la siguiente iteración.
+ */
 void sim_request_stop(void){
   sim_should_stop = 1;
 }
@@ -50,6 +85,13 @@ void sim_request_stop(void){
  * @brief Registra un tick en el historial
  * @param action Tipo de acción realizada (-1 para no incrementar timer)
  * 
+ * Guarda el estado actual del robot en el historial y verifica si
+ * la batería está por debajo del umbral crítico.
+ */
+/**
+ * @brief Registra un tick en el historial
+ * @param action Tipo de acción realizada (-1 para no incrementar timer)
+ *
  * Guarda el estado actual del robot en el historial y verifica si
  * la batería está por debajo del umbral crítico.
  */
@@ -77,6 +119,12 @@ void sim_log_tick(int action){
  * Función registrada con atexit() para asegurar que el log
  * se guarda incluso si el programa termina abruptamente.
  */
+/**
+ * @brief Wrapper para guardar el log al finalizar
+ *
+ * Función registrada con atexit() para asegurar que el log
+ * se guarda incluso si el programa termina abruptamente.
+ */
 static void _save_log_wrapper(void){ 
   if(!hist) return;
   save_log(hist, timer); 
@@ -85,6 +133,12 @@ static void _save_log_wrapper(void){
 /**
  * @brief Wrapper para guardar estadísticas al finalizar
  * 
+ * Calcula la batería media y guarda las estadísticas finales.
+ * Registrada con atexit().
+ */
+/**
+ * @brief Wrapper para guardar estadísticas al finalizar
+ *
  * Calcula la batería media y guarda las estadísticas finales.
  * Registrada con atexit().
  */
@@ -99,6 +153,12 @@ static void _save_stats_wrapper(void){
 /**
  * @brief Libera la memoria del historial
  * 
+ * Función registrada con atexit() para liberar la memoria
+ * dinámica del historial al finalizar el programa.
+ */
+/**
+ * @brief Libera la memoria del historial
+ *
  * Función registrada con atexit() para liberar la memoria
  * dinámica del historial al finalizar el programa.
  */

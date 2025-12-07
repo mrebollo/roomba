@@ -1,3 +1,4 @@
+// This line is a placeholder for existing code that should be removed if it exists.
 /**
  * @file myscore.c
  * @brief Personal scoring tool for competition participants
@@ -19,10 +20,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_RESULTS 100
+#define MAX_RESULTS 100 ///< Número máximo de resultados procesados
 
 /**
  * @brief Print usage information
+ */
+/**
+ * @brief Imprime la ayuda de uso del sistema de puntuación personal
+ * @param program_name Nombre del programa
  */
 void print_usage(const char *program_name) {
     printf("Usage: %s [OPTIONS] [stats_file]\n", program_name);
@@ -45,6 +50,14 @@ void print_usage(const char *program_name) {
 
 /**
  * @brief Main function
+ */
+/**
+ * @brief Función principal del sistema de puntuación personal
+ *
+ * Parsea argumentos, carga configuración y resultados, calcula y muestra el informe.
+ * @param argc Número de argumentos
+ * @param argv Vector de argumentos
+ * @return 0 si OK, 1 si error
  */
 int main(int argc, char *argv[]) {
     const char *config_file = "../scoring.conf";

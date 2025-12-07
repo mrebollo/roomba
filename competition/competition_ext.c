@@ -96,6 +96,11 @@ static void update_config(int rep, int map_id) {
  * PUBLIC FUNCTIONS IMPLEMENTATION
  * ============================================================================ */
 
+/**
+ * @brief Inicializa la configuración global de la competición
+ * @param maps_dir Directorio de mapas
+ * @param stats_file Archivo de estadísticas
+ */
 void competition_init(const char* maps_dir, const char* stats_file) {
     if(maps_dir) {
         g_maps_dir = maps_dir;
@@ -105,10 +110,19 @@ void competition_init(const char* maps_dir, const char* stats_file) {
     }
 }
 
+/**
+ * @brief Obtiene el identificador del equipo actual
+ * @return Cadena con el ID del equipo
+ */
 const char* competition_get_team_id(void) {
     return get_team_id();
 }
 
+/**
+ * @brief Ejecuta la simulación sobre un mapa concreto
+ * @param filename Ruta al archivo de mapa
+ * @param map_type Identificador del tipo de mapa
+ */
 void competition_execute_map(const char* filename, int map_type) {
     // Store map type for statistics
     if(filename) {
@@ -138,6 +152,9 @@ void competition_execute_map(const char* filename, int map_type) {
     }
 }
 
+/**
+ * @brief Ejecuta el ciclo completo de competición (multi-mapa y repeticiones)
+ */
 void run_competition(void) {
     // Map list for competition
     char *maps[] = {
@@ -190,6 +207,9 @@ void run_competition(void) {
     update_config(rep, map_id);
 }
 
+/**
+ * @brief Guarda las estadísticas de la ejecución en el archivo centralizado
+ */
 void save_stats_competition(void) {
     const char *team_id;
     int i;

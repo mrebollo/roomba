@@ -1,7 +1,7 @@
 /**
  * @file libscore.c
  * @brief Competition scoring library implementation
- * 
+ * This file contains the implementation of scoring logic.
  * Shared scoring logic for both organizers and participants.
  * 
  * @author IPR-GIIROB-ETSINF-UPV
@@ -14,7 +14,7 @@
 #include <math.h>
 #include <ctype.h>
 
-#define MAX_LINE 1024
+#define MAX_LINE 1024 ///< Longitud máxima de línea para buffers de texto
 
 /* ============================================================================
  * UTILITY FUNCTIONS
@@ -77,6 +77,10 @@ float scoring_stddev(const float *values, int count) {
  * CONFIGURATION
  * ============================================================================ */
 
+/**
+ * @brief Inicializa la configuración de puntuación con valores por defecto
+ * @param config Puntero a la configuración a rellenar
+ */
 void scoring_default_config(scoring_config_t *config) {
     config->weight_coverage = 30.0f;
     config->weight_dirt_efficiency = 35.0f;
@@ -96,6 +100,12 @@ void scoring_default_config(scoring_config_t *config) {
     config->verbose = 0;
 }
 
+/**
+ * @brief Carga la configuración de puntuación desde un archivo
+ * @param filename Ruta al archivo de configuración
+ * @param config Puntero a la configuración a rellenar
+ * @return true si OK, false si error
+ */
 bool scoring_load_config(const char *filename, scoring_config_t *config) {
     // Start with defaults
     scoring_default_config(config);
@@ -154,6 +164,11 @@ bool scoring_load_config(const char *filename, scoring_config_t *config) {
  * SCORING CALCULATIONS
  * ============================================================================ */
 
+/**
+ * @brief Calcula las métricas de puntuación para un mapa
+ * @param result Puntero a los resultados del mapa
+ * @param config Puntero a la configuración de puntuación
+ */
 void scoring_calculate_map(map_result_t *result, const scoring_config_t *config) {
     // Coverage: percentage of cells visited
     if (result->cell_total > 0) {
@@ -188,6 +203,13 @@ void scoring_calculate_map(map_result_t *result, const scoring_config_t *config)
     }
 }
 
+/**
+ * @brief Calcula la puntuación agregada de un equipo
+ * @param results Array de resultados de mapas
+ * @param count Número de mapas
+ * @param team_score Puntero a la estructura de puntuación del equipo
+ * @param config Puntero a la configuración de puntuación
+ */
 void scoring_aggregate_team(const map_result_t *results, int count, 
                             team_score_t *team_score, const scoring_config_t *config) {
     if (count == 0) {
@@ -276,6 +298,14 @@ void scoring_aggregate_team(const map_result_t *results, int count,
  * CSV LOADING
  * ============================================================================ */
 
+/**
+ * @brief Carga los resultados de stats.csv
+ * @param filename Ruta al archivo stats.csv
+ * @param results Array de resultados de mapas
+ * @param count Puntero a entero para número de resultados
+ * @param max_results Máximo de resultados a cargar
+ * @return true si OK, false si error
+ */
 bool scoring_load_stats(const char *filename, map_result_t *results, 
                        int *count, int max_results) {
     FILE *f = fopen(filename, "r");
@@ -337,6 +367,11 @@ bool scoring_load_stats(const char *filename, map_result_t *results,
  * DISPLAY
  * ============================================================================ */
 
+/**
+ * @brief Muestra el informe de puntuación de un equipo por consola
+ * @param team Puntero a la estructura de puntuación del equipo
+ * @param config Puntero a la configuración de puntuación
+ */
 void scoring_display_team(const team_score_t *team, const scoring_config_t *config) {
     printf("\n");
     printf("═══════════════════════════════════════════════════════════════════════\n");

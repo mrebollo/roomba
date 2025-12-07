@@ -34,23 +34,28 @@
 #include <signal.h>
 #include <sys/wait.h>
 
-#define MAX_TEAMS 100
-#define TEAM_NAME_LEN 64
-#define MAPS_COUNT 4
-#define REPS_PER_MAP 5
-#define LOGS_DIR "logs"
-#define EXEC_TIMEOUT 30  // seconds
-
-typedef struct {
-    char name[TEAM_NAME_LEN];
-    int total_cells_visited;
-    int total_dirt_cleaned;
-    float total_battery_used;
-    int score;
-} team_result_t;
+#define MAX_TEAMS 100              ///< Número máximo de equipos permitidos
+#define TEAM_NAME_LEN 64           ///< Longitud máxima del nombre de equipo
+#define MAPS_COUNT 4               ///< Cantidad de mapas en la competición
+#define REPS_PER_MAP 5             ///< Repeticiones por cada mapa
+#define LOGS_DIR "logs"            ///< Directorio para almacenar logs
+#define EXEC_TIMEOUT 30            ///< Tiempo máximo de ejecución por equipo (segundos)
 
 /**
- * @brief Initialize stats.csv file with headers
+ * @brief Estructura para almacenar los resultados de cada equipo
+ */
+typedef struct {
+    char name[TEAM_NAME_LEN];         ///< Nombre del equipo
+    int total_cells_visited;          ///< Total de celdas visitadas
+    int total_dirt_cleaned;           ///< Total de suciedad limpiada
+    float total_battery_used;         ///< Batería total consumida
+    int score;                        ///< Puntuación final del equipo
+} team_result_t;
+
+
+/**
+ * @brief Inicializa el archivo stats.csv con cabeceras
+ * @param filename Ruta al archivo de estadísticas
  */
 void init_stats_file(const char *filename) {
     FILE *fd = fopen(filename, "w");
@@ -66,8 +71,12 @@ void init_stats_file(const char *filename) {
     printf("✓ Statistics file initialized: %s\n", filename);
 }
 
+// ...existing code...
 /**
- * @brief Check execution result and log crash info
+ * @brief Verifica el resultado de ejecución y registra información de crash
+ * @param status Código de estado del proceso
+ * @param stderr_file Archivo de log de errores
+ * @return Cadena con el estado: "success", "error", "crash", "stopped", "unknown"
  */
 const char* check_execution_result(int status, const char *stderr_file) {
     if (WIFEXITED(status)) {
@@ -112,8 +121,9 @@ const char* check_execution_result(int status, const char *stderr_file) {
     return "unknown";
 }
 
+// ...existing code...
 /**
- * @brief Initialize logs directory
+ * @brief Inicializa el directorio de logs
  */
 void init_logs_dir(void) {
     struct stat st = {0};
@@ -126,8 +136,12 @@ void init_logs_dir(void) {
     printf("✓ Logs directory ready: %s/\n", LOGS_DIR);
 }
 
+// ...existing code...
 /**
- * @brief Check if a directory entry is a valid team directory
+ * @brief Verifica si una entrada de directorio es un equipo válido
+ * @param base_path Ruta base
+ * @param entry Entrada de directorio
+ * @return 1 si es equipo válido, 0 si no
  */
 int is_team_dir(const char *base_path, struct dirent *entry) {
     if(entry->d_type != DT_DIR)
@@ -144,8 +158,12 @@ int is_team_dir(const char *base_path, struct dirent *entry) {
     return (stat(main_path, &st) == 0);
 }
 
+// ...existing code...
 /**
- * @brief Compile a team's code with competition simulator
+ * @brief Compila el código de un equipo con el simulador de competición
+ * @param teams_dir Directorio de equipos
+ * @param team_name Nombre del equipo
+ * @return 0 si OK, -1 si error
  */
 int compile_team(const char *teams_dir, const char *team_name) {
     char cmd[1024];
@@ -204,8 +222,11 @@ int compile_team(const char *teams_dir, const char *team_name) {
     }
 }
 
+// ...existing code...
 /**
- * @brief Initialize config.txt for a team
+ * @brief Inicializa el archivo config.txt para un equipo
+ * @param teams_dir Directorio de equipos
+ * @param team_name Nombre del equipo
  */
 void init_team_config(const char *teams_dir, const char *team_name) {
     char config_path[512];
@@ -218,8 +239,12 @@ void init_team_config(const char *teams_dir, const char *team_name) {
     }
 }
 
+// ...existing code...
 /**
- * @brief Display progress bar
+ * @brief Muestra una barra de progreso en consola
+ * @param current Valor actual
+ * @param total Valor total
+ * @param bar_width Ancho de la barra
  */
 void print_progress_bar(int current, int total, int bar_width) {
     float progress = (float)current / total;
@@ -237,8 +262,12 @@ void print_progress_bar(int current, int total, int bar_width) {
     fflush(stdout);
 }
 
+// ...existing code...
 /**
- * @brief Execute all rounds for a team
+ * @brief Ejecuta todas las rondas para un equipo
+ * @param teams_dir Directorio de equipos
+ * @param team_name Nombre del equipo
+ * @return Número de ejecuciones exitosas
  */
 int execute_team_rounds(const char *teams_dir, const char *team_name) {
     char cmd[512];
@@ -306,8 +335,12 @@ int execute_team_rounds(const char *teams_dir, const char *team_name) {
     return successful_runs;
 }
 
+// ...existing code...
 /**
- * @brief Validate that all expected log files exist
+ * @brief Valida que todos los archivos de log esperados existen
+ * @param team_name Nombre del equipo
+ * @param total_runs Número total de ejecuciones
+ * @return Número de logs faltantes
  */
 int validate_team_logs(const char *team_name, int total_runs) {
     int missing = 0;
@@ -335,8 +368,12 @@ int validate_team_logs(const char *team_name, int total_runs) {
     return missing;
 }
 
+// ...existing code...
 /**
- * @brief Consolidate team stats to central stats.csv
+ * @brief Consolida las estadísticas de un equipo en el archivo central
+ * @param teams_dir Directorio de equipos
+ * @param team_name Nombre del equipo
+ * @param central_stats Archivo central de estadísticas
  */
 void consolidate_team_stats(const char *teams_dir, const char *team_name, const char *central_stats) {
     char team_stats_file[512];
@@ -375,8 +412,12 @@ void consolidate_team_stats(const char *teams_dir, const char *team_name, const 
     fclose(dest);
 }
 
+// ...existing code...
 /**
- * @brief Calculate team scores from stats.csv
+ * @brief Calcula las puntuaciones de los equipos a partir de stats.csv
+ * @param stats_file Archivo de estadísticas
+ * @param results Array de resultados de equipos
+ * @param team_count Puntero a número de equipos
  */
 void calculate_rankings(const char *stats_file, team_result_t results[], int *team_count) {
     FILE *fd = fopen(stats_file, "r");
@@ -431,8 +472,12 @@ void calculate_rankings(const char *stats_file, team_result_t results[], int *te
     fclose(fd);
 }
 
+// ...existing code...
 /**
- * @brief Comparison function for sorting teams by score
+ * @brief Función de comparación para ordenar equipos por puntuación
+ * @param a Puntero al primer equipo
+ * @param b Puntero al segundo equipo
+ * @return Diferencia de puntuación (descendente)
  */
 int compare_teams(const void *a, const void *b) {
     team_result_t *ta = (team_result_t*)a;
@@ -440,8 +485,10 @@ int compare_teams(const void *a, const void *b) {
     return tb->score - ta->score;  // Descending order
 }
 
+// ...existing code...
 /**
- * @brief Generate and display ranking
+ * @brief Genera y muestra el ranking de la competición
+ * @param stats_file Archivo de estadísticas
  */
 void display_ranking(const char *stats_file) {
     team_result_t results[MAX_TEAMS];
@@ -495,8 +542,14 @@ void display_ranking(const char *stats_file) {
     }
 }
 
+// ...existing code...
 /**
- * @brief Main competition runner
+ * @brief Función principal del runner de competición
+ *
+ * Parsea argumentos, compila y ejecuta equipos, genera ranking y archivos.
+ * @param argc Número de argumentos
+ * @param argv Vector de argumentos
+ * @return 0 si OK, 1 si error
  */
 int main(int argc, char *argv[]) {
     const char *teams_dir = "teams";

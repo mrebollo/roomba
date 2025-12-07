@@ -1,90 +1,117 @@
 /**
  * @file calculate_scores.c
- * @brief Configurable scoring system for Roomba competition
+ * @brief Sistema de puntuación configurable para la competición Roomba
  * 
- * Reads stats.csv and scoring.conf to calculate team rankings
- * with customizable weights and formulas.
+ * Lee stats.csv y scoring.conf para calcular el ranking de equipos
+ * con pesos y fórmulas personalizables.
  */
-
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
 
+
+/**
+ * @def MAX_TEAMS
+ * @brief Número máximo de equipos soportados en la competición
+ */
 #define MAX_TEAMS 100
+
+/**
+ * @def MAX_MAPS
+ * @brief Número máximo de mapas por equipo
+ */
 #define MAX_MAPS 50
+
+/**
+ * @def MAX_LINE
+ * @brief Tamaño máximo de línea para lectura de archivos
+ */
 #define MAX_LINE 1024
+
+/**
+ * @def MAX_NAME
+ * @brief Longitud máxima para nombres de equipo
+ */
 #define MAX_NAME 64
 
 // Configuration structure
+
+/**
+ * @brief Estructura de configuración para el sistema de puntuación
+ */
 typedef struct {
-    float weight_coverage;
-    float weight_dirt_efficiency;
-    float weight_battery_conservation;
-    float weight_movement_quality;
-    float completion_bonus;
-    float low_bumps_bonus;
-    float crash_penalty;
-    float low_bumps_threshold;
-    float min_battery_threshold;
-    int show_map_details;
-    int highlight_top;
-    int generate_csv;
+    float weight_coverage;           ///< Peso de la cobertura en la puntuación final
+    float weight_dirt_efficiency;    ///< Peso de la eficiencia de limpieza
+    float weight_battery_conservation; ///< Peso de la conservación de batería
+    float weight_movement_quality;   ///< Peso de la calidad de movimientos
+    float completion_bonus;          ///< Bonus por completar todas las rondas sin fallos
+    float low_bumps_bonus;           ///< Bonus por baja tasa de colisiones
+    float crash_penalty;             ///< Penalización por crash
+    float low_bumps_threshold;       ///< Umbral para considerar baja tasa de colisiones
+    float min_battery_threshold;     ///< Umbral mínimo de batería para bonus
+    int show_map_details;            ///< Mostrar detalles por mapa en el ranking
+    int highlight_top;               ///< Número de equipos destacados en el ranking
+    int generate_csv;                ///< Generar archivo CSV con resultados
 } config_t;
 
 // Map result for a single execution
+
+/**
+ * @brief Estructura con los resultados de una ejecución de mapa
+ */
 typedef struct {
-    char team_name[MAX_NAME];
-    int map_type;
-    int cell_total;
-    int cell_visited;
-    int dirt_total;
-    int dirt_cleaned;
-    float bat_total;
-    float bat_mean;
-    int forward;
-    int turn;
-    int bumps;
-    int clean;
-    int load;
-    
+    char team_name[MAX_NAME];            ///< Nombre del equipo
+    int map_type;                        ///< Tipo de mapa
+    int cell_total;                      ///< Total de celdas en el mapa
+    int cell_visited;                    ///< Celdas visitadas por el robot
+    int dirt_total;                      ///< Total de suciedad en el mapa
+    int dirt_cleaned;                    ///< Suciedad limpiada por el robot
+    float bat_total;                     ///< Batería total consumida
+    float bat_mean;                      ///< Batería media restante
+    int forward;                         ///< Movimientos hacia adelante
+    int turn;                            ///< Giros realizados
+    int bumps;                           ///< Colisiones detectadas
+    int clean;                           ///< Acciones de limpieza
+    int load;                            ///< Ciclos de carga
     // Calculated scores
-    float score_coverage;
-    float score_dirt_efficiency;
-    float score_battery_conservation;
-    float score_movement_quality;
+    float score_coverage;                ///< Puntuación de cobertura
+    float score_dirt_efficiency;         ///< Puntuación de eficiencia de limpieza
+    float score_battery_conservation;    ///< Puntuación de conservación de batería
+    float score_movement_quality;        ///< Puntuación de calidad de movimientos
 } map_result_t;
 
 // Team aggregated results
 typedef struct {
-    char name[MAX_NAME];
-    int num_maps;
-    int num_crashes;
-    
+    char name[MAX_NAME];                    ///< Nombre del equipo
+    int num_maps;                          ///< Número de mapas jugados
+    int num_crashes;                       ///< Número de crashes detectados
+
     // Per-map scores
-    float coverage_scores[MAX_MAPS];
-    float dirt_efficiency_scores[MAX_MAPS];
-    float battery_conservation_scores[MAX_MAPS];
-    float movement_quality_scores[MAX_MAPS];
-    
+    float coverage_scores[MAX_MAPS];        ///< Puntuaciones de cobertura por mapa
+    float dirt_efficiency_scores[MAX_MAPS]; ///< Puntuaciones de eficiencia de limpieza por mapa
+    float battery_conservation_scores[MAX_MAPS]; ///< Puntuaciones de conservación de batería por mapa
+    float movement_quality_scores[MAX_MAPS];     ///< Puntuaciones de calidad de movimientos por mapa
+
     // Aggregated metrics
-    float avg_coverage;
-    float avg_dirt_efficiency;
-    float avg_battery_conservation;
-    float avg_movement_quality;
-    float consistency_score;
-    
+    float avg_coverage;                    ///< Media de cobertura
+    float avg_dirt_efficiency;             ///< Media de eficiencia de limpieza
+    float avg_battery_conservation;        ///< Media de conservación de batería
+    float avg_movement_quality;            ///< Media de calidad de movimientos
+    float consistency_score;               ///< Puntuación de consistencia
+
     // Movement stats for bonuses
-    float avg_bumps;
-    float avg_moves;
-    
+    float avg_bumps;                       ///< Media de colisiones
+    float avg_moves;                       ///< Media de movimientos
+
     // Final score
-    float total_score;
+    float total_score;                     ///< Puntuación total final
 } team_score_t;
 
+
 /**
- * @brief Trim whitespace from string
+ * @brief Elimina espacios en blanco de una cadena
+ * @param str Cadena a modificar
  */
 void trim(char *str) {
     char *start = str;
@@ -97,8 +124,12 @@ void trim(char *str) {
     memmove(str, start, strlen(start) + 1);
 }
 
+
 /**
- * @brief Parse configuration file
+ * @brief Carga la configuración de puntuación desde archivo
+ * @param filename Ruta al archivo de configuración
+ * @param cfg Puntero a la estructura de configuración
+ * @return 1 si OK, 0 si error
  */
 int load_config(const char *filename, config_t *cfg) {
     // Default values
@@ -170,8 +201,11 @@ int load_config(const char *filename, config_t *cfg) {
     return 1;
 }
 
+
 /**
- * @brief Calculate scores for a single map result
+ * @brief Calcula las métricas de puntuación para un resultado de mapa
+ * @param result Puntero a la estructura de resultado de mapa
+ * @param cfg Puntero a la configuración
  */
 void calculate_map_scores(map_result_t *result, config_t *cfg) {
     (void)cfg; // Unused for now, formulas are fixed
@@ -201,8 +235,12 @@ void calculate_map_scores(map_result_t *result, config_t *cfg) {
     }
 }
 
+
 /**
- * @brief Calculate standard deviation
+ * @brief Calcula la desviación estándar de un array de valores
+ * @param values Array de valores
+ * @param count Número de valores
+ * @return Desviación estándar
  */
 float calculate_std_dev(float values[], int count) {
     if (count <= 1) return 0.0;
@@ -224,7 +262,9 @@ float calculate_std_dev(float values[], int count) {
 }
 
 /**
- * @brief Aggregate team results from all maps
+ * @brief Calcula la puntuación agregada de un equipo
+ * @param team Puntero a la estructura de equipo
+ * @param cfg Puntero a la configuración
  */
 void aggregate_team_scores(team_score_t *team, config_t *cfg) {
     if (team->num_maps == 0) {
@@ -286,8 +326,14 @@ void aggregate_team_scores(team_score_t *team, config_t *cfg) {
     if (team->total_score < 0) team->total_score = 0;
 }
 
+
 /**
- * @brief Load stats from CSV file
+ * @brief Carga los resultados de stats.csv
+ * @param filename Ruta al archivo stats.csv
+ * @param results Array de resultados de mapas
+ * @param count Puntero a entero para número de resultados
+ * @param cfg Puntero a la configuración
+ * @return 1 si OK, 0 si error
  */
 int load_stats(const char *filename, map_result_t results[], int *count, config_t *cfg) {
     FILE *f = fopen(filename, "r");
@@ -326,7 +372,12 @@ int load_stats(const char *filename, map_result_t results[], int *count, config_
 }
 
 /**
- * @brief Aggregate results by team
+ * @brief Agrega los resultados por equipo
+ * @param results Array de resultados de mapas
+ * @param result_count Número de resultados
+ * @param teams Array de equipos
+ * @param cfg Puntero a la configuración
+ * @return Número de equipos procesados
  */
 int aggregate_by_team(map_result_t results[], int result_count, team_score_t teams[], config_t *cfg) {
     int team_count = 0;
@@ -387,8 +438,12 @@ int aggregate_by_team(map_result_t results[], int result_count, team_score_t tea
     return team_count;
 }
 
+
 /**
- * @brief Comparison function for sorting teams
+ * @brief Función de comparación para ordenar equipos por puntuación
+ * @param a Puntero al primer equipo
+ * @param b Puntero al segundo equipo
+ * @return 1 si b > a, -1 si b < a, 0 si igual
  */
 int compare_teams(const void *a, const void *b) {
     team_score_t *ta = (team_score_t *)a;
@@ -399,8 +454,12 @@ int compare_teams(const void *a, const void *b) {
     return 0;
 }
 
+
 /**
- * @brief Display ranking to console
+ * @brief Muestra el ranking de equipos por consola
+ * @param teams Array de equipos
+ * @param team_count Número de equipos
+ * @param cfg Puntero a la configuración
  */
 void display_ranking(team_score_t teams[], int team_count, config_t *cfg) {
     printf("\n");
@@ -435,8 +494,12 @@ void display_ranking(team_score_t teams[], int team_count, config_t *cfg) {
     printf("\n");
 }
 
+
 /**
- * @brief Save ranking to text file
+ * @brief Guarda el ranking en un archivo de texto
+ * @param teams Array de equipos
+ * @param team_count Número de equipos
+ * @param cfg Puntero a la configuración
  */
 void save_ranking_txt(team_score_t teams[], int team_count, config_t *cfg) {
     FILE *f = fopen("results/ranking.txt", "w");
@@ -473,8 +536,11 @@ void save_ranking_txt(team_score_t teams[], int team_count, config_t *cfg) {
     printf("[OK] Ranking saved to results/ranking.txt\n");
 }
 
+
 /**
- * @brief Save detailed scores to CSV
+ * @brief Guarda las puntuaciones detalladas en un archivo CSV
+ * @param teams Array de equipos
+ * @param team_count Número de equipos
  */
 void save_scores_csv(team_score_t teams[], int team_count) {
     FILE *f = fopen("results/scores.csv", "w");
@@ -497,8 +563,14 @@ void save_scores_csv(team_score_t teams[], int team_count) {
     printf("[OK] Detailed scores saved to results/scores.csv\n");
 }
 
+
 /**
- * @brief Main function
+ * @brief Función principal del sistema de puntuación
+ *
+ * Parsea argumentos, carga configuración y resultados, calcula ranking y guarda archivos.
+ * @param argc Número de argumentos
+ * @param argv Vector de argumentos
+ * @return 0 si OK, 1 si error
  */
 int main(int argc, char *argv[]) {
     const char *config_file = "scoring.conf";
