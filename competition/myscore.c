@@ -11,7 +11,7 @@
  * 
  * If no file is specified, uses "stats.csv" in current directory.
  * 
- * @author IPR-GIIROB-ETSINF-UPV
+ * @author Miguel Rebollo (@mebollo)
  * @date 2025
  */
 

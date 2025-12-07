@@ -331,7 +331,7 @@ cat teamXX/compile.log
 - Evitar colisiones básicas
 
 **Fase 2: Exploración Sistemática** (Objetivo: 45-60 puntos)
-- Implementar wall-following o espiral
+- Implementar wall-following o algún otro método
 - Gestión básica de batería (recarga cuando <20%)
 - Reducir colisiones
 
@@ -351,7 +351,6 @@ cat teamXX/compile.log
 
 **Exploración:**
 - **Wall-following (seguir paredes):** Simple y efectivo
-- **Espiral:** Buena cobertura inicial
 - **Patrón en zigzag:** Cobertura sistemática
 - **Aleatorio con memoria:** Para mapas complejos
 
@@ -610,7 +609,7 @@ Antes de entregar, verifica:
 ### P6: ¿Puedo entregar varias versiones?
 **R:** Depende de las reglas de tu competición. Generalmente solo se acepta una entrega final.
 
-### P7: ¿Qué pasa si mi código crashea?
+### P7: ¿Qué pasa si mi código provoca fallos de ejecución?
 **R:** Esa ejecución recibe 0 puntos y -10 de penalización. Las otras ejecuciones cuentan normalmente.
 
 ### P8: ¿Puedo ver los resultados de otros equipos antes de entregar?
@@ -638,14 +637,9 @@ Antes de entregar, verifica:
 - **validate:** Pre-validación de entrega antes de enviar
 - **visualize():** Animación visual del recorrido del robot
 - **stats.csv:** Archivo con todas las métricas de ejecución
-- **Generación de mapas:** Usa `maps/generate.c` para crear mapas de prueba personalizados
-- **Visualización de mapas:** Los archivos `.pgm` se pueden abrir con GIMP, ImageMagick o visualizadores PGM
+- **Generación de mapas:** Usa `tools/generate.c` para crear mapas de prueba personalizados
+- **Visualización de mapas:** Los archivos `.pgm` se pueden abrir con GIMP, ImageMagick o visualizadores PGM en modo gráfico, o con el visualizador proporcionado en modo texto.
 
-### 10.3 Comunidad
-
-- Foro de la asignatura (si existe)
-- Sesiones de consulta con profesores
-- Grupos de estudio
 
 ---
 
@@ -654,7 +648,7 @@ Antes de entregar, verifica:
 Para consultas:
 - **Reglas de la competición:** Lee `RULES.md`
 - **Problemas técnicos:** Consulta con tu organizador
-- **Errores del sistema:** Reporta a los administradores
+- **Errores del sistema:** Informa a los organizadores
 
 ---
 
