@@ -15,7 +15,7 @@
    - `stats.csv`: estadísticas de ejecución
    - `map.pgm`: imagen del mundo (PGM)
 
-Consejo: Pulsa Ctrl-C durante la visualización para salir antes.
+Consejo: Pulsa Ctrl-C durante la visualización para interrumpirla y salir.
 
 ## Herramientas de mapas
 

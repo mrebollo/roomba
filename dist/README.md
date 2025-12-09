@@ -1,14 +1,14 @@
-# Simulador Roomba - Entorno de Programación para Estudiantes
+# Simulador Roomba - Entorno de Programación
 
 Bienvenido al simulador Roomba. Este directorio contiene todo lo necesario para programar tu robot limpiador autónomo.
 
-## Estructura de Archivos
+## Estructura de archivos
 
-### Archivos del Estudiante
+### Archivos del parcipitante
 - **`main.c`** - **EDITA ESTE ARCHIVO** - Programa aquí el comportamiento de tu robot
 - **`Makefile`** - Sistema de compilación (no modificar)
 
-### Biblioteca del Simulador
+### Biblioteca del simulador
 - **`simula.o`** - Biblioteca precompilada del simulador (no modificar)
 - **`simula.h`** - Documentación de funciones disponibles (consultar)
 
@@ -17,6 +17,8 @@ Bienvenido al simulador Roomba. Este directorio contiene todo lo necesario para 
   - `noobs.pgm` - Mapa simple sin obstáculos (ideal para empezar)
   - `random1.pgm`, `random3.pgm`, `random5.pgm` - Obstáculos aleatorios dispersos
   - `walls1.pgm`, `walls2.pgm`, `walls3.pgm`, `walls4.pgm` - Muros verticales/horizontales
+- En cualquier momento puedes generar mapas adicionales las herramientas proporcionadas el `tools`. 
+
 
 ## Inicio Rápido
 
@@ -27,8 +29,8 @@ make
 
 ### 2. Ejecutar el simulador
 ```bash
-./roomba                        # Genera un mapa aleatorio
-./roomba MAP=maps/noobs.pgm    # Usa un mapa específico
+./roomba                   # Genera un mapa aleatorio
+./roomba maps/noobs.pgm    # Usa un mapa específico de la carpeta `maps`
 ```
 
 ### 3. Ver resultados
@@ -74,7 +76,6 @@ void rmb_load();                // Recargar 1 unidad de batería (solo en la bas
 ### Funciones de Utilidad
 ```c
 void visualize();               // Mostrar animación ASCII del recorrido
-void save_stats();              // Guardar estadísticas en stats.csv
 ```
 
 ## Plantilla Básica
@@ -167,10 +168,6 @@ if (fabs(dif) > 0.2) {
 - Mayor cobertura
 - Algoritmo: wall-following (pared derecha o izquierda)
 
-**Espiral:**
-- Cobertura sistemática
-- Patrón: 1-1-2-2-3-3-4-4... pasos
-
 **Comportamiento Adaptativo:**
 - Máquina de estados
 - Diferentes modos según batería/suciedad
@@ -192,9 +189,9 @@ cell_total,cell_visited,dirt_total,dirt_cleaned,bat_total,bat_mean,...
 ### 4. Probar en múltiples mapas
 Tu código debe funcionar en diferentes escenarios:
 ```bash
-./roomba MAP=maps/noobs.pgm
-./roomba MAP=maps/random3.pgm
-./roomba MAP=maps/walls2.pgm
+./roomba maps/noobs.pgm
+./roomba maps/random3.pgm
+./roomba maps/walls2.pgm
 ```
 
 ### 5. Iterar y mejorar
@@ -208,7 +205,7 @@ Tu código debe funcionar en diferentes escenarios:
 
 ### Error: "undefined reference to..."
 - Falta compilar con `-lm` (biblioteca matemática)
-- Solución: Usa `make` (ya incluye las flags necesarias)
+- Solución: Usa `make` (ya incluye los flags necesarios)
 
 ### Robot se queda sin batería
 - Implementa recarga automática

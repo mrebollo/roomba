@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "../sim_world_api.h"
+#include "sim_world_api.h"
 
 
 #include <sys/stat.h>

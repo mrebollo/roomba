@@ -86,6 +86,7 @@ Valida código de equipos antes de la competición. Detecta problemas de compila
 - Generación de `stats.csv` válido
 - Límites de tiempo de ejecución
 - Reporte detallado con métricas
+ 
 
 **Casos de uso:**
 1. **Participante:** Verificar código antes de enviar
@@ -105,6 +106,55 @@ Valida código de equipos antes de la competición. Detecta problemas de compila
    ```bash
    .validate teams/team15 --strict --timeout 5
    ```
+
+---
+
+### 4. **myscore** - Cálculo del rendimiento
+
+Herramienta para analizar el fichero `stats.csv` generado por el simulador y calcular métricas de rendimiento del robot.
+
+**Uso básico:**
+```bash
+./myscore stats.csv
+```
+
+**Recomendaciones para acumulación de resultados:**
+- Por defecto, el simulador sobrescribe `stats.csv` en cada ejecución. Para analizar varias ejecuciones, es necesario guardar cada resultado con un nombre diferente:
+   ```bash
+   ./roomba > stats1.csv
+   ./roomba > stats2.csv
+   ./roomba > stats3.csv
+   # ...
+   ```
+
+**Cómo combinar varios ficheros de resultados para analizarlos juntos:**
+Supongamos que tienes varios ficheros `stats1.csv`, `stats2.csv`, `stats3.csv`, etc. Puedes combinarlos en uno solo para analizarlos con `myscore`:
+```bash
+# Copia la cabecera del primer fichero
+head -n 1 stats1.csv > stats.csv
+# Añade los datos de todos los ficheros (sin repetir la cabecera)
+for f in stats*.csv; do tail -n +2 "$f" >> stats.csv; done
+# Analiza el fichero combinado
+./myscore stats.csv
+```
+
+**Notas:**
+- Es importante no repetir la cabecera (línea 1) al combinar los ficheros.
+- Puedes cambiar el nombre de salida en cada ejecución para evitar sobrescribir resultados.
+- El análisis es más útil cuando se acumulan resultados de diferentes mapas o ejecuciones.
+
+**Ejemplo de uso completo:**
+```bash
+for i in {1..5}; do ./roomba > "stats${i}.csv"; done
+head -n 1 stats1.csv > stats.csv
+for f in stats*.csv; do tail -n +2 "$f" >> stats.csv; done
+./myscore stats.csv
+```
+
+Esta herramienta permite comparar el rendimiento de diferentes algoritmos, configuraciones o mapas de manera sencilla y automatizada.
+
+
+
 
 ---
 

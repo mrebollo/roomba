@@ -103,7 +103,7 @@ El sistema evalúa **4 métricas principales** (ver `RULES.md` para detalles):
 - +3 puntos por navegación limpia (<5 colisiones)
 
 **Penalizaciones:**
-- -10 puntos por cada crash del programa
+- -10 puntos por cada fallo en ejecución del programa
 
 **Detalles completos en `RULES.md`**
 

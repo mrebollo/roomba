@@ -10,7 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "../sim_world_api.h"
+#include "sim_world_api.h"
 
 /**
  * @brief Imprime la ayuda de uso del visualizador de mapas

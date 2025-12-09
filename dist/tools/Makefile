@@ -7,8 +7,8 @@ CFLAGS = -Wall -Wextra -O2
 LDFLAGS = -lm
 
 
-# Fuentes del mundo del simulador
-SIM_WORLD = ../sim_world.c ../sim_world_api.c
+# Objeto del mundo del simulador (distribución)
+SIM_WORLD = ../simula.o
 
 
 # Ejecutables: uno por cada .c
@@ -36,30 +36,30 @@ all: $(GENERATE) $(VIEWMAP) $(VALIDATE) $(MYSCORE)
 
 # Generador de mapas
 $(GENERATE): generate.c $(SIM_WORLD)
-	$(CC) $(CFLAGS) -I.. -o $@ $^ $(LDFLAGS)
-	@echo "✓ Map generator compiled: $(GENERATE)"
+	$(CC) $(CFLAGS) -I. -I.. -o $@ $^ $(LDFLAGS)
+	@echo "Map generator compiled: $(GENERATE)"
 
 
 # Visualizador de mapas
 $(VIEWMAP): viewmap.c $(SIM_WORLD)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-	@echo "✓ Map visualizer compiled: $(VIEWMAP)"
+	$(CC) $(CFLAGS) -I. -I.. -o $@ $^ $(LDFLAGS)
+	@echo "Map visualizer compiled: $(VIEWMAP)"
 
 # Validador de código
 $(VALIDATE): validate.c
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
-	@echo "✓ Code validator compiled: $(VALIDATE)"
+	@echo "Code validator compiled: $(VALIDATE)"
 
 # Mi sistema de puntuacion
-$(MYSCORE): myscore.c libscore.c libscore.h
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-	@echo "✓ Custom score system compiled: $(MYSCORE)"
+$(MYSCORE): myscore.c libscore.c
+	$(CC) $(CFLAGS) -o $@ myscore.c libscore.c $(LDFLAGS)
+	@echo "Custom score system compiled: $(MYSCORE)"
 
 # Clean compiled binaries
 
 clean:
 	rm -f $(GENERATE) $(VIEWMAP) $(VALIDATE) $(MYSCORE)	
-	@echo "✓ Tools cleaned"
+	@echo "Tools cleaned"
 
 # Help
 help:
