@@ -3,7 +3,7 @@
 # Compiles utility programs for map generation, visualization, and validation
 
 CC = gcc
-CFLAGS = -Wall -Wextra -O2
+CFLAGS = -Wall -Wextra -O2 -Wno-unused-result
 LDFLAGS = -lm
 
 

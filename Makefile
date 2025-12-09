@@ -10,7 +10,7 @@
 #   make debug    - Build with debug symbols
 
 CC = gcc
-CFLAGS = -Wall -Wextra -lm
+CFLAGS = -Wall -Wextra -lm -Wno-unused-result
 DEBUG_FLAGS = -g -O0
 RELEASE_FLAGS = -O2
 
@@ -41,7 +41,7 @@ debug: $(SOURCES) simula.h
 lib: $(LIBOBJECTS)
 
 $(LIBOBJECTS): $(LIBSOURCES) simula.h simula_internal.h sim_world_api.h
-	$(CC) -c $(LIBSOURCES) -Wall -Wextra -O2
+	$(CC) -c $(LIBSOURCES) $(CFLAGS)
 	ld -r simula.o sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o sim_world_api.o -o simula_combined.o
 	mv simula_combined.o simula.o
 	rm -f sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o sim_world_api.o
@@ -50,7 +50,7 @@ $(LIBOBJECTS): $(LIBSOURCES) simula.h simula_internal.h sim_world_api.h
 # Build library for competition mode (single object file)
 lib-competition:
 	@echo "Building competition library..."
-	$(CC) -c simula.c sim_robot.c sim_visual.c sim_io.c sim_world.c sim_stats.c -Wall -Wextra -O2
+	$(CC) -c simula.c sim_robot.c sim_visual.c sim_io.c sim_world.c sim_stats.c $(CFLAGS)
 	$(CC) -r simula.o sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o -o competition/lib/simula.o -nostdlib
 	rm -f simula.o sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o
 	@echo "Competition library created: competition/lib/simula.o"
@@ -142,16 +142,16 @@ doc-clean:
 	rm -f docs/developer/manual_desarrollador.pdf
 	@echo "Documentation artifacts cleaned"
 
-# Distribution target - Create student package
+# Distribution target - Create participant package
 dist: lib
-	@echo "Creating student distribution package..."
+	@echo "Creating participant distribution package..."
 	@mkdir -p dist/maps
 	@cp simula.o dist/
 	@cp simula.h dist/
 	@cp maps/*.pgm dist/maps/ 2>/dev/null || true
 	@echo ""
 	@echo "=========================================="
-	@echo "  Student Package Created"
+	@echo "  Participant Package Created"
 	@echo "=========================================="
 	@echo "Location: dist/"
 	@echo ""
@@ -159,8 +159,8 @@ dist: lib
 	@ls -lh dist/ | tail -n +2
 	@echo ""
 	@echo "To create distributable archive:"
-	@echo "  tar -czf roomba-student.tar.gz dist/"
-	@echo "  zip -r roomba-student.zip dist/"
+	@echo "  tar -czf roomba-participant.tar.gz dist/"
+	@echo "  zip -r roomba-participant.zip dist/"
 	@echo ""
 
 dist-clean:

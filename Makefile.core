@@ -1,0 +1,34 @@
+# Makefile.core: reglas principales de compilación y limpieza
+
+CC = gcc
+CFLAGS = -Wall -Wextra -lm -Wno-unused-result
+DEBUG_FLAGS = -g -O0
+RELEASE_FLAGS = -O2
+
+SOURCES = main.c simula.c sim_robot.c sim_visual.c sim_io.c sim_world.c sim_stats.c
+LIBSOURCES = simula.c sim_robot.c sim_visual.c sim_io.c sim_world.c sim_stats.c sim_world_api.c
+LIBOBJECTS = simula.o
+TARGET = roomba
+
+all: $(TARGET)
+
+$(TARGET): $(SOURCES) simula.h
+	$(CC) $(SOURCES) $(CFLAGS) $(RELEASE_FLAGS) -o $(TARGET)
+	@echo "Student project compiled successfully"
+
+debug: $(SOURCES) simula.h
+	$(CC) $(SOURCES) $(CFLAGS) $(DEBUG_FLAGS) -o $(TARGET)
+	@echo "Debug build completed"
+
+lib: $(LIBOBJECTS)
+
+$(LIBOBJECTS): $(LIBSOURCES) simula.h simula_internal.h sim_world_api.h
+	$(CC) -c $(LIBSOURCES) $(CFLAGS)
+	ld -r simula.o sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o sim_world_api.o -o simula_combined.o
+	mv simula_combined.o simula.o
+	rm -f sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o sim_world_api.o
+	@echo "Library object file created: simula.o"
+
+clean:
+	rm -f $(TARGET) *.o *.csv *.pgm log.csv stats.csv map.pgm
+	@echo "Cleaned build artifacts"

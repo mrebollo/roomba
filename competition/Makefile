@@ -4,7 +4,7 @@
 # the main development Makefile in the project root.
 
 CC = gcc
-CFLAGS = -Wall -Wextra -O2 -lm
+CFLAGS = -Wall -Wextra -O2 -lm -Wno-unused-result
 RUNNER = runner
 TEAMS_DIR = teams
 LIB_DIR = lib
@@ -16,48 +16,48 @@ all: runner score myscore check-lib
 # Build competition runner
 $(RUNNER): runner.c competition_ext.c simula_comp.c
 	$(CC) runner.c $(CFLAGS) -o $(RUNNER)
-	@echo "✓ Competition runner compiled successfully"
+	@echo "[OK] Competition runner compiled successfully"
 
 # Build scoring calculator (organizer tool)
 score: score.c libscore.o
 	$(CC) score.c libscore.o $(CFLAGS) -o score
-	@echo "✓ Scoring calculator compiled successfully"
+	@echo "[OK] Scoring calculator compiled successfully"
 
 # Build participant scoring tool
 myscore: myscore.c libscore.o
 	$(CC) myscore.c libscore.o $(CFLAGS) -o myscore
-	@echo "✓ Participant scoring tool compiled successfully"
+	@echo "[OK] Participant scoring tool compiled successfully"
 
 # Build scoring library
 libscore.o: libscore.c libscore.h
 	$(CC) -c libscore.c $(CFLAGS)
-	@echo "✓ Scoring library compiled"
+	@echo "[OK] Scoring library compiled"
 
 # Check if library exists, warn if not
 check-lib:
 	@if [ ! -f $(LIB_DIR)/simula.o ]; then \
-		echo "⚠️  Warning: $(LIB_DIR)/simula.o not found"; \
+		echo "[OK] Warning: $(LIB_DIR)/simula.o not found"; \
 		echo "   Run 'make lib' to build it"; \
 	else \
-		echo "✓ Competition library exists"; \
+		echo "[OK] Competition library exists"; \
 	fi
 
 # Build the competition library from project root
 lib:
 	@echo "Building competition library from project root..."
 	@cd .. && $(MAKE) lib-competition
-	@echo "✓ Library built: $(LIB_DIR)/simula.o"
+	@echo "[OK] Library built: $(LIB_DIR)/simula.o"
 	@echo "Copying participant tools to lib/..."
 	@cp myscore $(LIB_DIR)/ 2>/dev/null || echo "Run 'make myscore' first"
 	@cp scoring.conf $(LIB_DIR)/ 2>/dev/null || echo "scoring.conf not found"
-	@echo "✓ Participant tools ready"
+	@echo "[OK] Participant tools ready"
 
 # Sync headers from project root
 sync-headers:
 	@echo "Syncing headers from project root..."
 	@cp ../simula.h $(LIB_DIR)/
 	@cp ../simula_internal.h $(LIB_DIR)/
-	@echo "✓ Headers synced"
+	@echo "[OK] Headers synced"
 
 # Test compile a single team
 test:
@@ -70,14 +70,14 @@ test:
 	@cd $(TEAMS_DIR)/$(TEAM) && \
 		gcc -I../../lib main.c ../../lib/simula.o \
 		../../competition_ext.c ../../simula_comp.c -lm -o roomba
-	@echo "✓ Team $(TEAM) compiled successfully"
+	@echo "[OK] Team $(TEAM) compiled successfully"
 
 # Run the competition
 run: $(RUNNER) check-lib
 	@echo "Starting competition..."
 	@mkdir -p $(RESULTS_DIR)
 	./$(RUNNER) $(TEAMS_DIR)
-	@echo "✓ Competition completed"
+	@echo "[OK] Competition completed"
 
 # Run competition and archive results with timestamp
 run-archived: run
@@ -87,12 +87,12 @@ run-archived: run
 	mv stats.csv $$ARCHIVE_DIR/ 2>/dev/null || true; \
 	mv ranking.txt $$ARCHIVE_DIR/ 2>/dev/null || true; \
 	ln -sf run_$$TIMESTAMP $(RESULTS_DIR)/latest; \
-	echo "✓ Results archived to $$ARCHIVE_DIR"
+	echo "[OK] Results archived to $$ARCHIVE_DIR"
 
 # Initialize competition environment
 init:
 	@mkdir -p $(TEAMS_DIR) $(LIB_DIR) $(RESULTS_DIR) maps scripts
-	@echo "✓ Competition environment initialized"
+	@echo "[OK] Competition environment initialized"
 
 # Clean competition files
 clean:
@@ -100,13 +100,13 @@ clean:
 	rm -f $(TEAMS_DIR)/*/roomba
 	rm -f $(TEAMS_DIR)/*/config.txt
 	rm -f stats.csv ranking.txt
-	@echo "✓ Cleaned competition artifacts"
+	@echo "[OK] Cleaned competition artifacts"
 
 # Deep clean: also remove library and results
 clean-all: clean
 	rm -f $(LIB_DIR)/simula.o
 	rm -rf $(RESULTS_DIR)/*
-	@echo "✓ Deep clean completed"
+	@echo "[OK] Deep clean completed"
 
 # Help
 help:

@@ -1,0 +1,20 @@
+# Makefile.dist: reglas para distribución stand-alone
+
+dist:
+	@echo "[OK] Creando dist/ y subdirectorios..."
+	mkdir -p dist/maps
+	# Copiar fuentes y cabeceras principales
+	cp simula.o dist/
+	cp simula.h dist/
+	cp main.c dist/
+	cp README.md dist/ 2>/dev/null || true
+	cp Makefile dist/Makefile 2>/dev/null || true
+	# Copiar mapas
+	cp maps/*.pgm dist/maps/ 2>/dev/null || true
+	# Modificar includes en main.c para que sean stand-alone
+	sed -i 's|#include "simula.h"|#include "./simula.h"|' dist/main.c
+	@echo "[OK] Stand-alone dist package ready in dist/"
+
+clean-dist:
+	rm -rf dist/
+	@echo "[OK] dist/ directory cleaned"
