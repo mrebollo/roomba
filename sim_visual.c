@@ -1,3 +1,6 @@
+#include <termios.h>
+#include <unistd.h>
+#include <fcntl.h>
 /**
  * @file sim_visual.c
  * @brief Visualización de mapas y trayectorias para el simulador Roomba
@@ -169,24 +172,71 @@ void visualize(){
   }
   g_stop_vis = 0;
   void (*prev)(int) = signal(SIGINT, sigint_vis_handler);
-  // Activar alternate screen buffer y ocultar cursor
+  // Configurar terminal en modo no canónico
+  struct termios oldt, newt;
+  tcgetattr(STDIN_FILENO, &oldt);
+  newt = oldt;
+  newt.c_lflag &= ~(ICANON | ECHO);
+  tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+  int oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+  fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+
   printf("\033[?1049h\033[?25l\033[2J");
   fflush(stdout);
-  for(int t = 0; t < timer && !g_stop_vis; t++){
-    // Move cursor to home position (top-left) without clearing
-    printf("\033[2J");
-    printf("\033[H");
-    char view[WORLDSIZE][WORLDSIZE];
-    for(int i = 0; i < map.nrow; i++)
-      for(int j = 0; j < map.ncol; j++)
-        view[i][j] = map.cells[i][j];
-    print_path(view, hist, t);
-    printf("Ctrl-C para salir\n");
-    fflush(stdout);
-    const long ms = VISUALIZATION_DELAY_MS;
-    struct timespec ts = { ms/1000, (ms%1000)*1000000L };
-    nanosleep(&ts, NULL);
+  int t = 0;
+  int paused = 0;
+    printf("\n[Espacio]=pausa, S=siguiente, A=anterior, q=salir\n");
+  while (t < timer && !g_stop_vis) {
+    if (!paused) {
+      printf("\033[2J");
+      printf("\033[H");
+      char view[WORLDSIZE][WORLDSIZE];
+      for(int i = 0; i < map.nrow; i++)
+        for(int j = 0; j < map.ncol; j++)
+          view[i][j] = map.cells[i][j];
+      print_path(view, hist, t);
+      printf("\n[Espacio]=pausa, S=siguiente, A=anterior, q=salir\n");
+      fflush(stdout);
+      const long ms = VISUALIZATION_DELAY_MS;
+      struct timespec ts = { ms/1000, (ms%1000)*1000000L };
+      nanosleep(&ts, NULL);
+      int c = getchar();
+      if (c != EOF) {
+        if (c == 'q' || c == 'Q') { g_stop_vis = 1; break; }
+        if (c == ' ') paused = !paused;
+      }
+      if (!paused && !g_stop_vis) t++;
+    } else {
+      int redraw = 1;
+      while (paused && !g_stop_vis) {
+        if (redraw) {
+          printf("\033[2J");
+          printf("\033[H");
+          char view[WORLDSIZE][WORLDSIZE];
+          for(int i = 0; i < map.nrow; i++)
+            for(int j = 0; j < map.ncol; j++)
+              view[i][j] = map.cells[i][j];
+          print_path(view, hist, t);
+          printf("\n[Espacio]=pausa, S=siguiente, A=anterior, q=salir\n");
+          fflush(stdout);
+          redraw = 0;
+        }
+        int c = getchar();
+        if (c != EOF) {
+          if (c == 'q' || c == 'Q') { g_stop_vis = 1; break; }
+          if (c == ' ') { paused = 0; break; }
+            if (c == 's' || c == 'S') { if (t < timer-1) { t++; redraw = 1; } }
+            if (c == 'a' || c == 'A') { if (t > 1) { t--; redraw = 1; } }
+        }
+        struct timespec ts = { 0, 10000000L }; // 10ms
+        nanosleep(&ts, NULL);
+      }
+    }
   }
+
+  // Restaurar terminal
+  tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+  fcntl(STDIN_FILENO, F_SETFL, oldf);
   // Antes de restaurar el buffer normal, guardar el último frame
   int last_tick = (timer < 1) ? 0 : (timer-1);
   char view[WORLDSIZE][WORLDSIZE];
@@ -202,6 +252,7 @@ void visualize(){
   // Imprimir el último frame en el buffer normal
   print_path(view, hist, last_tick);
   printf("\n--- Simulación finalizada ---\n");
+  printf("\n[Espacio]=pausa, S=siguiente, A=anterior, q=salir\n");
   fflush(stdout);
   #endif
 }

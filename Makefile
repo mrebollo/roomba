@@ -86,7 +86,6 @@ run-map: $(TARGET)
 
 
 # Clean generated files
-clean:
 	rm -f $(TARGET) $(GENERATE) $(VIEWMAP)
 	rm -f *.o *.csv *.pgm
 	rm -f log.csv stats.csv map.pgm
@@ -177,6 +176,7 @@ help:
 	@echo "  make debug   - Build with debug symbols"
 	@echo "  make clean   - Remove generated files"
 	@echo "  make lib     - Create simula.o library for distribution"
+	@echo "  make visualize- Build log visualizer (visualize.c)"
 	@echo ""
 	@echo "Map generator:"
 	@echo "  make mapgen-dev  - Build map generator (development, from sources)"
