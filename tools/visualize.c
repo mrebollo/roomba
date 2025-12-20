@@ -17,9 +17,9 @@ int main(int argc, char *argv[]) {
             printf("Uso: visualize [log.csv] [map.pgm]\n");
             printf("\nControles durante la animación:\n");
             printf("  Espacio : Pausa/continúa la animación\n");
-            printf("  n       : Siguiente frame (en pausa)\n");
-            printf("  p       : Frame anterior (en pausa)\n");
-            printf("  q       : Salir\n");
+            printf("  S       : Siguiente frame (en pausa)\n");
+            printf("  A       : Frame anterior (en pausa)\n");
+            printf("  Q       : Salir\n");
             printf("  Ctrl-C  : Salir\n");
             return 0;
         }
