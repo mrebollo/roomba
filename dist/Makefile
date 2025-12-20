@@ -7,7 +7,7 @@
 #   make help   - Mostrar ayuda
 
 CC = gcc
-CFLAGS = -Wall -Wextra -lm -O2
+CFLAGS = -Wall -Wextra -lm
 TARGET = roomba
 
 # Compilar proyecto del estudiante

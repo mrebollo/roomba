@@ -4,7 +4,7 @@
 # the main development Makefile in the project root.
 
 CC = gcc
-CFLAGS = -Wall -Wextra -O2 -lm -Wno-unused-result
+CFLAGS = -Wall -Wextra -lm -Wno-unused-result
 RUNNER = runner
 TEAMS_DIR = teams
 LIB_DIR = lib
