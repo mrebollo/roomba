@@ -2448,19 +2448,20 @@ Usuario          main()         simula.c         sim_robot.c
 \end{tabular}
 \end{table}
 
+
 \subsection{Modo Competición}
 
-Para compilar en modo competición (sin visualización):
+Para compilar en modo competición (sin visualización y con tiempo de ejecución fijo para todos los equipos):
 
 \begin{verbatim}
-gcc -DCOMPETITION_MODE main.c simula.c ... -o roomba_comp
+gcc -DCOMPETITION_MODE=1 main.c simula.c ... -o roomba_comp
 \end{verbatim}
 
 Efectos:
 \begin{itemize}
     \item \texttt{DEBUG\_PRINT()} se convierte en no-op
-    \item \texttt{ENABLE\_VISUALIZATION} = 0
-    \item No se muestra output ASCII en tiempo real
+    \item La visualización se desactiva automáticamente
+    \item El número de iteraciones (exec\_time) es el mismo para todos los equipos
     \item Solo se generan logs y estadísticas
 \end{itemize}
 

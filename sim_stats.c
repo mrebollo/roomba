@@ -12,6 +12,7 @@
 
 // Stats is now exported for competition_ext.c access
 struct _stat stats = {0};     ///< Estadísticas globales
+static bool visited[WORLDSIZE][WORLDSIZE] = {0}; ///< Celdas visitadas
 
 /* ============================================================================
  * API PÚBLICA DE ESTADÍSTICAS
@@ -28,8 +29,15 @@ void stats_move(int kind){
 /**
  * @brief Incrementa el contador de celdas visitadas
  */
-void stats_visit_cell(void){ 
-  stats.cell_visited++; 
+void stats_visit_cell(void){
+  int x = rob->x;
+  int y = rob->y;
+  if (x >= 0 && x < WORLDSIZE && y >= 0 && y < WORLDSIZE) {
+    if (!visited[y][x]) {
+      visited[y][x] = true;
+      stats.cell_visited++;
+    }
+  }
 }
 
 /**
@@ -71,6 +79,10 @@ void stats_battery_consume(float amount){
 void stats_rebuild_from_map(const map_t* m){
   int cells = 0;
   int dirt_sum = 0;
+  // Reset visited matrix
+  for(int i = 0; i < WORLDSIZE; i++)
+    for(int j = 0; j < WORLDSIZE; j++)
+      visited[i][j] = false;
   for(int i = 0; i < m->nrow; i++){
     for(int j = 0; j < m->ncol; j++){
       char c = m->cells[i][j];
@@ -104,4 +116,7 @@ const struct _stat* stats_get(void){
  */
 void stats_reset(void){
   stats = (struct _stat){0};
+  for(int i = 0; i < WORLDSIZE; i++)
+    for(int j = 0; j < WORLDSIZE; j++)
+      visited[i][j] = false;
 }

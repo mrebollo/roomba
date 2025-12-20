@@ -173,6 +173,9 @@ void scoring_calculate_map(map_result_t *result, const scoring_config_t *config)
     // Coverage: percentage of cells visited
     if (result->cell_total > 0) {
         result->coverage = (result->cell_visited * 100.0f) / result->cell_total;
+        if (result->coverage > 100.0f) {
+            result->coverage = 100.0f;
+        }
     } else {
         result->coverage = 0.0f;
     }
@@ -191,11 +194,11 @@ void scoring_calculate_map(map_result_t *result, const scoring_config_t *config)
     }
     
     // Movement quality: ratio of successful moves to bumps
-    int total_moves = result->forward + result->turn;
+    int total_moves = result->forward + result->turn + result->bumps;
     if (total_moves > 0) {
         float bump_ratio = (float)result->bumps / total_moves;
         result->movement_quality = (1.0f - bump_ratio) * 100.0f;
-        if (result->movement_quality < 0.0f) {
+        if( result->movement_quality < 0.0f) {
             result->movement_quality = 0.0f;
         }
     } else {
