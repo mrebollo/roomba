@@ -1,18 +1,23 @@
+
 # Makefile for Roomba Student Projects
-# 
-# This Makefile compiles the student's robot behavior (main.c)
-# with the simulation library (simula.c) for development and testing.
 #
-# Usage:
-#   make          - Build the student project
-#   make run      - Build and run the simulation
-#   make clean    - Remove generated files
-#   make debug    - Build with debug symbols
+# Este Makefile compila el comportamiento del robot del estudiante (main.c)
+# junto con la librería de simulación (simula.c) para desarrollo y pruebas.
+#
+# Uso:
+#   make          - Compila el proyecto del estudiante (modo normal)
+#   make run      - Compila y ejecuta la simulación
+#   make clean    - Elimina archivos generados
+#   make debug    - Compila con símbolos de depuración
+#   make comp     - Compila en modo competición (sin visualización, tiempo fijo)
+
+
 
 CC = gcc
 CFLAGS = -Wall -Wextra -lm -Wno-unused-result
 DEBUG_FLAGS = -g -O0
 RELEASE_FLAGS = -O2
+COMP_FLAGS = -DCOMPETITION_MODE=1
 
 # Source files
 SOURCES = main.c simula.c sim_robot.c sim_visual.c sim_io.c sim_world.c sim_stats.c
@@ -23,8 +28,14 @@ GENERATE = maps/generate
 VIEWMAP = maps/viewmap
 
 
+
 # Default target
 all: $(TARGET)
+
+# Modo competición: fuerza COMPETITION_MODE=1
+comp: $(SOURCES) simula.h
+	$(CC) $(SOURCES) $(CFLAGS) $(RELEASE_FLAGS) $(COMP_FLAGS) -o $(TARGET)_comp
+	@echo "Proyecto compilado en modo competición (sin visualización, tiempo fijo)"
 
 # Build student project
 $(TARGET): $(SOURCES) simula.h

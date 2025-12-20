@@ -194,10 +194,14 @@ void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time){
   config.on_start = start;
   config.exec_beh = beh;
   config.on_stop = stop;
+#if COMPETITION_MODE
+  config.exec_time = COMPETITION_EXEC_TIME;
+#else
   // if exec_time is out of bounds, set a default value
   config.exec_time = (exec_time > 0 && exec_time <= MAX_EXEC_TIME) 
                      ? exec_time 
                      : WORLDSIZE*WORLDSIZE;
+#endif
   
   // Reserve memory for history
   if(hist) free(hist);

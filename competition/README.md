@@ -12,11 +12,12 @@ Este sistema permite a organizadores ejecutar competiciones de forma automática
 - **Participantes**: Consulta `STUDENT_GUIDE.md` para preparar tu entrega
 - **Todos**: Lee `RULES.md` para entender los criterios de evaluación
 
+
 ## Quick Start (Organizadores)
 
 ```bash
-# 1. Compilar herramientas
-make all
+# 1. Compilar herramientas en modo competición (sin visualización, tiempo fijo)
+make comp
 
 # 2. Validar código de un equipo
 ./validate ../teams/team01
@@ -27,6 +28,8 @@ make all
 # 4. Generar ranking
 ./score
 ```
+
+**Nota:** En modo competición, el número de iteraciones (exec_time) es fijo para todos los equipos y la visualización está desactivada automáticamente.
 
 ## Estructura de Directorios
 

@@ -165,7 +165,6 @@ static void print_path(char view[WORLDSIZE][WORLDSIZE], sensor_t h[], int len){
  * Requiere que ENABLE_VISUALIZATION esté activado.
  */
 void visualize(){
-#if ENABLE_VISUALIZATION
   if(!hist){
     printf("No history available for visualization\n");
     return;
@@ -254,6 +253,5 @@ void visualize(){
   printf("\n--- Simulación finalizada ---\n");
   printf("\n[Espacio]=pausa, S=siguiente, A=anterior, q=salir\n");
   fflush(stdout);
-  #endif
 }
 /* --- FIN DEL ARCHIVO ORIGINAL --- */

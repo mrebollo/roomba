@@ -77,7 +77,7 @@ GENERATE_LATEX         = NO
 ENABLE_PREPROCESSING   = YES
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = NO
-PREDEFINED             = ENABLE_VISUALIZATION=1
+PREDEFINED             = COMPETITION_MODE=1
 
 #---------------------------------------------------------------------------
 # Configuration options related to external references

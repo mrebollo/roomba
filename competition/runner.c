@@ -49,7 +49,7 @@ typedef struct {
     int total_cells_visited;          ///< Total de celdas visitadas
     int total_dirt_cleaned;           ///< Total de suciedad limpiada
     float total_battery_used;         ///< Batería total consumida
-    int score;                        ///< Puntuación final del equipo
+    int total_bumps;                  ///< Total de colisiones
 } team_result_t;
 
 
@@ -426,12 +426,12 @@ void calculate_rankings(const char *stats_file, team_result_t results[], int *te
         int map_type, cell_total, cell_visited, dirt_total, dirt_cleaned;
         float bat_total, bat_mean;
         int forward, turn, bumps, clean, load;
-        
+
         sscanf(line, "%[^,],%d,%d,%d,%d,%d,%f,%f,%d,%d,%d,%d,%d",
             team_name, &map_type, &cell_total, &cell_visited, 
             &dirt_total, &dirt_cleaned, &bat_total, &bat_mean,
             &forward, &turn, &bumps, &clean, &load);
-        
+
         // Find or create team entry
         int team_idx = -1;
         for(int i = 0; i < *team_count; i++) {
@@ -440,23 +440,21 @@ void calculate_rankings(const char *stats_file, team_result_t results[], int *te
                 break;
             }
         }
-        
+
         if(team_idx == -1) {
             team_idx = (*team_count)++;
             strcpy(results[team_idx].name, team_name);
             results[team_idx].total_cells_visited = 0;
             results[team_idx].total_dirt_cleaned = 0;
             results[team_idx].total_battery_used = 0;
-            results[team_idx].score = 0;
+            results[team_idx].total_bumps = 0;
         }
-        
+
         // Accumulate statistics
         results[team_idx].total_cells_visited += cell_visited;
         results[team_idx].total_dirt_cleaned += dirt_cleaned;
         results[team_idx].total_battery_used += bat_total;
-        
-        // Calculate score: dirt cleaned (priority) + cells visited - battery penalty
-        results[team_idx].score += (dirt_cleaned * 100) + cell_visited - (int)(bat_total / 10);
+        results[team_idx].total_bumps += bumps;
     }
     
     fclose(fd);
@@ -471,7 +469,8 @@ void calculate_rankings(const char *stats_file, team_result_t results[], int *te
 int compare_teams(const void *a, const void *b) {
     team_result_t *ta = (team_result_t*)a;
     team_result_t *tb = (team_result_t*)b;
-    return tb->score - ta->score;  // Descending order
+    // Orden descendente por celdas visitadas
+    return tb->total_cells_visited - ta->total_cells_visited;
 }
 
 /**
@@ -495,38 +494,39 @@ void display_ranking(const char *stats_file) {
     // Display ranking
     printf("\n");
     printf("═══════════════════════════════════════════════════════════════\n");
-    printf("                    COMPETITION RANKING                        \n");
+    printf("                    COMPETITION RANKING (TOTALS)                       \n");
     printf("═══════════════════════════════════════════════════════════════\n");
-    printf("Rank  Team            Score    Cells    Dirt    Battery\n");
+    printf("Rank  Team            Cells    Dirt    Battery   Bumps\n");
     printf("───────────────────────────────────────────────────────────────\n");
-    
+
     for(int i = 0; i < team_count; i++) {
-        printf("%-5d %-15s %-8d %-8d %-7d %.1f\n",
+        printf("%-5d %-15s %-8d %-8d %-9.1f %-6d\n",
             i + 1,
             results[i].name,
-            results[i].score,
             results[i].total_cells_visited,
             results[i].total_dirt_cleaned,
-            results[i].total_battery_used);
+            results[i].total_battery_used,
+            results[i].total_bumps);
     }
-    
+
     printf("═══════════════════════════════════════════════════════════════\n\n");
-    
+
     // Save to file
     FILE *fd = fopen("ranking.txt", "w");
     if(fd) {
-        fprintf(fd, "ROOMBA COMPETITION RANKING\n\n");
-        fprintf(fd, "Rank  Team            Score    Cells    Dirt    Battery\n");
+        fprintf(fd, "ROOMBA COMPETITION RANKING (TOTALS)\n\n");
+        fprintf(fd, "Rank  Team            Cells    Dirt    Battery   Bumps\n");
         fprintf(fd, "-----------------------------------------------------------\n");
         for(int i = 0; i < team_count; i++) {
-            fprintf(fd, "%-5d %-15s %-8d %-8d %-7d %.1f\n",
-                i + 1, results[i].name, results[i].score,
+            fprintf(fd, "%-5d %-15s %-8d %-8d %-9.1f %-6d\n",
+                i + 1, results[i].name,
                 results[i].total_cells_visited,
                 results[i].total_dirt_cleaned,
-                results[i].total_battery_used);
+                results[i].total_battery_used,
+                results[i].total_bumps);
         }
         fclose(fd);
-        printf("✓ Ranking saved to ranking.txt\n");
+        printf("Ranking saved to ranking.txt\n");
     }
 }
 

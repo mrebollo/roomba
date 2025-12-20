@@ -15,6 +15,13 @@
    - `stats.csv`: estadísticas de ejecución
    - `map.pgm`: imagen del mundo (PGM)
 
+
+**Modo competición:**
+- Para compilar en modo competición (sin visualización y con tiempo fijo para todos los equipos):
+   - `make comp`
+   - O manualmente: `gcc -DCOMPETITION_MODE=1 ...`
+   - El número de iteraciones (exec_time) será el mismo para todos los equipos y la visualización estará desactivada.
+
 Consejo: Pulsa Ctrl-C durante la visualización para interrumpirla y salir.
 
 ## Herramientas de mapas
