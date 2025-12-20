@@ -31,7 +31,7 @@ if [ ! -f "$COMP_DIR/lib/simula.o" ]; then
     make lib-competition
     cd "$COMP_DIR"
 else
-    echo "✓ Competition library already exists"
+    echo "Competition library already exists"
 fi
 
 # Sync headers
@@ -53,13 +53,13 @@ for team_dir in "$COMP_DIR/teams"/*; do
         if [ -f "$team_dir/main.c" ] || ls "$team_dir"/*.c >/dev/null 2>&1; then
             TEAM_COUNT=$((TEAM_COUNT + 1))
         else
-            echo "  ⚠️  $TEAM_NAME: No .c file found"
+            echo "  [!]  $TEAM_NAME: No .c file found"
         fi
     fi
 done
 
 echo ""
-echo "✓ Setup complete!"
+echo "[OK] Setup complete!"
 echo "  Teams found: $TEAM_COUNT"
 echo "  Library: lib/simula.o"
 echo "  Runner: runner"

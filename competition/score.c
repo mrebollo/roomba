@@ -385,7 +385,6 @@ int aggregate_by_team(map_result_t results[], int result_count, team_score_t tea
     
     for (int i = 0; i < result_count; i++) {
         map_result_t *r = &results[i];
-        
         // Find or create team
         int team_idx = -1;
         for (int j = 0; j < team_count; j++) {
@@ -394,28 +393,24 @@ int aggregate_by_team(map_result_t results[], int result_count, team_score_t tea
                 break;
             }
         }
-        
         if (team_idx == -1) {
             team_idx = team_count++;
             strcpy(teams[team_idx].name, r->team_name);
             teams[team_idx].num_maps = 0;
             teams[team_idx].num_crashes = 0;
+            printf("Entrando en carpeta/equipo: %s\n", r->team_name);
         }
-        
         team_score_t *team = &teams[team_idx];
         int map_idx = team->num_maps;
-        
         if (map_idx < MAX_MAPS) {
             team->coverage_scores[map_idx] = r->score_coverage;
             team->dirt_efficiency_scores[map_idx] = r->score_dirt_efficiency;
             team->battery_conservation_scores[map_idx] = r->score_battery_conservation;
             team->movement_quality_scores[map_idx] = r->score_movement_quality;
             team->num_maps++;
-            
             // Accumulate movement stats for bonuses
             team->avg_bumps += r->bumps;
             team->avg_moves += (r->forward + r->turn + r->bumps);
-            
             // Detect crashes (very low scores combined with very few moves)
             if (r->score_coverage < 1.0 && r->cell_visited < 5) {
                 team->num_crashes++;
@@ -472,17 +467,15 @@ void display_ranking(team_score_t teams[], int team_count, config_t *cfg) {
     
     for (int i = 0; i < team_count; i++) {
         team_score_t *t = &teams[i];
-        
+        printf("Procesando equipo: %s\n", t->name);
         char marker = ' ';
         if (i < cfg->highlight_top) {
             marker = (i == 0) ? '*' : '+';
         }
-        
         printf("%c %-3d %-15s %6.2f   %5.1f  %6.1f   %6.1f   %6.1f      %d\n",
             marker, i + 1, t->name, t->total_score,
             t->avg_coverage, t->avg_dirt_efficiency, t->avg_battery_conservation,
             t->avg_movement_quality, t->num_maps);
-        
         if (t->num_crashes > 0) {
             printf("      └─ [!] %d crash(es) detected\n", t->num_crashes);
         }

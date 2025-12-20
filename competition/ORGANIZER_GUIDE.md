@@ -25,6 +25,7 @@ Manual completo para profesores y coordinadores sobre cómo configurar, ejecutar
 ### 1.1 Público Objetivo
 
 Esta guía es para:
+
 - Profesores coordinando la competición
 - Administradores técnicos del sistema
 - Personal de soporte durante la evaluación
@@ -60,6 +61,7 @@ Esta guía es para:
 ### 2.1 Requisitos del Sistema
 
 **Software necesario:**
+
 - Sistema operativo: Linux o macOS
 - Compilador: GCC 7.0 o superior
 - Make: GNU Make 4.0+
@@ -67,6 +69,7 @@ Esta guía es para:
 - Git (recomendado para control de versiones)
 
 **Recursos de hardware:**
+
 - CPU: 2+ cores (recomendado 4+ para ejecuciones paralelas)
 - RAM: 4 GB mínimo (8 GB recomendado)
 - Disco: 500 MB libres
@@ -89,6 +92,7 @@ make all
 ```
 
 Esto genera:
+
 - `simula.o` - Biblioteca del simulador
 - Todos los módulos compilados
 
@@ -100,6 +104,7 @@ make all
 ```
 
 Esto genera:
+
 - `runner` - Orquestador de ejecuciones
 - `score` - Calculador de ranking
 - `myscore` - Herramienta de autoevaluación
@@ -130,12 +135,14 @@ competition/
 **Crear mapas oficiales:**
 
 Opción 1: Usar mapas existentes
+
 ```bash
 # Si ya tienes mapas en otra ubicación
 cp /path/to/maps/*.pgm competition/maps/
 ```
 
 Opción 2: Generar mapas nuevos
+
 ```bash
 cd maps
 gcc generate.c -o generate
@@ -176,6 +183,7 @@ crash_penalty=10
 ```
 
 **Recomendaciones:**
+
 - No modifiques los pesos después de anunciar la competición
 - Los valores por defecto están balanceados
 - Si cambias pesos, comunícalo con 1 semana de antelación
@@ -236,6 +244,7 @@ cp /path/to/received/main.c competition/teams/teamXX/
 **Método 2: Entrega por plataforma (Moodle, etc.)**
 
 Descargar archivo y colocar en estructura:
+
 ```bash
 unzip entregas.zip
 for team in team*; do
@@ -335,11 +344,13 @@ rm teams/teamXX/*.o teams/teamXX/roomba teams/teamXX/*.pgm
 Dependiendo de las reglas de tu competición:
 
 **Opción 1: No aceptar entregas tardías**
+
 ```bash
 # Simplemente no incluir en teams/
 ```
 
 **Opción 2: Aceptar con penalización**
+
 ```bash
 # Incluir en teams/ pero anotar penalización manualmente
 # Restar puntos al calcular ranking final
@@ -352,6 +363,7 @@ Dependiendo de las reglas de tu competición:
 ### 4.1 Sistema Runner
 
 `runner` es el orquestador que:
+
 1. Descubre automáticamente equipos en `teams/`
 2. Compila cada equipo con la biblioteca estándar
 3. Ejecuta 20 veces cada equipo (4 mapas × 5 repeticiones)
@@ -489,12 +501,14 @@ rm logs/team05.*
 ### 5.1 Biblioteca libscore
 
 El cálculo de puntuaciones usa `libscore`, que implementa:
+
 - Carga de configuración desde `scoring.conf`
 - Cálculo de las 4 métricas principales
 - Aplicación de bonificaciones y penalizaciones
 - Agregación de resultados por equipo
 
 **Ventajas:**
+
 - Mismo algoritmo para `score` (oficial) y `myscore` (participantes)
 - Código auditable y transparente
 - Fácil de modificar para ajustar pesos
@@ -590,6 +604,7 @@ cat results/team15/map*.csv > results/team15/all_stats.csv
 **Auditar cálculos:**
 
 El código de `libscore.c` está disponible para revisión:
+
 ```bash
 cat libscore.c | grep -A 20 "scoring_calculate_map"
 ```
@@ -607,6 +622,7 @@ python3 analyze_csv.py results_2024.csv results_2025.csv
 ```
 
 **Funcionalidades:**
+
 - Comparación entre ediciones
 - Análisis estadístico (media, mediana, desviación estándar)
 - Detección de anomalías
@@ -652,13 +668,13 @@ awk -F',' '$2 < 30 {print $1}' scores.csv
 **Reporte completo para publicación:**
 
 ```bash
-cat > competition_report.md << 'EOF'
+cat > competition_report.md << EOF
 # Resultados Competición Roomba 2025
 
 ## Estadísticas Generales
 - Equipos participantes: $(ls results/ | wc -l)
-- Puntuación media: $(awk -F',' '{sum+=$2} END {print sum/NR}' scores.csv)
-- Puntuación máxima: $(sort -t',' -k2 -rn scores.csv | head -1 | cut -d',' -f2)
+- Puntuación media: $(awk -F',' '{sum+=$2} END {print sum/NR}' results/scores.csv)
+- Puntuación máxima: $(sort -t',' -k2 -rn results/scores.csv | head -1 | cut -d',' -f2)
 
 ## Top 10
 $(head -11 ranking.txt | tail -10)
@@ -674,13 +690,14 @@ EOF
 
 ```bash
 # Script para generar feedback por equipo
-for team in results/team*; do
+for team in teams/team*; do
     team_name=$(basename $team)
     ./myscore $team/*.csv > feedback_$team_name.txt
 done
 ```
 
 **Enviar resultados:**
+
 ```bash
 # Feedback individual por email
 mail -s "Resultados Roomba - $team_name" email@example.com < feedback_$team_name.txt
@@ -750,6 +767,7 @@ mail -s "Paquete Competición Roomba" -a roomba_competition_dist.tar.gz particip
 ### 7.2 Documentación para Participantes
 
 Proporciona:
+
 - `PARTICIPANT_GUIDE.md` - Guía completa
 - `RULES.md` - Reglas oficiales
 - Ejemplos de código en `samples/` (opcional)
@@ -781,6 +799,7 @@ Herramientas:
 ### 7.4 Preguntas Frecuentes
 
 Prepara respuestas para:
+
 - "¿Cómo compilo mi código?"
 - "¿Qué significa el error X?"
 - "¿Cómo sé si estoy mejorando?"
@@ -993,6 +1012,7 @@ tar -xzf backup_20251206_143000.tar.gz
 ## 10. Contacto y Soporte Técnico
 
 Para problemas no resueltos por esta guía:
+
 - Consultar manual del desarrollador (`docs/developer/`)
 - Revisar código fuente de herramientas
 - Contactar con el equipo de desarrollo del sistema
