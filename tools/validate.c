@@ -112,15 +112,16 @@ void print_usage(const char *prog_name) {
     printf("Arguments:\n");
     printf("  team_directory    Path to team directory containing main.c (optional, default: current directory)\n\n");
     printf("Options:\n");
-    printf("  --maps <dir>      Path to maps directory (default: %s)\n", DEFAULT_MAPS_DIR);
+    printf("  --maps [<dir>]    Path to maps directory (default: './maps'). If omitted, uses './maps'.\n");
     printf("  --output <file>   Save validation report to file\n");
     printf("  --strict          Fail on warnings\n");
     printf("  --timeout <sec>   Execution timeout per test (default: %d)\n", DEFAULT_TIMEOUT);
     printf("  --no-color        Disable colored output\n");
     printf("  --help            Show this help\n\n");
     printf("Examples:\n");
-    printf("  %s\n", prog_name);
-    printf("  %s .\n", prog_name);
+    printf("  %s                # Use current dir, maps in ./maps\n", prog_name);
+    printf("  %s --maps         # Use maps in ./maps\n", prog_name);
+    printf("  %s --maps maps2   # Use maps in ./maps2\n", prog_name);
     printf("  %s ../competition/teams/team01 --output report.txt\n", prog_name);
     printf("  %s ../competition/teams/team02 --strict\n\n", prog_name);
 }
@@ -135,19 +136,24 @@ void print_usage(const char *prog_name) {
  */
 int parse_args(int argc, char *argv[], config_t *cfg) {
     // Defaults
-    //strcpy(cfg->maps_dir, DEFAULT_MAPS_DIR);
-    cfg->maps_dir[0] = '\0';
+    cfg->maps_dir[0] = '\0'; // por defecto: vacío (usa mapa interno)
     cfg->output_file[0] = '\0';
     cfg->strict_mode = 0;
     cfg->timeout = DEFAULT_TIMEOUT;
     cfg->use_color = 1;
     cfg->team_dir[0] = '\0';
-    
+
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--help") == 0) {
             return -1;
-        } else if (strcmp(argv[i], "--maps") == 0 && i + 1 < argc) {
-            strcpy(cfg->maps_dir, argv[++i]);
+        } else if (strcmp(argv[i], "--maps") == 0) {
+            // Si hay argumento y no es otra opción
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+                strcpy(cfg->maps_dir, argv[++i]);
+            } else {
+                // --maps sin argumento: usar "maps"
+                strcpy(cfg->maps_dir, DEFAULT_MAPS_DIR);
+            }
         } else if (strcmp(argv[i], "--output") == 0 && i + 1 < argc) {
             strcpy(cfg->output_file, argv[++i]);
         } else if (strcmp(argv[i], "--strict") == 0) {
@@ -161,6 +167,14 @@ int parse_args(int argc, char *argv[], config_t *cfg) {
         } else {
             fprintf(stderr, "Unknown option: %s\n", argv[i]);
             return -1;
+        }
+    }
+
+    // Si no se ha indicado --maps ni --maps <dir>, comprobar si existe ./maps
+    if (cfg->maps_dir[0] == '\0') {
+        struct stat st;
+        if (stat(DEFAULT_MAPS_DIR, &st) == 0 && S_ISDIR(st.st_mode)) {
+            strcpy(cfg->maps_dir, DEFAULT_MAPS_DIR);
         }
     }
 
@@ -331,7 +345,11 @@ int execute_test(const char *team_dir, const char *map_file, int timeout) {
     if (pid == 0) {
         // Child process
         char exec_cmd[MAX_CMD];
-        snprintf(exec_cmd, sizeof(exec_cmd), "cd %s && ./roomba_test > /dev/null 2>&1", team_dir);
+        if (strcmp(map_file, "default") != 0) {
+            snprintf(exec_cmd, sizeof(exec_cmd), "cd %s && ./roomba_test map.pgm > /dev/null 2>&1", team_dir);
+        } else {
+            snprintf(exec_cmd, sizeof(exec_cmd), "cd %s && ./roomba_test > /dev/null 2>&1", team_dir);
+        }
         exit(system(exec_cmd) == 0 ? 0 : 1);
     } else if (pid > 0) {
         // Parent process

@@ -73,10 +73,10 @@ Valida código de equipos antes de la competición. Detecta problemas de compila
 
 **Opciones:**
 ```
---maps <dir>      Path to maps directory (default: maps)
---output <file>   Save validation report to file
---strict          Fail on warnings
---timeout <sec>   Execution timeout per test (default: 100s)
+--maps [<dir>]     Path to maps directory (default: ./maps).
+--output <file>    Save validation report to file
+--strict           Fail on warnings
+--timeout <sec>    Execution timeout per test (default: 100s)
 ```
 
 **Validaciones realizadas:**

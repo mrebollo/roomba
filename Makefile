@@ -12,11 +12,9 @@
 #   make comp     - Compila en modo competición (sin visualización, tiempo fijo)
 
 
-
 CC = gcc
 CFLAGS = -Wall -Wextra -lm -Wno-unused-result
 DEBUG_FLAGS = -g -O0
-RELEASE_FLAGS = -O2
 COMP_FLAGS = -DCOMPETITION_MODE=1
 
 # Source files
@@ -28,19 +26,18 @@ GENERATE = maps/generate
 VIEWMAP = maps/viewmap
 
 
-
 # Default target
 all: $(TARGET)
 
 # Modo competición: fuerza COMPETITION_MODE=1
 comp: $(SOURCES) simula.h
-	$(CC) $(SOURCES) $(CFLAGS) $(RELEASE_FLAGS) $(COMP_FLAGS) -o $(TARGET)_comp
+	$(CC) $(SOURCES) $(CFLAGS) $(COMP_FLAGS) -o $(TARGET)_comp
 	@echo "Proyecto compilado en modo competición (sin visualización, tiempo fijo)"
 
 # Build student project
 $(TARGET): $(SOURCES) simula.h
-	$(CC) $(SOURCES) $(CFLAGS) $(RELEASE_FLAGS) -o $(TARGET)
-	@echo "Student project compiled successfully"
+	$(CC) $(SOURCES) $(CFLAGS) -o $(TARGET)
+	@echo "Roomba project compiled successfully"
 
 # Build with debug symbols
 debug: $(SOURCES) simula.h
@@ -68,22 +65,22 @@ lib-competition:
 
 # Map generator (development mode - from sources)
 mapgen-dev: maps/generate.c sim_world_api.c
-	$(CC) maps/generate.c sim_world_api.c $(LIBSOURCES:sim_world_api.c=) $(CFLAGS) $(RELEASE_FLAGS) -o $(GENERATE)
+	$(CC) maps/generate.c sim_world_api.c $(LIBSOURCES:sim_world_api.c=) $(CFLAGS) -o $(GENERATE)
 	@echo "Map generator compiled (development mode)"
 
 # Map generator (distribution mode - with simula.o)
 mapgen: $(LIBOBJECTS) maps/generate.c sim_world_api.h
-	$(CC) maps/generate.c simula.o $(CFLAGS) $(RELEASE_FLAGS) -o $(GENERATE)
+	$(CC) maps/generate.c simula.o $(CFLAGS) -o $(GENERATE)
 	@echo "Map generator compiled (distribution mode)"
 
 # Map viewer (development mode - from sources)
 viewmap-dev: maps/viewmap.c sim_world_api.c
-	$(CC) maps/viewmap.c sim_world_api.c $(LIBSOURCES:sim_world_api.c=) $(CFLAGS) $(RELEASE_FLAGS) -o $(VIEWMAP)
+	$(CC) maps/viewmap.c sim_world_api.c $(LIBSOURCES:sim_world_api.c=) $(CFLAGS) -o $(VIEWMAP)
 	@echo "Map viewer compiled (development mode)"
 
 # Map viewer (distribution mode - with simula.o)
 viewmap: $(LIBOBJECTS) maps/viewmap.c sim_world_api.h
-	$(CC) maps/viewmap.c simula.o $(CFLAGS) $(RELEASE_FLAGS) -o $(VIEWMAP)
+	$(CC) maps/viewmap.c simula.o $(CFLAGS) -o $(VIEWMAP)
 	@echo "Map viewer compiled (distribution mode)"
 
 
@@ -97,6 +94,7 @@ run-map: $(TARGET)
 
 
 # Clean generated files
+clean:
 	rm -f $(TARGET) $(GENERATE) $(VIEWMAP)
 	rm -f *.o *.csv *.pgm
 	rm -f log.csv stats.csv map.pgm
