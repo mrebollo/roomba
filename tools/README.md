@@ -92,7 +92,7 @@ Valida código de equipos antes de la competición. Detecta problemas de compila
 1. **Participante:** Verificar código antes de enviar
    ```bash
    cd mi_roomba/
-   ./tools/validate.s . --output mi_validacion.txt
+   ./tools/validate . --output mi_validacion.txt
    ```
 
 2. **Organizador:** Validar entregas
@@ -262,7 +262,7 @@ mkdir -p reports/
 for team in competition/teams/team*/; do
     team_name=$(basename "$team")
     echo "Validating $team_name..."
-    ./tools/validate.sh "$team" --strict --output "reports/${team_name}.txt"
+    ./tools/validate "$team" --strict --output "reports/${team_name}.txt"
 done
 ```
 
@@ -277,7 +277,7 @@ cd tools/
 
 **3. Validación rápida de un equipo específico:**
 ```bash
-./tools/validate.sh competition/teams/team07
+./tools/validate competition/teams/team07
 ```
 
 ---
@@ -309,7 +309,7 @@ roomba/
 
 - **gcc** con soporte para C99
 - **make** para compilación
-- **bash** para scripts de validación
+
 - **timeout** command (incluido en GNU coreutils)
 
 ---

@@ -1,15 +1,15 @@
-
-# Makefile for Roomba Student Projects
+# Makefile for Roomba Project
 #
-# Este Makefile compila el comportamiento del robot del estudiante (main.c)
-# junto con la librería de simulación (simula.c) para desarrollo y pruebas.
+# This Makefile compiles the standalone robot behavior (main.c)
+# combined with the simulation library (simula.c) for development and testing.
 #
-# Uso:
-#   make          - Compila el proyecto del estudiante (modo normal)
-#   make run      - Compila y ejecuta la simulación
-#   make clean    - Elimina archivos generados
-#   make debug    - Compila con símbolos de depuración
-#   make comp     - Compila en modo competición (sin visualización, tiempo fijo)
+# Usage:
+#   make          - Compiles the standalone project (normal mode)
+#   make run      - Compiles and runs the simulation
+#   make clean    - Removes generated files
+#   make debug    - Compiles with debug symbols
+#   make single   - Compiles in single competition mode (no GUI, fixed time)
+#   make arena    - Compiles organizer tools (runner, score, etc.)
 
 
 CC = gcc
@@ -22,22 +22,26 @@ SOURCES = main.c simula.c sim_robot.c sim_visual.c sim_io.c sim_world.c sim_stat
 LIBSOURCES = simula.c sim_robot.c sim_visual.c sim_io.c sim_world.c sim_stats.c sim_world_api.c
 LIBOBJECTS = simula.o
 TARGET = roomba
-GENERATE = maps/generate
-VIEWMAP = maps/viewmap
+
 
 
 # Default target
 all: $(TARGET)
 
-# Modo competición: fuerza COMPETITION_MODE=1
-comp: $(SOURCES) simula.h
+# Modo "Single": versión individual de competición (sin visualización)
+single: $(SOURCES) simula.h
 	$(CC) $(SOURCES) $(CFLAGS) $(COMP_FLAGS) -o $(TARGET)_comp
-	@echo "Proyecto compilado en modo competición (sin visualización, tiempo fijo)"
+	@echo "Single-mode compiled: $(TARGET)_comp (Competition mode, no GUI)"
 
-# Build student project
+# Modo "Arena": herramientas del organizador (runner, score, etc.)
+arena:
+	@$(MAKE) -C competition
+	@echo "Arena system compiled in competition/"
+
+# Build standalone project
 $(TARGET): $(SOURCES) simula.h
 	$(CC) $(SOURCES) $(CFLAGS) -o $(TARGET)
-	@echo "Roomba project compiled successfully"
+	@echo "Roomba standalone project compiled successfully"
 
 # Build with debug symbols
 debug: $(SOURCES) simula.h
@@ -45,7 +49,7 @@ debug: $(SOURCES) simula.h
 	@echo "Debug build completed"
 
 
-# Build library object file for distribution to students
+# Build library object file for distribution
 lib: $(LIBOBJECTS)
 
 $(LIBOBJECTS): $(LIBSOURCES) simula.h simula_internal.h sim_world_api.h
@@ -63,103 +67,41 @@ lib-competition:
 	rm -f simula.o sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o
 	@echo "Competition library created: competition/lib/simula.o"
 
-# Map generator (development mode - from sources)
-mapgen-dev: maps/generate.c sim_world_api.c
-	$(CC) maps/generate.c sim_world_api.c $(LIBSOURCES:sim_world_api.c=) $(CFLAGS) -o $(GENERATE)
-	@echo "Map generator compiled (development mode)"
-
-# Map generator (distribution mode - with simula.o)
-mapgen: $(LIBOBJECTS) maps/generate.c sim_world_api.h
-	$(CC) maps/generate.c simula.o $(CFLAGS) -o $(GENERATE)
-	@echo "Map generator compiled (distribution mode)"
-
-# Map viewer (development mode - from sources)
-viewmap-dev: maps/viewmap.c sim_world_api.c
-	$(CC) maps/viewmap.c sim_world_api.c $(LIBSOURCES:sim_world_api.c=) $(CFLAGS) -o $(VIEWMAP)
-	@echo "Map viewer compiled (development mode)"
-
-# Map viewer (distribution mode - with simula.o)
-viewmap: $(LIBOBJECTS) maps/viewmap.c sim_world_api.h
-	$(CC) maps/viewmap.c simula.o $(CFLAGS) -o $(VIEWMAP)
-	@echo "Map viewer compiled (distribution mode)"
-
-
-# Run the simulation
-run: $(TARGET)
-	./$(TARGET)
-
-# Run with a specific map
-run-map: $(TARGET)
-	./$(TARGET) $(MAP)
-
+# Tools compilation
+tools:
+	@$(MAKE) -C tools
 
 # Clean generated files
 clean:
-	rm -f $(TARGET) $(GENERATE) $(VIEWMAP)
+	rm -f $(TARGET) $(TARGET)_comp
 	rm -f *.o *.csv *.pgm
 	rm -f log.csv stats.csv map.pgm
+	@$(MAKE) -C tools clean
+	@$(MAKE) -C competition clean
 	@echo "Cleaned build artifacts"
 
+# Clean everything including generated maps
+clean-all: clean
+	rm -f maps/*.pgm
+	@echo "Cleaned all generated content including maps"
+
 # Documentation targets
-doc: doc-api doc-user doc-developer
-	@echo "All documentation generated successfully"
-
-doc-api:
-	@echo "Generating API documentation (Doxygen)..."
-	@if [ -f docs/Doxyfile ]; then \
-		cd docs && doxygen Doxyfile > /dev/null 2>&1; \
-		echo "API documentation generated in docs/html/"; \
-	else \
-		echo "Warning: Doxyfile not found in docs/"; \
-	fi
-# > /dev/null 2>&1
-doc-user:
-	@echo "Generating User Manual PDF..."
-	@if [ -f docs/user/manual_usuario.tex ]; then \
-		cd docs/user && pdflatex manual_usuario.tex \
-		pdflatex manual_usuario.tex && \
-		rm -f manual_usuario.aux manual_usuario.log manual_usuario.out && \
-		echo "User manual generated: docs/user/manual_usuario.pdf"; \
-	else \
-		echo "Warning: User manual .tex file not found"; \
-	fi
-
-doc-developer:
-	@echo "Generating Developer Manual PDF..."
-	@if [ -f docs/developer/manual_desarrollador.tex ]; then \
-		cd docs/developer && pdflatex manual_desarrollador.tex > /dev/null 2>&1 && \
-		pdflatex manual_desarrollador.tex > /dev/null 2>&1 && \
-		rm -f manual_desarrollador.aux manual_desarrollador.log manual_desarrollador.out && \
-		echo "Developer manual generated: docs/developer/manual_desarrollador.pdf"; \
-	else \
-		echo "Warning: Developer manual .tex file not found"; \
-	fi
+doc:
+	@$(MAKE) -C docs
 
 doc-clean:
-	@echo "Cleaning documentation artifacts..."
-	rm -rf docs/html/
-	rm -f docs/user/*.aux docs/user/*.log docs/user/*.out docs/user/*.toc
-	rm -f docs/user/*.fdb_latexmk docs/user/*.fls docs/user/*.synctex.gz
-	rm -f docs/user/*.bbl docs/user/*.blg docs/user/*.idx docs/user/*.ilg docs/user/*.ind
-	rm -f docs/user/*.lof docs/user/*.lot
-	rm -f docs/developer/*.aux docs/developer/*.log docs/developer/*.out docs/developer/*.toc
-	rm -f docs/developer/*.fdb_latexmk docs/developer/*.fls docs/developer/*.synctex.gz
-	rm -f docs/developer/*.bbl docs/developer/*.blg docs/developer/*.idx docs/developer/*.ilg docs/developer/*.ind
-	rm -f docs/developer/*.lof docs/developer/*.lot
-	rm -f docs/user/manual_usuario.pdf
-	rm -f docs/developer/manual_desarrollador.pdf
-	@echo "Documentation artifacts cleaned"
+	@$(MAKE) -C docs clean
 
-# Distribution target - Create participant package
+# Distribution target - Create standalone package
 dist: lib
-	@echo "Creating participant distribution package..."
+	@echo "Creating standalone distribution package..."
 	@mkdir -p dist/maps
 	@cp simula.o dist/
 	@cp simula.h dist/
 	@cp maps/*.pgm dist/maps/ 2>/dev/null || true
 	@echo ""
 	@echo "=========================================="
-	@echo "  Participant Package Created"
+	@echo "  Standalone Package Created"
 	@echo "=========================================="
 	@echo "Location: dist/"
 	@echo ""
@@ -167,9 +109,11 @@ dist: lib
 	@ls -lh dist/ | tail -n +2
 	@echo ""
 	@echo "To create distributable archive:"
-	@echo "  tar -czf roomba-participant.tar.gz dist/"
-	@echo "  zip -r roomba-participant.zip dist/"
+	@echo "  tar -czf roomba-standalone.tar.gz dist/"
+	@echo "  zip -r roomba-standalone.zip dist/"
 	@echo ""
+	@echo "To clean distribution package:"
+	@echo "  make dist-clean"
 
 dist-clean:
 	@echo "Cleaning distribution package..."
@@ -178,36 +122,27 @@ dist-clean:
 
 # Help
 help:
-	@echo "Roomba Student Project - Available targets:"
+	@echo "Roomba Project - Available targets:"
 	@echo ""
-	@echo "Build targets:"
-	@echo "  make         - Build the project"
-	@echo "  make debug   - Build with debug symbols"
-	@echo "  make clean   - Remove generated files"
-	@echo "  make lib     - Create simula.o library for distribution"
-	@echo "  make visualize- Build log visualizer (visualize.c)"
-	@echo ""
-	@echo "Map generator:"
-	@echo "  make mapgen-dev  - Build map generator (development, from sources)"
-	@echo "  make mapgen      - Build map generator (with simula.o library)"
-	@echo ""
-	@echo "Map viewer:"
-	@echo "  make viewmap-dev - Build map viewer (development, from sources)"
-	@echo "  make viewmap     - Build map viewer (with simula.o library)"
+	@echo "Main targets:"
+	@echo "  make         - Build the interactive simulation (default)"
+	@echo "  make single  - Build standalone competition version (no GUI, fast)"
+	@echo "  make arena   - Build organizer tools (runner, score, etc.)"
+	@echo "  make tools   - Build utilities (generate, viewmap, validate)"
+	@echo "  make clean   - Remove all generated files (binaries, logs, docs)"
+	@echo "  make clean-all - Remove EVERYTHING (including generated maps)"
 	@echo ""
 	@echo "Run targets:"
-	@echo "  make run     - Build and run the simulation"
+	@echo "  make run     - Build and run simulation interactively"
 	@echo "  make run-map MAP=path/to/map.pgm - Run with specific map"
 	@echo ""
-	@echo "Documentation targets:"
-	@echo "  make doc           - Generate all documentation (API + manuals)"
-	@echo "  make doc-api       - Generate API documentation (Doxygen)"
-	@echo "  make doc-user      - Generate user manual PDF"
-	@echo "  make doc-developer - Generate developer manual PDF"
-	@echo "  make doc-clean     - Remove all generated documentation"
+	@echo "Distribution (for organizers):"
+	@echo "  make dist       - Create standalone package in dist/"
+	@echo "  make dist-clean - Clean distribution package"
+	@echo "  make lib        - Rebuild simula.o library"
 	@echo ""
-	@echo "Distribution targets:"
-	@echo "  make dist       - Create student package in dist/ (includes simula.o)"
-	@echo "  make dist-clean - Clean distribution files (keep templates)"
+	@echo "Documentation:"
+	@echo "  make doc        - Generate all documentation (API, User & Dev Manuals)"
+	@echo "  make doc-clean  - Remove documentation artifacts"
 
-.PHONY: all debug run run-map clean lib mapgen mapgen-dev viewmap viewmap-dev doc doc-api doc-user doc-developer doc-clean dist dist-clean help
+.PHONY: all debug run run-map clean lib tools doc doc-api doc-user doc-developer doc-clean dist dist-clean help

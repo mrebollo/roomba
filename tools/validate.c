@@ -6,10 +6,11 @@
  * revisar entregas.
  *
  * Compilación:
- *   gcc validate.c -Wall -Wextra -O2 -lm -o validate
+ *   make tools (desde la raíz)
+ *   o cd tools && make
  *
  * Uso:
- *   ./validate <team_directory> [opciones]
+ *   ./tools/validate <team_directory> [opciones]
  */
 
 #include <dirent.h>

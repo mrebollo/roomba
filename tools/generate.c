@@ -6,11 +6,10 @@
  * Todos los mapas incluyen base aleatoria en las paredes.
  *
  * Compilación:
- *   make mapgen-dev   (modo desarrollo, desde fuentes)
- *   make lib && make mapgen   (modo distribución, con simula.o)
+ *   make tools (desde la raíz)
  *
  * Uso:
- *   ./maps/generate
+ *   ./tools/generate
  */
 
 #include "../sim_world_api.h"
