@@ -17,12 +17,17 @@
  * CONFIGURACIÓN Y DEBUG
  * ============================================================================ */
 
+
 #ifndef COMPETITION_MODE
-  #define DEBUG_PRINT(...) printf(__VA_ARGS__)
-  #define ENABLE_VISUALIZATION 1
+#define COMPETITION_MODE 0
+#endif
+#ifndef COMPETITION_EXEC_TIME
+#define COMPETITION_EXEC_TIME 2000 // Valor por defecto para la competición
+#endif
+#if COMPETITION_MODE
+#define DEBUG_PRINT(...)
 #else
-  #define DEBUG_PRINT(...)
-  #define ENABLE_VISUALIZATION 0
+#define DEBUG_PRINT(...) printf(__VA_ARGS__)
 #endif
 
 /* ============================================================================

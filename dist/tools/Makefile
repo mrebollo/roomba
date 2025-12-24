@@ -7,21 +7,23 @@ CFLAGS = -Wall -Wextra -Wno-unused-result
 LDFLAGS = -lm
 
 
-# Objeto del mundo del simulador (distribución)
-SIM_WORLD = ../simula.o
+# Fuentes del mundo del simulador
+SIM_WORLD = ../sim_world.c ../sim_world_api.c
 
 
 # Ejecutables: uno por cada .c
+
 GENERATE = generate
 VIEWMAP = viewmap
 VALIDATE = validate
 MYSCORE = myscore
+VISUALIZE = visualize
 
 
-.PHONY: all clean help
 
-# Default target: build all tools
-all: $(GENERATE) $(VIEWMAP) $(VALIDATE) $(MYSCORE)
+.PHONY: all clean help visualize
+
+all: $(GENERATE) $(VIEWMAP) $(VALIDATE) $(MYSCORE) $(VISUALIZE)
 	@echo ""
 	@echo "=== Tools compiled successfully ==="
 	@echo ""
@@ -30,19 +32,20 @@ all: $(GENERATE) $(VIEWMAP) $(VALIDATE) $(MYSCORE)
 	@echo "  ./$(VIEWMAP) <map.pgm>"
 	@echo "  ./$(VALIDATE) [<team_dir>] [--output report.txt] [--strict]"
 	@echo "  ./$(MYSCORE) [stats.csv]"
+	@echo "  ./$(VISUALIZE) [logs.csv]"
 	@echo ""
 
 
 
 # Generador de mapas
 $(GENERATE): generate.c $(SIM_WORLD)
-	$(CC) $(CFLAGS) -I. -I.. -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -I.. -o $@ $^ $(LDFLAGS)
 	@echo "Map generator compiled: $(GENERATE)"
 
 
 # Visualizador de mapas
 $(VIEWMAP): viewmap.c $(SIM_WORLD)
-	$(CC) $(CFLAGS) -I. -I.. -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 	@echo "Map visualizer compiled: $(VIEWMAP)"
 
 # Validador de código
@@ -52,13 +55,31 @@ $(VALIDATE): validate.c
 
 # Mi sistema de puntuacion
 $(MYSCORE): myscore.c libscore.c
-	$(CC) $(CFLAGS) -o $@ myscore.c libscore.c $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 	@echo "Custom score system compiled: $(MYSCORE)"
+
+# Visualizador de logs
+$(VISUALIZE): visualize.c ../sim_visual.c
+
+# Regla para generar simula.o local en tools/
+SIMULA_SRC = ../simula.c ../sim_robot.c ../sim_visual.c ../sim_io.c ../sim_world.c ../sim_stats.c ../sim_world_api.c
+SIMULA_OBJ = simula.o
+
+$(SIMULA_OBJ): $(SIMULA_SRC)
+	$(CC) -c $(SIMULA_SRC) $(CFLAGS)
+	ld -r simula.o sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o sim_world_api.o -o simula_combined.o
+	mv simula_combined.o simula.o
+	rm -f sim_robot.o sim_visual.o sim_io.o sim_world.o sim_stats.o sim_world_api.o
+	@echo "Local simula.o created in tools/"
+
+$(VISUALIZE): visualize.c simula.o
+	$(CC) $(CFLAGS) -I.. -o $@ visualize.c simula.o $(LDFLAGS)
+	@echo "Log visualizer compiled: $(VISUALIZE)"
 
 # Clean compiled binaries
 
 clean:
-	rm -f $(GENERATE) $(VIEWMAP) $(VALIDATE) $(MYSCORE)	
+	rm -f $(GENERATE) $(VIEWMAP) $(VALIDATE) $(MYSCORE) $(VISUALIZE) simula.o
 	@echo "Tools cleaned"
 
 # Help
@@ -66,7 +87,7 @@ help:
 	@echo "Roomba Tools Makefile"
 	@echo ""
 	@echo "Targets:"
-	@echo "  make         - Compile all tools (generate, viewmap, validate)"
+	@echo "  make         - Compile all tools (generate, viewmap, validate, visualize)"
 	@echo "  make clean   - Remove compiled binaries"
 	@echo "  make help    - Show this help"
 	@echo "  make <tool>  - Compile only the specified tool (e.g. 'make generate')"
@@ -76,3 +97,4 @@ help:
 	@echo "  viewmap      - Visualize PGM maps in terminal"
 	@echo "  validate     - Validate team code before competition"
 	@echo "  myscore      - Custom scoring system for competition results"
+	@echo "  visualize    - Visualize logs from logs.csv or other file"

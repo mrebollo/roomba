@@ -80,10 +80,11 @@ void stats_battery_consume(float amount){
 void stats_rebuild_from_map(const map_t* m){
   int cells = 0;
   int dirt_sum = 0;
-  // Reset visited matrix
+  // Reset visited matrix y contador de celdas visitadas
   for(int i = 0; i < WORLDSIZE; i++)
     for(int j = 0; j < WORLDSIZE; j++)
       visited[i][j] = false;
+  stats.cell_visited = 0;
   for(int i = 0; i < m->nrow; i++){
     for(int j = 0; j < m->ncol; j++){
       char c = m->cells[i][j];

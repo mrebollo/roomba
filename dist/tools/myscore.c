@@ -132,11 +132,11 @@ int main(int argc, char *argv[]) {
     scoring_display_team(&team_score, &config);
     
     // Additional tips based on scores
-    printf("Tips for improvement:\n");
+    printf("💡 Tips for improvement:\n");
     printf("\n");
     
     if (team_score.avg_coverage < 50.0f) {
-        printf("  Coverage is low (%.1f%%). Try:\n", team_score.avg_coverage);
+        printf("  📍 Coverage is low (%.1f%%). Try:\n", team_score.avg_coverage);
         printf("     - Implement a systematic exploration strategy\n");
         printf("     - Use memory to avoid revisiting areas\n");
         printf("     - Consider spiral or zigzag patterns\n");
@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
     }
     
     if (team_score.avg_dirt_efficiency < 1.0f) {
-        printf("  Dirt efficiency is low (%.1f%%). Try:\n", team_score.avg_dirt_efficiency);
+        printf("  🧹 Dirt efficiency is low (%.1f%%). Try:\n", team_score.avg_dirt_efficiency);
         printf("     - Clean more aggressively when dirt detected\n");
         printf("     - Balance exploration vs cleaning\n");
         printf("     - Prioritize dirty areas\n");
@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
     }
     
     if (team_score.avg_battery_conservation < 40.0f) {
-        printf("  Battery conservation is low (%.1f%%). Try:\n", team_score.avg_battery_conservation);
+        printf("  🔋 Battery conservation is low (%.1f%%). Try:\n", team_score.avg_battery_conservation);
         printf("     - Reduce unnecessary movements\n");
         printf("     - Optimize pathfinding\n");
         printf("     - Return to base when battery is low\n");
@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) {
     }
     
     if (team_score.avg_movement_quality < 80.0f) {
-        printf("  Movement quality is low (%.1f%%). Try:\n", team_score.avg_movement_quality);
+        printf("  🎯 Movement quality is low (%.1f%%). Try:\n", team_score.avg_movement_quality);
         printf("     - Implement obstacle memory\n");
         printf("     - Use sensor data to avoid known obstacles\n");
         printf("     - Plan paths before moving\n");
@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
     }
     
     if (team_score.num_crashes > 0) {
-        printf("  [!] CRASHES DETECTED (%d)!\n", team_score.num_crashes);
+        printf("  ⚠️  CRASHES DETECTED (%d)!\n", team_score.num_crashes);
         printf("     - Check for segmentation faults\n");
         printf("     - Verify array bounds\n");
         printf("     - Test with ./validate before running\n");
@@ -176,20 +176,20 @@ int main(int argc, char *argv[]) {
     }
     
     // Success criteria
-    printf("  Competition thresholds:\n");
+    printf("🎯 Competition thresholds:\n");
     printf("   • Good score:      > 40 points\n");
     printf("   • Excellent score: > 60 points\n");
     printf("   • Top performer:   > 70 points\n");
     printf("\n");
     
     if (team_score.total_score >= 70.0f) {
-        printf("Outstanding! You're on track for top rankings!\n");
+        printf("🏆 Outstanding! You're on track for top rankings!\n");
     } else if (team_score.total_score >= 60.0f) {
-        printf("Excellent work! Keep refining your strategy.\n");
+        printf("⭐ Excellent work! Keep refining your strategy.\n");
     } else if (team_score.total_score >= 40.0f) {
-        printf("Good progress! Focus on the tips above.\n");
+        printf("✓ Good progress! Focus on the tips above.\n");
     } else {
-        printf("Keep working! Review the examples and tips.\n");
+        printf("💪 Keep working! Review the examples and tips.\n");
     }
     
     printf("\n");

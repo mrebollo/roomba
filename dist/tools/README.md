@@ -73,10 +73,10 @@ Valida código de equipos antes de la competición. Detecta problemas de compila
 
 **Opciones:**
 ```
---maps <dir>      Path to maps directory (default: maps)
---output <file>   Save validation report to file
---strict          Fail on warnings
---timeout <sec>   Execution timeout per test (default: 100s)
+--maps [<dir>]     Path to maps directory (default: ./maps).
+--output <file>    Save validation report to file
+--strict           Fail on warnings
+--timeout <sec>    Execution timeout per test (default: 100s)
 ```
 
 **Validaciones realizadas:**
@@ -154,6 +154,39 @@ for f in stats*.csv; do tail -n +2 "$f" >> stats.csv; done
 Esta herramienta permite comparar el rendimiento de diferentes algoritmos, configuraciones o mapas de manera sencilla y automatizada.
 
 
+### 5. **visualize** - Visualizador de logs y trayectorias
+
+Permite visualizar la trayectoria del robot y el mapa a partir de un log de ejecución (`log.csv`) y un mapa (`map.pgm`).
+
+**Uso:**
+```bash
+# Compilar
+make visualize
+
+# Visualizar el resultado de una ejecución
+./visualize [log.csv] [map.pgm]
+
+# Mostrar ayuda
+./visualize --help
+./visualize -h
+```
+
+**Controles durante la animación:**
+
+- **Espacio** : Pausa/continúa la animación
+- **S**       : Siguiente frame (en pausa)
+- **A**       : Frame anterior (en pausa)
+- **Q**       : Salir
+- **Ctrl-C**  : Salir
+
+**Notas:**
+- Si no se especifican archivos, usa `log.csv` y `map.pgm` por defecto.
+- La visualización es interactiva y permite analizar paso a paso el recorrido del robot.
+
+**Ejemplo:**
+```bash
+./visualize log.csv map.pgm
+```
 
 
 ---
@@ -162,15 +195,21 @@ Esta herramienta permite comparar el rendimiento de diferentes algoritmos, confi
 
 ### Compilar todas las herramientas
 ```bash
-cd tools/
+cd tools
 make
+```
+o
+```
+make -C tools
 ```
 
 ### Compilar herramientas individuales
 ```bash
+cd tools
 make generate
 make viewmap
 make validate
+make visualize
 ```
 
 ### Limpiar
@@ -204,6 +243,13 @@ cd tools/
 cd mi_proyecto/
 cp ../maps/mi_mapa.pgm map.pgm
 ./roomba
+```
+
+**4. Repetir una ejecución:**
+```bash
+cd mi_proyecto/
+./roomba
+./tools/visualize
 ```
 
 ---
@@ -240,13 +286,15 @@ cd tools/
 
 ```
 roomba/
-├── tools/              # Este directorio
-│   ├── generate        # Binario compilado
+├── tools/             # Este directorio
+│   ├── generate       # Binario compilado
 │   ├── viewmap        # Binario compilado
-│   ├── validate.      # Binario compilado
+│   ├── validate       # Binario compilado
+│   ├── visualize      # Binario compilado
 │   ├── generate.c     # Fuente del generador
-│   ├── viewmap.c      # Fuente del visualizador
-│   ├── validata.c.    # Fuente del validador 
+│   ├── viewmap.c      # Fuente del visualizador de mapas
+│   ├── validate.c     # Fuente del validador 
+│   ├── visualize.c    # Fuente del visualizador de ejecución 
 │   ├── Makefile       # Construye el sistema
 │   └── README.md      # Esta documentación
 └── maps/              # Mapas PGM (solo datos)
@@ -280,3 +328,4 @@ roomba/
 - **Para organizadores:** Usa `--strict` para forzar compilación sin warnings
 - **Para competiciones:** Combina con `competition/runner` para ejecución completa
 - **Debugging:** Usa `viewmap` para inspeccionar mapas problemáticos rápidamente
+- **Debugging:** Usa `visualize` vovler a revisar una ejecució, incluyendo paso a paso y hacia atrás
