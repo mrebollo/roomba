@@ -92,14 +92,22 @@ competition/score
 competition/myscore
 competition/validate
 
-# Ignore all teams execept reference
-competition/teams*
-!competition/teams/.gitkeep
-!competition/teams/reference/
-!competition/teams/copycat/
 
-# Generated Maps (keep source code)
-maps/*.pgm
+# Competition directories (entregas, teams, results variants)
+competition/entregas*/
+competition/results*/
+competition/teams*/
+!competition/teams/.gitkeep
+
+# Competition tools and artifacts
+competition/myscore
+competition/runner
+competition/score
+competition/validate
+competition/ranking.txt
+competition/validation_report.txt
+
+# Tools
 tools/generate
 tools/myscore
 tools/validate
