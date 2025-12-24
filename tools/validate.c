@@ -1,16 +1,16 @@
 /**
  * @file validate.c
- * @brief Valida el código de los equipos antes de la entrega en la competición.
+ * @brief Validates team code before competition submission.
  *
- * Puede ser usado por estudiantes para auto-chequeo o por profesores para
- * revisar entregas.
+ * Can be used by students for self-check or by organizers to review
+ * submissions.
  *
- * Compilación:
- *   make tools (desde la raíz)
- *   o cd tools && make
+ * Compilation:
+ *   make tools (from root)
+ *   or cd tools && make
  *
- * Uso:
- *   ./tools/validate <team_directory> [opciones]
+ * Usage:
+ *   ./tools/validate <team_directory> [options]
  */
 
 #include <dirent.h>
@@ -37,37 +37,36 @@
 #define COLOR_RESET "\033[0m"
 
 /**
- * @brief Estructura de configuración para la validación
+ * @brief Validation configuration structure
  */
 typedef struct {
-  char team_dir[MAX_PATH];    ///< Directorio del equipo
-  char maps_dir[MAX_PATH];    ///< Directorio de mapas
-  char output_file[MAX_PATH]; ///< Archivo de salida
-  int strict_mode;            ///< Modo estricto
-  int timeout;                ///< Tiempo máximo de ejecución
-  int use_color;              ///< Uso de colores en la salida
+  char team_dir[MAX_PATH];    ///< Team directory
+  char maps_dir[MAX_PATH];    ///< Maps directory
+  char output_file[MAX_PATH]; ///< Output file
+  int strict_mode;            ///< Strict mode
+  int timeout;                ///< Max execution time
+  int use_color;              ///< Use color output
 } config_t;
 
 /**
- * @brief Estructura para almacenar resultados de los tests
+ * @brief Test results structure
  */
 typedef struct {
-  int passed;       ///< Tests pasados
-  int warnings;     ///< Advertencias
-  int failed;       ///< Tests fallidos
-  int tests_run;    ///< Total de tests ejecutados
-  int tests_passed; ///< Total de tests aprobados
+  int passed;       ///< Tests passed
+  int warnings;     ///< Warnings
+  int failed;       ///< Tests failed
+  int tests_run;    ///< Total tests run
+  int tests_passed; ///< Total tests passed
 } results_t;
 
 // Global output file pointer
 FILE *output_fp = NULL;
 
 /**
- * @brief Imprime un mensaje con color (si está habilitado) y lo guarda en el
- * archivo de salida
- * @param color Código ANSI del color
- * @param prefix Prefijo del mensaje
- * @param msg Mensaje a imprimir
+ * @brief Print message with color (if enabled) and log to output file
+ * @param color ANSI color code
+ * @param prefix Message prefix
+ * @param msg Message to print
  */
 void log_msg(const char *color, const char *prefix, const char *msg) {
   if (output_fp) {
@@ -77,32 +76,32 @@ void log_msg(const char *color, const char *prefix, const char *msg) {
 }
 
 /**
- * @brief Imprime un mensaje informativo
- * @param msg Mensaje a imprimir
+ * @brief Print info message
+ * @param msg Message to print
  */
 void log_info(const char *msg) { log_msg(COLOR_BLUE, "INFO", msg); }
 
 /**
- * @brief Imprime un mensaje de éxito
- * @param msg Mensaje a imprimir
+ * @brief Print success message
+ * @param msg Message to print
  */
 void log_pass(const char *msg) { log_msg(COLOR_GREEN, "PASS", msg); }
 
 /**
- * @brief Imprime una advertencia
- * @param msg Mensaje a imprimir
+ * @brief Print warning message
+ * @param msg Message to print
  */
 void log_warn(const char *msg) { log_msg(COLOR_YELLOW, "WARN", msg); }
 
 /**
- * @brief Imprime un mensaje de error
- * @param msg Mensaje a imprimir
+ * @brief Print error message
+ * @param msg Message to print
  */
 void log_fail(const char *msg) { log_msg(COLOR_RED, "FAIL", msg); }
 
 /**
- * @brief Imprime la ayuda de uso del validador
- * @param prog_name Nombre del programa
+ * @brief Print validator usage help
+ * @param prog_name Program name
  */
 void print_usage(const char *prog_name) {
   printf("Usage: %s [team_directory] [options]\n\n", prog_name);
@@ -128,15 +127,15 @@ void print_usage(const char *prog_name) {
 }
 
 /**
- * @brief Parsea los argumentos de línea de comandos
- * @param argc Número de argumentos
- * @param argv Vector de argumentos
- * @param cfg Puntero a la configuración a rellenar
- * @return 0 si OK, -1 si error o ayuda
+ * @brief Parse command line arguments
+ * @param argc Argument count
+ * @param argv Argument vector
+ * @param cfg Pointer to config structure to fill
+ * @return 0 on OK, -1 on error or help
  */
 int parse_args(int argc, char *argv[], config_t *cfg) {
   // Defaults
-  cfg->maps_dir[0] = '\0'; // por defecto: vacío (usa mapa interno)
+  cfg->maps_dir[0] = '\0'; // default: empty (use internal map)
   cfg->output_file[0] = '\0';
   cfg->strict_mode = 0;
   cfg->timeout = DEFAULT_TIMEOUT;

@@ -1,10 +1,10 @@
 /**
  * @file viewmap.c
- * @brief Visualizador de mapas PGM para el simulador Roomba
+ * @brief PGM map visualizer for Roomba simulator
  *
- * de ejecutar el simulador completo.
+ * Allows viewing PGM map content without running the full simulator.
  *
- * Uso: ./tools/viewmap <archivo.pgm>
+ * Usage: ./tools/viewmap <file.pgm>
  */
 
 #include "../sim_world_api.h"
@@ -12,8 +12,8 @@
 #include <stdlib.h>
 
 /**
- * @brief Imprime la ayuda de uso del visualizador de mapas
- * @param prog Nombre del programa
+ * @brief Print visualizer usage help
+ * @param prog Program name
  */
 void print_usage(const char *prog) {
   printf("\n");
@@ -30,12 +30,12 @@ void print_usage(const char *prog) {
 }
 
 /**
- * @brief Función principal del visualizador de mapas
+ * @brief Map visualizer main function
  *
- * Carga y muestra un mapa PGM en formato ASCII por consola.
- * @param argc Número de argumentos
- * @param argv Vector de argumentos
- * @return 0 si OK, 1 si error
+ * Loads and displays a PGM map in ASCII format to console.
+ * @param argc Argument count
+ * @param argv Argument vector
+ * @return 0 on OK, 1 on error
  */
 int main(int argc, char *argv[]) {
   if (argc != 2) {

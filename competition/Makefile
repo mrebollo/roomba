@@ -19,19 +19,20 @@ $(RUNNER): runner.c competition_ext.c simula_comp.c
 	@echo "[OK] Competition runner compiled successfully"
 
 # Build scoring calculator (organizer tool)
-score: score.c libscore.o
-	$(CC) score.c libscore.o $(CFLAGS) -o score
+score: score.c ../tools/libscore.o
+	$(CC) score.c ../tools/libscore.o $(CFLAGS) -o score
 	@echo "[OK] Scoring calculator compiled successfully"
 
-# Build participant scoring tool
-myscore: myscore.c libscore.o
-	$(CC) myscore.c libscore.o $(CFLAGS) -o myscore
-	@echo "[OK] Participant scoring tool compiled successfully"
+# Build participant scoring tool (from tools/)
+myscore:
+	@$(MAKE) -C ../tools myscore
+	@cp ../tools/myscore .
+	@echo "[OK] Participant scoring tool copied from tools/"
 
-# Build scoring library
-libscore.o: libscore.c libscore.h
-	$(CC) -c libscore.c $(CFLAGS)
-	@echo "[OK] Scoring library compiled"
+# Build scoring library (in tools/)
+../tools/libscore.o: ../tools/libscore.c ../tools/libscore.h
+	@$(MAKE) -C ../tools libscore.o
+	@echo "[OK] Scoring library compiled in tools/"
 
 # Check if library exists, warn if not
 check-lib:
@@ -48,8 +49,8 @@ lib:
 	@cd .. && $(MAKE) lib-competition
 	@echo "[OK] Library built: $(LIB_DIR)/simula.o"
 	@echo "Copying participant tools to lib/..."
-	@cp myscore $(LIB_DIR)/ 2>/dev/null || echo "Run 'make myscore' first"
-	@cp scoring.conf $(LIB_DIR)/ 2>/dev/null || echo "scoring.conf not found"
+	@cp ../tools/myscore $(LIB_DIR)/ 2>/dev/null || echo "Run 'make myscore' first"
+	@cp ../tools/scoring.conf $(LIB_DIR)/ 2>/dev/null || echo "scoring.conf not found"
 	@echo "[OK] Participant tools ready"
 
 # Sync headers from project root
