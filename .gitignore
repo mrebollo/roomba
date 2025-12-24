@@ -82,6 +82,8 @@ competition/entregas*
 competition/validation_report.txt
 
 # Instructor Material
+# NOTE: These files are ignored to prevent leaking solutions to students.
+# If you want to publish them, uncomment the following line:
 samples/solutions/
 
 # Binaries
