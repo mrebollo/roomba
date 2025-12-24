@@ -69,13 +69,33 @@ dkms.conf
 *.pdf
 
 # Competition results and logs
-competition/logs/*.stderr
-competition/logs/*.stdout
-competition/results/*.txt
-competition/results/*.csv
-competition/teams/team*/
-
-# Keep directory structure
+# Competition artifacts
+competition/logs/*
 !competition/logs/.gitkeep
+
+competition/results*
 !competition/results/.gitkeep
+competition/ranking.txt
+competition/stats.csv
+competition/reports/
+competition/entregas*
+competition/validation_report.txt
+
+# Binaries
+competition/runner
+competition/score
+competition/myscore
+competition/validate
+
+# Ignore all teams execept reference
+competition/teams*
 !competition/teams/.gitkeep
+!competition/teams/reference/
+
+# Generated Maps (keep source code)
+maps/*.pgm
+tools/generate
+tools/myscore
+tools/validate
+tools/viewmap
+tools/visualize

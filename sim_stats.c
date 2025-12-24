@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <stdbool.h>
 #include "simula_internal.h"
 
 // Stats is now exported for competition_ext.c access
