@@ -81,6 +81,9 @@ competition/reports/
 competition/entregas*
 competition/validation_report.txt
 
+# Instructor Material
+samples/solutions/
+
 # Binaries
 competition/runner
 competition/score
@@ -91,6 +94,7 @@ competition/validate
 competition/teams*
 !competition/teams/.gitkeep
 !competition/teams/reference/
+!competition/teams/copycat/
 
 # Generated Maps (keep source code)
 maps/*.pgm
