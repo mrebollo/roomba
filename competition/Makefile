@@ -4,7 +4,7 @@
 # the main development Makefile in the project root.
 
 CC = gcc
-CFLAGS = -Wall -Wextra -lm -Wno-unused-result
+CFLAGS = -Wall -Wextra -lm -Wno-unused-result -I../tools
 RUNNER = runner
 TEAMS_DIR = teams
 LIB_DIR = lib
@@ -93,6 +93,10 @@ run-archived: run
 # Initialize competition environment
 init:
 	@mkdir -p $(TEAMS_DIR) $(LIB_DIR) $(RESULTS_DIR) maps scripts
+	@$(MAKE) lib
+	@$(MAKE) sync-headers
+	@echo "Copying default maps from ../maps/..."
+	@cp ../maps/*.pgm maps/ 2>/dev/null || echo "Warning: No maps found in ../maps/"
 	@echo "[OK] Competition environment initialized"
 
 # Clean competition files

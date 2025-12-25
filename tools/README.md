@@ -36,8 +36,8 @@ Muestra mapas PGM en formato ASCII en la terminal.
 make viewmap
 
 # Visualizar mapa
-./viewmap maps/walls2.pgm
-./viewmap maps/random3.pgm
+./tools/viewmap maps/walls2.pgm
+./tools/viewmap maps/random3.pgm
 ```
 
 **Leyenda:**
@@ -59,16 +59,16 @@ Valida código de equipos antes de la competición. Detecta problemas de compila
 **Uso:**
 ```bash
 # Validación por defecto (directorio actual)
-./validate
+./tools/validate
 
 # Vallidación del código en el directorio myfolder
-./validate myfolder
+./tools/validate myfolder
 
 # Validación por organizador con informe
-./validate ../competition/teams/team01 --output report.txt
+./tools/validate ../competition/teams/team01 --output report.txt
 
 # Modo estricto (fallo con warnings)
-./validate ../competition/teams/team02 --strict
+./tools/validate ../competition/teams/team02 --strict
 ```
 
 **Opciones:**
@@ -185,7 +185,7 @@ make visualize
 
 **Ejemplo:**
 ```bash
-./visualize log.csv map.pgm
+./tools/visualize log.csv map.pgm
 ```
 
 
@@ -290,11 +290,18 @@ roomba/
 │   ├── generate       # Binario compilado
 │   ├── viewmap        # Binario compilado
 │   ├── validate       # Binario compilado
+│   ├── myscore        # Binario compilado
 │   ├── visualize      # Binario compilado
+│   │
 │   ├── generate.c     # Fuente del generador
 │   ├── viewmap.c      # Fuente del visualizador de mapas
 │   ├── validate.c     # Fuente del validador 
+│   ├── myscore.c      # Fuente del calculador de puntuación
+│   ├── libscore.c     # Librería compartida de puntuación
+│   ├── libscore.h     # Cabecera de la librería de puntuación
+│   ├── scoring.conf   # Configuración de puntuación
 │   ├── visualize.c    # Fuente del visualizador de ejecución 
+│   │
 │   ├── Makefile       # Construye el sistema
 │   └── README.md      # Esta documentación
 └── maps/              # Mapas PGM (solo datos)
@@ -328,4 +335,7 @@ roomba/
 - **Para organizadores:** Usa `--strict` para forzar compilación sin warnings
 - **Para competiciones:** Combina con `competition/runner` para ejecución completa
 - **Debugging:** Usa `viewmap` para inspeccionar mapas problemáticos rápidamente
-- **Debugging:** Usa `visualize` vovler a revisar una ejecució, incluyendo paso a paso y hacia atrás
+   ```bash
+   ./validate teams/team15 --strict --timeout 5
+   ```
+- **Debugging:** Usa `visualize` volver a revisar una ejecución, incluyendo paso a paso y hacia atrás

@@ -150,11 +150,18 @@ typedef struct {
 
 ### 3.2 Cómo Usar myscore
 
+**Paso 0: Compilar herramientas (una sola vez)**
+
+```bash
+make -C tools
+# O cd tools && make
+```
+
 **Paso 1: Compilar tu código**
 
 ```bash
-# En el directorio donde están main.c, simula.h y simula.o
-gcc main.c simula.o -lm -o roomba
+# En el directorio raíz de tu proyecto
+make
 ```
 
 **Paso 2: Ejecutar tu robot**
@@ -168,7 +175,7 @@ Esto genera `stats.csv` en el mismo directorio.
 **Paso 3: Evaluar con myscore**
 
 ```bash
-./myscore stats.csv
+./tools/myscore stats.csv
 ```
 
 ### 3.3 Interpretación de Resultados
@@ -246,7 +253,7 @@ Sugerencias de mejora:
 Antes de entregar, **SIEMPRE** valida tu código con:
 
 ```bash
-./validate teamXX/
+./tools/validate .
 ```
 
 ### 4.2 Qué Verifica validate
@@ -303,8 +310,8 @@ mv mi_codigo.c main.c
 **Error: "Compilation failed"**
 ```bash
 # Solución: Revisa los mensajes de error del compilador
-./validate teamXX/
-cat teamXX/compile.log
+./tools/validate .
+cat compile.log
 ```
 
 **Error: "Execution TIMEOUT"**

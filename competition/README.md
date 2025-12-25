@@ -9,25 +9,30 @@ Este sistema permite a organizadores ejecutar competiciones de forma automática
 ## ¿Para quién es esto?
 
 - **Organizadores/Profesores**: Usa `ORGANIZER_GUIDE.md` para configurar y ejecutar la competición
-- **Participantes**: Consulta `STUDENT_GUIDE.md` para preparar tu entrega
+- **Participantes**: Consulta `STANDALONE_GUIDE.md` para preparar tu entrega
 - **Todos**: Lee `RULES.md` para entender los criterios de evaluación
 
 
-## Quick Start (Organizadores)
+## Configuración rápida
 
-```bash
-# 1. Compilar herramientas en modo competición (sin visualización, tiempo fijo)
-make comp
+1. **Generar herramientas y mapas (desde la raíz):**
+   ```bash
+   make tools
+   ```
 
-# 2. Validar código de un equipo
-./validate ../teams/team01
+2. **Preparar entorno de competición:**
+   ```bash
+   cd competition
+   make init
+   ```
+   Esto creará las carpetas necesarias, compilará las librerías y copiará los mapas por defecto.
 
-# 3. Ejecutar competición completa
-./runner
-
-# 4. Generar ranking
+3. **Ejecutar competición:**
+   ```bash
+   make run
+   ```
+4. Generar ranking
 ./score
-```
 
 **Nota:** En modo competición, el número de iteraciones (exec_time) es fijo para todos los equipos y la visualización está desactivada automáticamente.
 

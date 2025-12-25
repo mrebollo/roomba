@@ -1,6 +1,6 @@
 # Guía para Organizadores - Competición Roomba
 
-Manual completo para profesores y coordinadores sobre cómo configurar, ejecutar y gestionar la competición.
+Manual completo para organizadores sobre cómo configurar, ejecutar y gestionar la competición.
 
 **Versión:** 1.0  
 **Fecha:** Diciembre 2025
@@ -26,7 +26,7 @@ Manual completo para profesores y coordinadores sobre cómo configurar, ejecutar
 
 Esta guía es para:
 
-- Profesores coordinando la competición
+- Docentes coordinando la competición
 - Administradores técnicos del sistema
 - Personal de soporte durante la evaluación
 
@@ -80,86 +80,39 @@ Esta guía es para:
 **Paso 1: Clonar/Descargar repositorio**
 
 ```bash
-cd ~/devel
 git clone <repository-url> roomba
 cd roomba
 ```
 
-**Paso 2: Compilar simulador base**
+**Paso 2: Compilar todo el sistema**
 
 ```bash
-make all
+make tools      # Compila herramientas (validate, generate, etc.)
+make arena      # Prepara entorno de competición (runner, score)
 ```
 
 Esto genera:
-
-- `simula.o` - Biblioteca del simulador
-- Todos los módulos compilados
-
-**Paso 3: Compilar herramientas de competición**
-
-```bash
-cd competition
-make all
-```
-
-Esto genera:
-
-- `runner` - Orquestador de ejecuciones
-- `score` - Calculador de ranking
-- `myscore` - Herramienta de autoevaluación
-- `validate` - Validador de entregas
-- `libscore.o` - Biblioteca compartida de puntuación
-
-**Verificación:**
-
-```bash
-ls -lh runner score myscore validate
-```
-
-Deberías ver todos los ejecutables.
+- Herramientas en `tools/`
+- Sistema de competición listo en `competition/`
+- Mapas por defecto generados en `maps/`
 
 ### 2.3 Configuración de Mapas
 
-**Estructura de directorios:**
+El comando `make tools` ya genera 8 mapas de prueba en `maps/`.
+Al ejecutar `make arena`, estos mapas se copian automáticamente a `competition/maps/`.
+
+**Si deseas regenerar mapas con otra configuración:**
 
 ```bash
-competition/
-├── maps/
-│   ├── noobs.pgm       # Mapa 0: sin obstáculos
-│   ├── random1.pgm     # Mapa 1: 1% obstáculos
-│   ├── random3.pgm     # Mapa 2: 3% obstáculos
-│   └── random5.pgm     # Mapa 3: 5% obstáculos
+# Desde la raíz del proyecto
+rm maps/*.pgm
+./tools/generate
 ```
 
-**Crear mapas oficiales:**
-
-Opción 1: Usar mapas existentes
+**Visualizar mapas:**
 
 ```bash
-# Si ya tienes mapas en otra ubicación
-cp /path/to/maps/*.pgm competition/maps/
-```
-
-Opción 2: Generar mapas nuevos
-
-```bash
-cd maps
-gcc generate.c -o generate
-./generate noobs.pgm 0    # 0% obstáculos
-./generate random1.pgm 1  # 1% obstáculos
-./generate random3.pgm 3  # 3% obstáculos
-./generate random5.pgm 5  # 5% obstáculos
-```
-
-**Verificar mapas:**
-
-```bash
-# Cada mapa debe ser 50x50 celdas
-file maps/*.pgm
-
-# Visualizar (si tienes ImageMagick)
-display maps/noobs.pgm
+./tools/viewmap maps/noobs.pgm
 ```
 
 ### 2.4 Configuración de Puntuación
@@ -194,20 +147,21 @@ crash_penalty=10
 
 ```bash
 cd competition
+make init   # Asegurar que el entorno está listo
 
-# Compilar código de ejemplo
+# Compilar código de ejemplo (simulando un equipo)
 cd teams/team01
-gcc main.c ../../simula.o -lm -o roomba
+gcc main.c ../lib/simula.o -lm -o roomba
 
-# Ejecutar manualmente
-./roomba ../../maps/noobs.pgm
+# Ejecutar manualmente con un mapa
+./roomba ../maps/noobs.pgm
 
 # Verificar que genera stats.csv
 ls -lh stats.csv
 
 # Probar myscore
 cd ../..
-./myscore teams/team01/stats.csv
+../tools/myscore teams/team01/stats.csv
 ```
 
 Si todo funciona correctamente, el sistema está listo.
@@ -296,8 +250,9 @@ Validation PASSED - Code is ready for competition!
 
 ```bash
 for team in teams/team*; do
-    echo "=== Validando $(basename $team) ==="
-    ./validate $team
+    echo ""
+    echo "=== Validating $(basename $team) ==="
+    ../tools/validate $team
     echo ""
 done > validation_report.txt
 ```
@@ -376,7 +331,7 @@ Dependiendo de las reglas de tu competición:
 
 ```bash
 cd competition
-./runner
+make run
 ```
 
 **Con timeout ajustable:**
@@ -709,51 +664,31 @@ mail -s "Resultados Roomba - $team_name" email@example.com < feedback_$team_name
 
 ### 7.1 Paquete de Distribución
 
-Los participantes necesitan:
+Los participantes necesitan un paquete "Standalone" que incluye el simulador precompilado (`simula.o`), cabeceras, guia y herramienta de autoevaluación.
+
+**Crear paquete automáticamente:**
 
 ```bash
-dist/
-├── simula.h           # API del simulador
-├── simula.o           # Biblioteca precompilada
-├── myscore            # Herramienta de autoevaluación
-├── map.pgm            # Mapa de ejemplo
-├── README.txt         # Instrucciones básicas
-└── PARTICIPANT_GUIDE.md  # Guía completa
+# Desde la raíz del proyecto
+make dist
 ```
 
-**Crear paquete:**
+Esto generará el directorio `dist/` con todo lo necesario y mostrará instrucciones para comprimirlo.
+
+**Contenido del paquete generado:**
+- `simula.h`: API del simulador
+- `simula.o`: Biblioteca precompilada
+- `tools/`: Herramientas (myscore, validate, etc.)
+- `maps/`: Mapas de ejemplo
+- `STANDALONE_GUIDE.md`: Guía completa para participantes
+- `README.md`: Instrucciones de inicio rápido
+
+**Para comprimir y distribuir:**
 
 ```bash
-mkdir -p dist
-cp simula.h dist/
-cp simula.o dist/
-cp competition/myscore dist/
-cp competition/maps/noobs.pgm dist/map.pgm
-cp competition/PARTICIPANT_GUIDE.md dist/
-cat > dist/README.txt << 'EOF'
-=== Paquete de Competición Roomba ===
-
-Archivos incluidos:
-- simula.h: API del simulador
-- simula.o: Biblioteca precompilada
-- myscore: Autoevaluación de tu código
-- map.pgm: Mapa de ejemplo para pruebas
-- PARTICIPANT_GUIDE.md: Guía completa
-
-Compilar tu código:
-  gcc main.c simula.o -lm -o roomba
-
-Ejecutar:
-  ./roomba map.pgm
-
-Autoevaluar:
-  ./myscore stats.csv
-
-Lee PARTICIPANT_GUIDE.md para más detalles.
-EOF
-
-# Comprimir
-tar -czf roomba_competition_dist.tar.gz dist/
+tar -czf roomba-standalone.tar.gz dist/
+# o
+zip -r roomba-standalone.zip dist/
 ```
 
 **Distribuir:**
