@@ -113,3 +113,4 @@ tools/myscore
 tools/validate
 tools/viewmap
 tools/visualize
+#dist/

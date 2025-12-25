@@ -36,8 +36,8 @@ Muestra mapas PGM en formato ASCII en la terminal.
 make viewmap
 
 # Visualizar mapa
-./viewmap maps/walls2.pgm
-./viewmap maps/random3.pgm
+./tools/viewmap maps/walls2.pgm
+./tools/viewmap maps/random3.pgm
 ```
 
 **Leyenda:**
@@ -59,16 +59,16 @@ Valida código de equipos antes de la competición. Detecta problemas de compila
 **Uso:**
 ```bash
 # Validación por defecto (directorio actual)
-./validate
+./tools/validate
 
 # Vallidación del código en el directorio myfolder
-./validate myfolder
+./tools/validate myfolder
 
 # Validación por organizador con informe
-./validate ../competition/teams/team01 --output report.txt
+./tools/validate ../competition/teams/team01 --output report.txt
 
 # Modo estricto (fallo con warnings)
-./validate ../competition/teams/team02 --strict
+./tools/validate ../competition/teams/team02 --strict
 ```
 
 **Opciones:**
@@ -92,7 +92,7 @@ Valida código de equipos antes de la competición. Detecta problemas de compila
 1. **Participante:** Verificar código antes de enviar
    ```bash
    cd mi_roomba/
-   ./tools/validate.s . --output mi_validacion.txt
+   ./tools/validate . --output mi_validacion.txt
    ```
 
 2. **Organizador:** Validar entregas
@@ -185,7 +185,7 @@ make visualize
 
 **Ejemplo:**
 ```bash
-./visualize log.csv map.pgm
+./tools/visualize log.csv map.pgm
 ```
 
 
@@ -262,7 +262,7 @@ mkdir -p reports/
 for team in competition/teams/team*/; do
     team_name=$(basename "$team")
     echo "Validating $team_name..."
-    ./tools/validate.sh "$team" --strict --output "reports/${team_name}.txt"
+    ./tools/validate "$team" --strict --output "reports/${team_name}.txt"
 done
 ```
 
@@ -277,7 +277,7 @@ cd tools/
 
 **3. Validación rápida de un equipo específico:**
 ```bash
-./tools/validate.sh competition/teams/team07
+./tools/validate competition/teams/team07
 ```
 
 ---
@@ -290,11 +290,18 @@ roomba/
 │   ├── generate       # Binario compilado
 │   ├── viewmap        # Binario compilado
 │   ├── validate       # Binario compilado
+│   ├── myscore        # Binario compilado
 │   ├── visualize      # Binario compilado
+│   │
 │   ├── generate.c     # Fuente del generador
 │   ├── viewmap.c      # Fuente del visualizador de mapas
 │   ├── validate.c     # Fuente del validador 
+│   ├── myscore.c      # Fuente del calculador de puntuación
+│   ├── libscore.c     # Librería compartida de puntuación
+│   ├── libscore.h     # Cabecera de la librería de puntuación
+│   ├── scoring.conf   # Configuración de puntuación
 │   ├── visualize.c    # Fuente del visualizador de ejecución 
+│   │
 │   ├── Makefile       # Construye el sistema
 │   └── README.md      # Esta documentación
 └── maps/              # Mapas PGM (solo datos)
@@ -309,7 +316,7 @@ roomba/
 
 - **gcc** con soporte para C99
 - **make** para compilación
-- **bash** para scripts de validación
+
 - **timeout** command (incluido en GNU coreutils)
 
 ---
@@ -328,4 +335,7 @@ roomba/
 - **Para organizadores:** Usa `--strict` para forzar compilación sin warnings
 - **Para competiciones:** Combina con `competition/runner` para ejecución completa
 - **Debugging:** Usa `viewmap` para inspeccionar mapas problemáticos rápidamente
-- **Debugging:** Usa `visualize` vovler a revisar una ejecució, incluyendo paso a paso y hacia atrás
+   ```bash
+   ./validate teams/team15 --strict --timeout 5
+   ```
+- **Debugging:** Usa `visualize` volver a revisar una ejecución, incluyendo paso a paso y hacia atrás

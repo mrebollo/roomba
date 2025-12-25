@@ -95,10 +95,28 @@ doc-clean:
 # Distribution target - Create standalone package
 dist: lib
 	@echo "Creating standalone distribution package..."
-	@mkdir -p dist/maps
+	@mkdir -p dist/maps dist/tools
+	
+	# Copiar plantilla base
+	@cp -r templates/* dist/ 2>/dev/null || true
+	
+	# Copiar binarios y cabeceras del simulador
 	@cp simula.o dist/
 	@cp simula.h dist/
+	
+	# Copiar mapas
 	@cp maps/*.pgm dist/maps/ 2>/dev/null || true
+	
+	# Copiar herramientas (solo fuentes y makefile, excluyendo binarios y carpeta maps interna)
+	@rsync -av --exclude='generate' --exclude='viewmap' --exclude='validate' \
+		--exclude='myscore' --exclude='visualize' --exclude='*.o' \
+		--exclude='maps' --exclude='.DS_Store' \
+		tools/ dist/tools/
+	
+	# Copiar documentación
+	@cp competition/STANDALONE_GUIDE.md dist/ 2>/dev/null || echo "Warning: STANDALONE_GUIDE.md not found"
+	@cp docs/user/manual_usuario.pdf dist/MANUAL_USUARIO.pdf 2>/dev/null || echo "Warning: manual_usuario.pdf not found (run 'make doc' first?)"
+	
 	@echo ""
 	@echo "=========================================="
 	@echo "  Standalone Package Created"
@@ -117,8 +135,8 @@ dist: lib
 
 dist-clean:
 	@echo "Cleaning distribution package..."
-	rm -rf dist/maps/*.pgm dist/simula.o dist/simula.h
-	@echo "Distribution cleaned (keeping template files)"
+	rm -rf dist
+	@echo "Distribution directory removed"
 
 # Help
 help:

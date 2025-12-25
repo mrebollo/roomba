@@ -7,11 +7,11 @@ CFLAGS = -Wall -Wextra -Wno-unused-result
 LDFLAGS = -lm
 
 
-# Fuentes del mundo del simulador
+# Simulator world sources
 SIM_WORLD = ../sim_world.c ../sim_world_api.c
 
 
-# Ejecutables: uno por cada .c
+# Executables: one per .c file
 
 GENERATE = generate
 VIEWMAP = viewmap
@@ -37,31 +37,36 @@ all: $(GENERATE) $(VIEWMAP) $(VALIDATE) $(MYSCORE) $(VISUALIZE)
 
 
 
-# Generador de mapas
+# Map generator
 $(GENERATE): generate.c $(SIM_WORLD)
 	$(CC) $(CFLAGS) -I.. -o $@ $^ $(LDFLAGS)
 	@echo "Map generator compiled: $(GENERATE)"
 
 
-# Visualizador de mapas
+# Map visualizer
 $(VIEWMAP): viewmap.c $(SIM_WORLD)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 	@echo "Map visualizer compiled: $(VIEWMAP)"
 
-# Validador de código
+# Code validator
 $(VALIDATE): validate.c
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 	@echo "Code validator compiled: $(VALIDATE)"
 
-# Mi sistema de puntuacion
+# Custom scoring system
 $(MYSCORE): myscore.c libscore.c
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 	@echo "Custom score system compiled: $(MYSCORE)"
 
-# Visualizador de logs
+# Library object for shared use (e.g. by competition system)
+libscore.o: libscore.c libscore.h
+	$(CC) -c libscore.c $(CFLAGS)
+	@echo "Scoring library object compiled: libscore.o"
+
+# Log visualizer
 $(VISUALIZE): visualize.c ../sim_visual.c
 
-# Regla para generar simula.o local en tools/
+# Rule to generate local simula.o in tools/
 SIMULA_SRC = ../simula.c ../sim_robot.c ../sim_visual.c ../sim_io.c ../sim_world.c ../sim_stats.c ../sim_world_api.c
 SIMULA_OBJ = simula.o
 
@@ -79,7 +84,7 @@ $(VISUALIZE): visualize.c simula.o
 # Clean compiled binaries
 
 clean:
-	rm -f $(GENERATE) $(VIEWMAP) $(VALIDATE) $(MYSCORE) $(VISUALIZE) simula.o
+	rm -f $(GENERATE) $(VIEWMAP) $(VALIDATE) $(MYSCORE) $(VISUALIZE) simula.o libscore.o
 	@echo "Tools cleaned"
 
 # Help
