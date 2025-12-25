@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #define MIN_BATTERY_THRESHOLD                                                  \
   0.1f ///< Umbral mínimo de batería para detener simulación
@@ -74,21 +75,8 @@ int sim_should_stop = 0; ///< Flag de detención
  * Establece el flag sim_should_stop para que el bucle principal
  * termine en la siguiente iteración.
  */
-/**
- * @brief Solicita la detención de la simulación
- *
- * Establece el flag sim_should_stop para que el bucle principal
- * termine en la siguiente iteración.
- */
 void sim_request_stop(void) { sim_should_stop = 1; }
 
-/**
- * @brief Registra un tick en el historial
- * @param action Tipo de acción realizada (-1 para no incrementar timer)
- *
- * Guarda el estado actual del robot en el historial y verifica si
- * la batería está por debajo del umbral crítico.
- */
 /**
  * @brief Registra un tick en el historial
  * @param action Tipo de acción realizada (-1 para no incrementar timer)
@@ -123,24 +111,12 @@ void sim_log_tick(int action) {
  * Función registrada con atexit() para asegurar que el log
  * se guarda incluso si el programa termina abruptamente.
  */
-/**
- * @brief Wrapper para guardar el log al finalizar
- *
- * Función registrada con atexit() para asegurar que el log
- * se guarda incluso si el programa termina abruptamente.
- */
 static void _save_log_wrapper(void) {
   if (!hist)
     return;
   save_log(hist, timer);
 }
 
-/**
- * @brief Wrapper para guardar estadísticas al finalizar
- *
- * Calcula la batería media y guarda las estadísticas finales.
- * Registrada con atexit().
- */
 /**
  * @brief Wrapper para guardar estadísticas al finalizar
  *
@@ -157,12 +133,6 @@ static void _save_stats_wrapper(void) {
   save_stats(stats_get());
 }
 
-/**
- * @brief Libera la memoria del historial
- *
- * Función registrada con atexit() para liberar la memoria
- * dinámica del historial al finalizar el programa.
- */
 /**
  * @brief Libera la memoria del historial
  *
@@ -198,7 +168,14 @@ void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time) {
     fprintf(stderr, "Error: Behavior function cannot be NULL\n");
     exit(1);
   }
-  srand(time(0));
+
+  // Use clock_gettime for nanosecond precision seeding
+  struct timespec ts;
+  // CLOCK_MONOTONIC is preferred for time intervals, but for seeding
+  // CLOCK_REALTIME or MONOTONIC works as long as it changes rapidly.
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  srand((unsigned int)(ts.tv_nsec ^ ts.tv_sec));
+
   config.on_start = start;
   config.exec_beh = beh;
   config.on_stop = stop;

@@ -30,9 +30,10 @@ myscore:
 	@echo "[OK] Participant scoring tool copied from tools/"
 
 # Build scoring library (in tools/)
+# Explicit dependency on source files ensures 'make' checks timestamps correcty
 ../tools/libscore.o: ../tools/libscore.c ../tools/libscore.h
 	@$(MAKE) -C ../tools libscore.o
-	@echo "[OK] Scoring library compiled in tools/"
+	@echo "[OK] Scoring library verified in tools/"
 
 # Check if library exists, warn if not
 check-lib:

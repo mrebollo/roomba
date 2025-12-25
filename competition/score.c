@@ -36,15 +36,15 @@ void display_ranking(team_score_t teams[], int team_count,
                      scoring_config_t *cfg) {
   printf("\n");
   printf("═════════════════════════════════════════════════════════════════════"
-         "══════\n");
+         "═════════════\n");
   printf("                        ROOMBA COMPETITION RANKING                   "
-         "       \n");
+         "             \n");
   printf("═════════════════════════════════════════════════════════════════════"
-         "══════\n");
+         "═════════════\n");
   printf("Rank  Team            Score    Cover  DirtEff  BatCons  Movement  "
-         "Maps\n");
+         "Consist  Maps\n");
   printf("─────────────────────────────────────────────────────────────────────"
-         "──────\n");
+         "─────────────\n");
 
   for (int i = 0; i < team_count; i++) {
     team_score_t *t = &teams[i];
@@ -52,21 +52,28 @@ void display_ranking(team_score_t teams[], int team_count,
     if (i < highlight_top) {
       marker = (i == 0) ? '*' : '+';
     }
-    printf("%c %-3d %-15s %6.2f   %5.1f  %6.1f   %6.1f   %6.1f      %d\n",
-           marker, i + 1, t->name, t->total_score, t->avg_coverage,
-           t->avg_dirt_efficiency, t->avg_battery_conservation,
-           t->avg_movement_quality, t->num_maps);
+    printf(
+        "%c %-3d %-15s %6.2f   %5.1f  %6.1f   %6.1f   %6.1f    %6.1f    %d\n",
+        marker, i + 1, t->name, t->total_score, t->avg_coverage,
+        t->avg_dirt_efficiency, t->avg_battery_conservation,
+        t->avg_movement_quality, t->consistency_score, t->num_maps);
     if (t->num_crashes > 0) {
       printf("      └─ [!] %d crash(es) detected\n", t->num_crashes);
     }
   }
 
   printf("═════════════════════════════════════════════════════════════════════"
-         "══════\n");
-  printf("\nScoring weights: Coverage=%.0f%% DirtEff=%.0f%% BatCons=%.0f%% "
-         "Movement=%.0f%%\n",
+         "═════════════\n");
+  printf("\nScoring Rules:\n");
+  printf("  Weights: Cover=%.0f%% Dirt=%.0f%% Bat=%.0f%% Move=%.0f%%\n",
          cfg->weight_coverage, cfg->weight_dirt_efficiency,
          cfg->weight_battery_conservation, cfg->weight_movement_quality);
+  printf("  Bonuses: Consistency > %.0f (+%.0f) | LowBumps > %.0f%% (+%.0f) | "
+         "Completion (+%.0f)\n",
+         cfg->consistency_threshold, cfg->consistency_bonus,
+         cfg->movement_quality_threshold, cfg->low_bumps_bonus,
+         cfg->completion_bonus);
+  printf("  Penalty: Crash (-%.0f)\n", cfg->crash_penalty);
   printf("\n");
 }
 
@@ -84,26 +91,30 @@ void save_ranking_txt(team_score_t teams[], int team_count,
   fprintf(f, "ROOMBA COMPETITION RANKING\n");
   fprintf(f, "==========================\n\n");
 
-  fprintf(f, "Scoring Configuration:\n");
-  fprintf(f, "  Coverage Weight:           %.0f%%\n", cfg->weight_coverage);
-  fprintf(f, "  Dirt Efficiency Weight:    %.0f%%\n",
-          cfg->weight_dirt_efficiency);
-  fprintf(f, "  Battery Conservation:      %.0f%%\n",
-          cfg->weight_battery_conservation);
-  fprintf(f, "  Movement Quality Weight:   %.0f%%\n\n",
-          cfg->weight_movement_quality);
+  fprintf(f, "Configuration:\n");
+  fprintf(f, "  Weights: Cover=%.0f%% Dirt=%.0f%% Bat=%.0f%% Move=%.0f%%\n",
+          cfg->weight_coverage, cfg->weight_dirt_efficiency,
+          cfg->weight_battery_conservation, cfg->weight_movement_quality);
+  fprintf(f,
+          "  Bonuses: Consistency > %.0f (+%.0f) | LowBumps > %.0f%% (+%.0f) | "
+          "Completion (+%.0f)\n",
+          cfg->consistency_threshold, cfg->consistency_bonus,
+          cfg->movement_quality_threshold, cfg->low_bumps_bonus,
+          cfg->completion_bonus);
+  fprintf(f, "  Penalty: Crash (-%.0f)\n\n", cfg->crash_penalty);
 
   fprintf(f, "Rank  Team            Total Score  Cover  DirtEff  BatCons  "
-             "Movement  Maps\n");
+             "Movement  Consist  Maps\n");
   fprintf(f, "-----------------------------------------------------------------"
-             "---------------\n");
+             "----------------------\n");
 
   for (int i = 0; i < team_count; i++) {
     team_score_t *t = &teams[i];
-    fprintf(f, "%-5d %-15s %8.2f     %5.1f  %6.1f   %6.1f   %6.1f      %d\n",
-            i + 1, t->name, t->total_score, t->avg_coverage,
-            t->avg_dirt_efficiency, t->avg_battery_conservation,
-            t->avg_movement_quality, t->num_maps);
+    fprintf(
+        f, "%-5d %-15s %8.2f     %5.1f  %6.1f   %6.1f   %6.1f    %6.1f    %d\n",
+        i + 1, t->name, t->total_score, t->avg_coverage, t->avg_dirt_efficiency,
+        t->avg_battery_conservation, t->avg_movement_quality,
+        t->consistency_score, t->num_maps);
 
     if (t->num_crashes > 0) {
       fprintf(f, "      Warning: %d crash(es) detected\n", t->num_crashes);

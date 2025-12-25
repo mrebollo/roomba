@@ -97,7 +97,8 @@ competition/validate
 competition/entregas*/
 competition/results*/
 competition/teams*/
-!competition/teams/.gitkeep
+!competition/teams/reference/
+!competition/teams/copycat/
 
 # Competition tools and artifacts
 competition/myscore

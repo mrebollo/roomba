@@ -48,10 +48,12 @@ typedef struct {
     // Bonuses
     float completion_bonus;             ///< Bonus for zero crashes
     float low_bumps_bonus;              ///< Bonus for movement > 90%
+    float consistency_bonus;            ///< Bonus for high consistency
     float crash_penalty;                ///< Penalty per crash
     
     // Thresholds
     float movement_quality_threshold;   ///< Threshold for low bumps bonus (default 90%)
+    float consistency_threshold;        ///< Threshold for consistency bonus (default 40)
     
     // Scaling factors
     float dirt_scale;                   ///< Scaling factor for dirt efficiency
