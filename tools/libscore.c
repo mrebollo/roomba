@@ -166,7 +166,7 @@ bool scoring_load_config(const char *filename, scoring_config_t *config) {
     } else if (strcmp(key, "consistency_threshold") == 0) {
       config->consistency_threshold = atof(value);
     } else if (strcmp(key, "generate_csv") == 0) {
-      config->generate_csv = atoi(value);
+      config->generate_csv = strcmp(value, "yes") == 0;
     } else if (strcmp(key, "verbose") == 0) {
       config->verbose = atoi(value);
     }
