@@ -104,3 +104,35 @@ jobs:
           fi
         done
         echo "All samples compile successfully!"
+
+    - name: Test Tools Suite (Sanitizer)
+      working-directory: .
+      run: |
+        echo "Building Tools with Sanitizers..."
+        make -C tools tools-asan
+        
+        echo "--> Testing Generate..."
+        cd tools
+        ./generate
+        if [ ! -f maps/random1.pgm ]; then
+            echo "::error::Generate failed to create maps"
+            exit 1
+        fi
+        
+        echo "--> Testing Viewmap..."
+        ./viewmap maps/random1.pgm
+        
+        echo "--> Testing Myscore..."
+        # Create dummy stats for myscore
+        echo "team,map_type,cell_total,cell_visited,dirt_total,dirt_cleaned,bat_total,bat_mean,forward,turn,bumps,clean,load" > /tmp/dummy_stats.csv
+        echo "teamTool,0,100,50,20,10,500.0,10.0,100,50,5,10,0" >> /tmp/dummy_stats.csv
+        ./myscore /tmp/dummy_stats.csv
+        
+        echo "--> Testing Validate..."
+        # Use the CI test team created in previous steps
+        # We need to make sure validate can find the map, so we'll use generated maps
+        # Validate assumes maps are in ./maps by default or passed via arg
+        # We run from tools dir, so maps are in maps/
+        ./validate ../competition/teams/ci_test --maps maps --timeout 5
+        
+        echo "Tools Suite Verified!"

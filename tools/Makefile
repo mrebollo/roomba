@@ -87,6 +87,10 @@ clean:
 	rm -f $(GENERATE) $(VIEWMAP) $(VALIDATE) $(MYSCORE) $(VISUALIZE) simula.o libscore.o
 	@echo "Tools cleaned"
 
+# Debug build for Tools with AddressSanitizer
+tools-asan: CFLAGS += -fsanitize=address -g -O1 -fno-omit-frame-pointer
+tools-asan: clean all
+
 # Help
 help:
 	@echo "Roomba Tools Makefile"
