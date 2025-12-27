@@ -40,7 +40,67 @@ jobs:
       working-directory: competition
       run: |
         if [ ! -f ranking.txt ]; then
-          echo "Error: ranking.txt not generated"
+          echo "Error: runner ranking.txt not generated"
           exit 1
         fi
         cat ranking.txt
+
+    - name: Test Scoring System (Sanitizer)
+      working-directory: competition
+      run: |
+        # Build score with AddressSanitizer
+        make score-asan
+        
+        # Create dummy stats
+        echo "team,map_type,cell_total,cell_visited,dirt_total,dirt_cleaned,bat_total,bat_mean,forward,turn,bumps,clean,load" > ci_stats.dat
+        echo "teamCI,0,100,50,20,10,500.0,10.0,100,50,5,10,0" >> ci_stats.dat
+        
+        # Run score
+        ./score --stats ci_stats.dat
+        
+        # Verify outputs
+        if [ ! -f results/ranking.txt ] || [ ! -f results/scores.csv ]; then
+          echo "Error: Scoring system failed to generate output files"
+          exit 1
+        fi
+    - name: Test Simulation Engine (Sanitizer)
+      working-directory: competition
+      run: |
+        # 1. Build library with Sanitizers (using root Makefile)
+        make -C .. clean
+        make -C .. lib-competition CFLAGS="-fsanitize=address -g -O1 -fno-omit-frame-pointer"
+        
+        # 2. Create a temporary test robot with short duration (50 ticks)
+        cat <<EOF > test_robot.c
+        #include "../simula.h"
+        #include <stdio.h>
+        void start() { int x,y; rmb_awake(&x, &y); }
+        void beh() {}
+        void stop() {}
+        int main() {
+            // Configure with 50 ticks duration
+            configure(start, beh, stop, 50);
+            run();
+            return 0;
+        }
+        EOF
+        
+        # 3. Compile and Run
+        gcc -fsanitize=address -g -O1 -fno-omit-frame-pointer -DCOMPETITION_MODE -I.. test_robot.c lib/simula.o -lm -o test_simula
+        ./test_simula
+
+    - name: Validate Samples Compatibility
+      working-directory: competition
+      run: |
+        echo "Validating sample compilation..."
+        # Find all .c files in samples/
+        find ../samples -name "*.c" -print0 | while IFS= read -r -d '' file; do
+          echo "Compiling $file..."
+          # Compile check only (check linking too)
+          gcc -DCOMPETITION_MODE -I.. "$file" lib/simula.o -lm -o /dev/null
+          if [ $? -ne 0 ]; then
+            echo "::error::Failed to compile sample: $file"
+            exit 1
+          fi
+        done
+        echo "All samples compile successfully!"

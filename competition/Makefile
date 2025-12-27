@@ -29,6 +29,12 @@ myscore:
 	@cp ../tools/myscore .
 	@echo "[OK] Participant scoring tool copied from tools/"
 
+# Debug build for Scoring with AddressSanitizer
+score-asan: CFLAGS += -fsanitize=address -g -O1 -fno-omit-frame-pointer
+score-asan: clean
+	$(CC) score.c ../tools/libscore.c $(CFLAGS) -o score
+	@echo "[OK] Built score with AddressSanitizer"
+
 # Build scoring library (in tools/)
 # Explicit dependency on source files ensures 'make' checks timestamps correcty
 ../tools/libscore.o: ../tools/libscore.c ../tools/libscore.h
