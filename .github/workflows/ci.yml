@@ -113,10 +113,13 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y build-essential
 
       - name: Build Tools (Sanitizer)
+        run: make -C tools tools-asan
+
+      - name: Prepare Clean Lib for Validate
         run: |
-          make -C tools tools-asan
-          # Validate tool expects simula.o in root directory
-          make simula.o CFLAGS="-fsanitize=address -g -O1 -fno-omit-frame-pointer"
+          # Validate compiles student code without sanitizers, so it needs a clean simula.o
+          make clean
+          make simula.o
 
       - name: Test Generate & Viewmap
         working-directory: tools
