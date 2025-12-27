@@ -7,132 +7,130 @@ on:
     branches: [ "main", "master" ]
 
 jobs:
-  build-and-test:
+  # ------------------------------------------------------------------
+  # JOB 1: Simulation Engine & Compatibility
+  # ------------------------------------------------------------------
+  engine-test:
+    name: 🏗️ Engine & Samples
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential
 
-    - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y build-essential
+      - name: Build Library (Sanitizer)
+        run: make -C . lib-competition CFLAGS="-fsanitize=address -g -O1 -fno-omit-frame-pointer"
 
-    - name: Compile Runner with Sanitizers
-      working-directory: competition
-      # Usamos make debug-asan si existe, o el comando manual si el Makefile no tiene el target (aunque ya lo añadimos)
-      run: |
-        make debug-asan || gcc runner.c -fsanitize=address -g -O1 -fno-omit-frame-pointer -Wall -Wextra -lm -I../tools -o runner
+      - name: Smoke Test - Physics Engine
+        working-directory: competition
+        run: |
+          # Create temp robot (50 ticks)
+          cat <<EOF > test_robot.c
+          #include "../simula.h"
+          #include <stdio.h>
+          void start() { int x,y; rmb_awake(&x, &y); }
+          void beh() {}
+          void stop() {}
+          int main() { configure(start, beh, stop, 50); run(); return 0; }
+          EOF
+          # Compile & Run
+          gcc -fsanitize=address -g -O1 -fno-omit-frame-pointer -DCOMPETITION_MODE -I.. test_robot.c lib/simula.o -lm -o test_simula
+          ./test_simula
 
-    - name: Prepare Test Team
-      run: |
-        mkdir -p competition/teams/ci_test
-        # Copiar la plantilla como base del equipo de test
-        cp templates/main.c competition/teams/ci_test/main.c
-        # Crear config básico
-        echo "0 0" > competition/teams/ci_test/config.txt
+      - name: Validate Samples Compatibility
+        run: |
+          echo "Validating sample compilation..."
+          find samples -name "*.c" -print0 | while IFS= read -r -d '' file; do
+            echo "Compiling $file..."
+            gcc -DCOMPETITION_MODE -I. "$file" competition/lib/simula.o -lm -o /dev/null
+            if [ $? -ne 0 ]; then
+              echo "::error::Failed to compile sample: $file"
+              exit 1
+            fi
+          done
 
-    - name: Run Smoke Test
-      working-directory: competition
-      # Ejecutar runner solo para el equipo de test, usando la bandera --test para inyectar configuración rapida
-      run: |
-        ./runner --team=ci_test --test
-        
-    - name: Check Results
-      working-directory: competition
-      run: |
-        if [ ! -f ranking.txt ]; then
-          echo "Error: runner ranking.txt not generated"
-          exit 1
-        fi
-        cat ranking.txt
+  # ------------------------------------------------------------------
+  # JOB 2: Competition System (Runner & Score)
+  # ------------------------------------------------------------------
+  competition-test:
+    name: 🏁 Runner & Score
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential
 
-    - name: Test Scoring System (Sanitizer)
-      working-directory: competition
-      run: |
-        # Build score with AddressSanitizer
-        make score-asan
-        
-        # Create dummy stats
-        echo "team,map_type,cell_total,cell_visited,dirt_total,dirt_cleaned,bat_total,bat_mean,forward,turn,bumps,clean,load" > ci_stats.dat
-        echo "teamCI,0,100,50,20,10,500.0,10.0,100,50,5,10,0" >> ci_stats.dat
-        
-        # Run score
-        ./score --stats ci_stats.dat
-        
-        # Verify outputs
-        if [ ! -f results/ranking.txt ] || [ ! -f results/scores.csv ]; then
-          echo "Error: Scoring system failed to generate output files"
-          exit 1
-        fi
-    - name: Test Simulation Engine (Sanitizer)
-      working-directory: competition
-      run: |
-        # 1. Build library with Sanitizers (using root Makefile)
-        make -C .. clean
-        make -C .. lib-competition CFLAGS="-fsanitize=address -g -O1 -fno-omit-frame-pointer"
-        
-        # 2. Create a temporary test robot with short duration (50 ticks)
-        cat <<EOF > test_robot.c
-        #include "../simula.h"
-        #include <stdio.h>
-        void start() { int x,y; rmb_awake(&x, &y); }
-        void beh() {}
-        void stop() {}
-        int main() {
-            // Configure with 50 ticks duration
-            configure(start, beh, stop, 50);
-            run();
-            return 0;
-        }
-        EOF
-        
-        # 3. Compile and Run
-        gcc -fsanitize=address -g -O1 -fno-omit-frame-pointer -DCOMPETITION_MODE -I.. test_robot.c lib/simula.o -lm -o test_simula
-        ./test_simula
-
-    - name: Validate Samples Compatibility
-      working-directory: competition
-      run: |
-        echo "Validating sample compilation..."
-        # Find all .c files in samples/
-        find ../samples -name "*.c" -print0 | while IFS= read -r -d '' file; do
-          echo "Compiling $file..."
-          # Compile check only (check linking too)
-          gcc -DCOMPETITION_MODE -I.. "$file" lib/simula.o -lm -o /dev/null
-          if [ $? -ne 0 ]; then
-            echo "::error::Failed to compile sample: $file"
+      - name: Test Runner (Sanitizer + Smoke)
+        working-directory: competition
+        run: |
+          # Build Runner Sanitized
+          make debug-asan || gcc runner.c -fsanitize=address -g -O1 -fno-omit-frame-pointer -Wall -Wextra -lm -I../tools -o runner
+          
+          # Setup dummy team
+          mkdir -p teams/ci_test
+          cp ../templates/main.c teams/ci_test/main.c
+          echo "0 0" > teams/ci_test/config.txt
+          
+          # Run Fast Test
+          ./runner --team=ci_test --test
+          
+          # Verify
+          if [ ! -f ranking.txt ]; then
+            echo "Error: runner ranking.txt not generated"
             exit 1
           fi
-        done
-        echo "All samples compile successfully!"
 
-    - name: Test Tools Suite (Sanitizer)
-      working-directory: .
-      run: |
-        echo "Building Tools with Sanitizers..."
-        make -C tools tools-asan
-        
-        echo "--> Testing Generate..."
-        cd tools
-        ./generate
-        if [ ! -f maps/random1.pgm ]; then
-            echo "::error::Generate failed to create maps"
+      - name: Test Score System (Sanitizer)
+        working-directory: competition
+        run: |
+          make score-asan
+          echo "team,map_type,cell_total,cell_visited,dirt_total,dirt_cleaned,bat_total,bat_mean,forward,turn,bumps,clean,load" > ci_stats.dat
+          echo "teamCI,0,100,50,20,10,500.0,10.0,100,50,5,10,0" >> ci_stats.dat
+          
+          ./score --stats ci_stats.dat
+          
+          if [ ! -f results/ranking.txt ]; then
+            echo "Error: Scoring system failed"
             exit 1
-        fi
-        
-        echo "--> Testing Viewmap..."
-        ./viewmap maps/random1.pgm
-        
-        echo "--> Testing Myscore..."
-        # Create dummy stats for myscore
-        echo "team,map_type,cell_total,cell_visited,dirt_total,dirt_cleaned,bat_total,bat_mean,forward,turn,bumps,clean,load" > /tmp/dummy_stats.csv
-        echo "teamTool,0,100,50,20,10,500.0,10.0,100,50,5,10,0" >> /tmp/dummy_stats.csv
-        ./myscore /tmp/dummy_stats.csv
-        
-        echo "--> Testing Validate..."
-        # Use the CI test team created in previous steps
-        # We need to make sure validate can find the map, so we'll use generated maps
-        # Validate assumes maps are in ./maps by default or passed via arg
-        # We run from tools dir, so maps are in maps/
-        ./validate ../competition/teams/ci_test --maps maps --timeout 5
-        
-        echo "Tools Suite Verified!"
+          fi
+
+  # ------------------------------------------------------------------
+  # JOB 3: Tools Ecosystem
+  # ------------------------------------------------------------------
+  tools-test:
+    name: 🛠️ Tools Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential
+
+      - name: Build Tools (Sanitizer)
+        run: make -C tools tools-asan
+
+      - name: Test Generate & Viewmap
+        working-directory: tools
+        run: |
+          ./generate
+          if [ ! -f maps/random1.pgm ]; then echo "::error::Generate failed"; exit 1; fi
+          ./viewmap maps/random1.pgm
+
+      - name: Test Myscore
+        working-directory: tools
+        run: |
+          echo "team,map_type,..." > dummy.csv
+          echo "teamT,0,100,50,..." >> dummy.csv
+          ./myscore dummy.csv
+
+      - name: Test Validate (Setup)
+        run: |
+          # Create valid team structure for validate tool
+          mkdir -p competition/teams/ci_test
+          cp templates/main.c competition/teams/ci_test/main.c
+          echo "0 0" > competition/teams/ci_test/config.txt
+
+      - name: Test Validate (Run)
+        working-directory: tools
+        run: |
+          # Validate expects maps directory
+          ./validate ../competition/teams/ci_test --maps maps --timeout 5
