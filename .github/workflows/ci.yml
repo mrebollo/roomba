@@ -33,9 +33,9 @@ jobs:
           void stop() {}
           int main() { configure(start, beh, stop, 50); run(); return 0; }
           EOF
-          # Compile & Run
+          # Compile & Run (with timeout protection)
           gcc -fsanitize=address -g -O1 -fno-omit-frame-pointer -DCOMPETITION_MODE -I.. test_robot.c lib/simula.o -lm -o test_simula
-          ./test_simula
+          timeout 10s ./test_simula
 
       - name: Validate Samples Compatibility
         run: |
