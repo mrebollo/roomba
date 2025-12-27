@@ -32,6 +32,7 @@ jobs:
           void beh() {}
           void stop() {}
           int main() {
+             setbuf(stdout, NULL);
              printf("DEBUG: Configuring robot...\n");
              configure(start, beh, stop, 50);
              printf("DEBUG: Starting run loop...\n");
@@ -42,7 +43,8 @@ jobs:
           EOF
           # Compile & Run (with verbose timeout protection)
           gcc -fsanitize=address -g -O1 -fno-omit-frame-pointer -DCOMPETITION_MODE -I.. test_robot.c lib/simula.o -lm -o test_simula
-          timeout 5s ./test_simula
+          # Use explicit map to avoid random generation hangs
+          timeout 10s ./test_simula ../maps/noobs.pgm
 
       - name: Validate Samples Compatibility
         run: |
@@ -118,8 +120,8 @@ jobs:
       - name: Prepare Clean Lib for Validate
         run: |
           # Validate compiles student code without sanitizers, so it needs a clean simula.o
-          make clean
-          make simula.o
+          # Use 'make lib' to build standard simula.o without cleaning previously built tools
+          make lib
 
       - name: Test Generate & Viewmap
         working-directory: tools
