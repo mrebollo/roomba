@@ -28,14 +28,21 @@ jobs:
           cat <<EOF > test_robot.c
           #include "../simula.h"
           #include <stdio.h>
-          void start() { int x,y; rmb_awake(&x, &y); }
+          void start() { int x,y; rmb_awake(&x, &y); printf("DEBUG: Robot started at %d,%d\n", x,y); }
           void beh() {}
           void stop() {}
-          int main() { configure(start, beh, stop, 50); run(); return 0; }
+          int main() {
+             printf("DEBUG: Configuring robot...\n");
+             configure(start, beh, stop, 50);
+             printf("DEBUG: Starting run loop...\n");
+             run();
+             printf("DEBUG: Run finished successfully.\n");
+             return 0;
+          }
           EOF
-          # Compile & Run (with timeout protection)
+          # Compile & Run (with verbose timeout protection)
           gcc -fsanitize=address -g -O1 -fno-omit-frame-pointer -DCOMPETITION_MODE -I.. test_robot.c lib/simula.o -lm -o test_simula
-          timeout 10s ./test_simula
+          timeout 5s ./test_simula
 
       - name: Validate Samples Compatibility
         run: |
@@ -106,7 +113,10 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y build-essential
 
       - name: Build Tools (Sanitizer)
-        run: make -C tools tools-asan
+        run: |
+          make -C tools tools-asan
+          # Validate tool expects simula.o in root directory
+          make simula.o CFLAGS="-fsanitize=address -g -O1 -fno-omit-frame-pointer"
 
       - name: Test Generate & Viewmap
         working-directory: tools
