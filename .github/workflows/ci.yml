@@ -1,0 +1,46 @@
+name: Roomba Competition CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y build-essential
+
+    - name: Compile Runner with Sanitizers
+      working-directory: competition
+      # Usamos make debug-asan si existe, o el comando manual si el Makefile no tiene el target (aunque ya lo añadimos)
+      run: |
+        make debug-asan || gcc runner.c -fsanitize=address -g -O1 -fno-omit-frame-pointer -Wall -Wextra -lm -I../tools -o runner
+
+    - name: Prepare Test Team
+      run: |
+        mkdir -p competition/teams/ci_test
+        # Copiar la plantilla como base del equipo de test
+        cp templates/main.c competition/teams/ci_test/main.c
+        # Crear config básico
+        echo "0 0" > competition/teams/ci_test/config.txt
+
+    - name: Run Smoke Test
+      working-directory: competition
+      # Ejecutar runner solo para el equipo de test, usando la bandera --test para inyectar configuración rapida
+      run: |
+        ./runner --team=ci_test --test
+        
+    - name: Check Results
+      working-directory: competition
+      run: |
+        if [ ! -f ranking.txt ]; then
+          echo "Error: ranking.txt not generated"
+          exit 1
+        fi
+        cat ranking.txt

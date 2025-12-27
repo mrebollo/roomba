@@ -57,6 +57,18 @@ typedef struct {
 } runner_config_t;
 
 runner_config_t runner_cfg;
+int dry_run_mode = 0; // Global flag for dry run
+
+/**
+ * @brief Ejecuta un comando del sistema o solo lo imprime si estamos en dry-run
+ */
+int safe_system(const char *cmd) {
+  if (dry_run_mode) {
+    printf("[DRY-RUN] Would execute: %s\n", cmd);
+    return 0; // Simulate success
+  }
+  return system(cmd);
+}
 
 /**
  * @brief Carga la configuración desde runner.conf
@@ -68,7 +80,8 @@ void load_runner_config(const char *filename) {
   runner_cfg.timeout_seconds = DEFAULT_TIMEOUT;
   strcpy(runner_cfg.maps_dir, DEFAULT_MAPS_DIR);
   strcpy(runner_cfg.logs_dir, DEFAULT_LOGS_DIR);
-  runner_cfg.max_ticks = 2000; // Valor por defecto si no se encuentra en runner.conf
+  runner_cfg.max_ticks =
+      2000; // Valor por defecto si no se encuentra en runner.conf
 
   FILE *f = fopen(filename, "r");
   if (!f) {
@@ -113,7 +126,8 @@ void load_runner_config(const char *filename) {
     }
   }
   fclose(f);
-    printf("✓ Loaded config: %d maps, %d reps, %ds timeout, %d max_ticks from %s\n",
+  printf(
+      "✓ Loaded config: %d maps, %d reps, %ds timeout, %d max_ticks from %s\n",
       runner_cfg.maps_count, runner_cfg.reps_per_map,
       runner_cfg.timeout_seconds, runner_cfg.max_ticks, filename);
 }
@@ -276,17 +290,18 @@ int compile_team(const char *teams_dir, const char *team_name) {
 
   // Use precompiled object file from lib/
   // Add -DCOMPETITION_MODE to disable visualization
-    snprintf(
-      cmd, sizeof(cmd),
-      "cd %s/%s && gcc -Wall -Wno-unused-function -DCOMPETITION_MODE -DCOMPETITION_EXEC_TIME=%d -I%s/.. "
-      "%s %s/lib/simula.o "
-      "%s/competition_ext.c %s/simula_comp.c -lm -o roomba 2>&1",
-      teams_dir, team_name, runner_cfg.max_ticks, comp_path, main_file, comp_path, comp_path, comp_path);
+  snprintf(cmd, sizeof(cmd),
+           "cd %s/%s && gcc -Wall -Wno-unused-function -DCOMPETITION_MODE "
+           "-DCOMPETITION_EXEC_TIME=%d -I%s/.. "
+           "%s %s/lib/simula.o "
+           "%s/competition_ext.c %s/simula_comp.c -lm -o roomba 2>&1",
+           teams_dir, team_name, runner_cfg.max_ticks, comp_path, main_file,
+           comp_path, comp_path, comp_path);
 
   printf("  Compiling %s... ", team_name);
   fflush(stdout);
 
-  int result = system(cmd);
+  int result = safe_system(cmd);
 
   if (result == 0) {
     printf("✓\n");
@@ -401,11 +416,11 @@ int execute_team_rounds(const char *teams_dir, const char *team_name) {
 #define MAX_MAPS 100
   char map_files_buf[MAX_MAPS][256];
 
-
   // Obtener mapas oficiales
   int available_maps = get_official_maps(runner_cfg.maps_dir, map_files_buf,
                                          runner_cfg.maps_count);
-  int maps_to_run = (available_maps > 0) ? available_maps : runner_cfg.maps_count;
+  int maps_to_run =
+      (available_maps > 0) ? available_maps : runner_cfg.maps_count;
 
   int total_runs = maps_to_run * runner_cfg.reps_per_map;
   int successful_runs = 0;
@@ -415,7 +430,8 @@ int execute_team_rounds(const char *teams_dir, const char *team_name) {
   // ...existing code...
 
   // Initialize team's stats.csv with header
-  snprintf(team_stats, sizeof(team_stats), "%s/%s/stats.csv", teams_dir, team_name);
+  snprintf(team_stats, sizeof(team_stats), "%s/%s/stats.csv", teams_dir,
+           team_name);
   FILE *stats_fd = fopen(team_stats, "w");
   if (stats_fd) {
     fprintf(stats_fd,
@@ -427,11 +443,10 @@ int execute_team_rounds(const char *teams_dir, const char *team_name) {
   // Abrir log de experimentos
   FILE *exp_log = fopen("runner_experiments.log", "a");
   if (!exp_log) {
-      fprintf(stderr, "Error opening runner_experiments.log\n");
+    fprintf(stderr, "Error opening runner_experiments.log\n");
   }
 
   printf("  Executing %d rounds for %s:\n", total_runs, team_name);
-
 
   for (int run = 0; run < total_runs; run++) {
     int map_idx = run / runner_cfg.reps_per_map;
@@ -444,7 +459,7 @@ int execute_team_rounds(const char *teams_dir, const char *team_name) {
       // Copiar el mapa oficial
       snprintf(cmd, sizeof(cmd), "cp %s/%s %s/%s/map.pgm", runner_cfg.maps_dir,
                map_files_buf[map_idx], teams_dir, team_name);
-      system(cmd);
+      safe_system(cmd);
 
       // Argumento para ./roomba será "map.pgm"
       strcpy(map_arg, "map.pgm");
@@ -473,15 +488,14 @@ int execute_team_rounds(const char *teams_dir, const char *team_name) {
       printf(" [%s] ", map_files_buf[map_idx]);
     fflush(stdout);
 
-    int result = system(cmd);
+    int result = safe_system(cmd);
     const char *status = check_execution_result(result, log_stderr);
 
     // Log de experimento
     if (exp_log) {
-      fprintf(exp_log, "TEAM=%s MAP=%s IDX=%d REP=%d STATUS=%s\n",
-        team_name,
-        (available_maps > 0) ? map_files_buf[map_idx] : "N/A",
-        map_idx, rep, status);
+      fprintf(exp_log, "TEAM=%s MAP=%s IDX=%d REP=%d STATUS=%s\n", team_name,
+              (available_maps > 0) ? map_files_buf[map_idx] : "N/A", map_idx,
+              rep, status);
       fflush(exp_log);
     }
 
@@ -496,12 +510,13 @@ int execute_team_rounds(const char *teams_dir, const char *team_name) {
     // Limpieza de mapa copiado
     if (available_maps > 0) {
       snprintf(cmd, sizeof(cmd), "rm -f %s/%s/map.pgm", teams_dir, team_name);
-      system(cmd);
+      safe_system(cmd);
     }
   }
 
   // Cerrar log de experimentos
-  if (exp_log) fclose(exp_log);
+  if (exp_log)
+    fclose(exp_log);
 
   // Final progress bar
   printf("\r");
@@ -719,7 +734,7 @@ void display_ranking(const char *stats_file) {
 int main(int argc, char *argv[]) {
   const char *teams_dir = "teams";
   const char *stats_file = "stats.csv";
-  int dry_run = 0;
+  int test_mode = 0;
   const char *single_team = NULL;
 
   // Load configuration first
@@ -728,19 +743,29 @@ int main(int argc, char *argv[]) {
   // Parse arguments
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "--dry-run") == 0) {
-      dry_run = 1;
+      dry_run_mode = 1;
+    } else if (strcmp(argv[i], "--test") == 0) {
+      test_mode = 1;
     } else if (strncmp(argv[i], "--team=", 7) == 0) {
       single_team = argv[i] + 7;
     } else if (argv[i][0] != '-') {
       teams_dir = argv[i];
     } else {
       fprintf(stderr, "Unknown option: %s\n", argv[i]);
-      fprintf(stderr, "Usage: %s [teams_dir] [--dry-run] [--team=XX]\n",
+      fprintf(stderr,
+              "Usage: %s [teams_dir] [--dry-run] [--test] [--team=XX]\n",
               argv[0]);
       return 1;
     }
   }
 
+  // Apply test mode overrides
+  if (test_mode) {
+    runner_cfg.maps_count = 1;
+    runner_cfg.reps_per_map = 1;
+    runner_cfg.timeout_seconds = 5;
+    printf("[TEST MODE] Configuration overridden: 1 map, 1 rep, 5s timeout\n");
+  }
 
   printf("\n");
   printf("═══════════════════════════════════════════════════════════════\n");
@@ -755,7 +780,7 @@ int main(int argc, char *argv[]) {
   printf("  Logs Directory: %s\n", runner_cfg.logs_dir);
   printf("  Timeout: %ds\n", runner_cfg.timeout_seconds);
   printf("  Max Ticks: %d\n", runner_cfg.max_ticks);
-  if (dry_run) {
+  if (dry_run_mode) {
     printf("[DRY RUN MODE - No execution, just showing what would run]\n");
   }
   if (single_team) {
@@ -765,25 +790,30 @@ int main(int argc, char *argv[]) {
 
   // Listar mapas detectados
   char map_files_buf[100][256];
-  int available_maps = get_official_maps(runner_cfg.maps_dir, map_files_buf, runner_cfg.maps_count);
-  printf("  Mapas detectados en '%s': %d\n", runner_cfg.maps_dir, available_maps);
+  int available_maps = get_official_maps(runner_cfg.maps_dir, map_files_buf,
+                                         runner_cfg.maps_count);
+  printf("  Mapas detectados en '%s': %d\n", runner_cfg.maps_dir,
+         available_maps);
   for (int i = 0; i < available_maps; i++) {
     printf("    [%d] %s\n", i, map_files_buf[i]);
   }
   printf("  Repeticiones por mapa: %d\n", runner_cfg.reps_per_map);
-  printf("  Total de ejecuciones por equipo: %d\n", (available_maps > 0 ? available_maps : runner_cfg.maps_count) * runner_cfg.reps_per_map);
+  printf("  Total de ejecuciones por equipo: %d\n",
+         (available_maps > 0 ? available_maps : runner_cfg.maps_count) *
+             runner_cfg.reps_per_map);
   printf("\n");
 
   // Check if simula.o exists, if not build it
   if (access("lib/simula.o", F_OK) != 0) {
     printf("⚙️  Building competition library...\n");
-    int result = system("cd .. && make lib-competition > /dev/null 2>&1");
+    int result = safe_system("cd .. && make lib-competition > /dev/null 2>&1");
     if (result != 0) {
-      fprintf(stderr, "❌ Failed to build competition library\n");
-      fprintf(
-          stderr,
-          "   Please run 'make lib-competition' manually from project root\n");
-      return 1;
+      if (!dry_run_mode) { // Only fail if not in dry-run
+        fprintf(stderr, "❌ Failed to build competition library\n");
+        fprintf(stderr, "   Please run 'make lib-competition' manually from "
+                        "project root\n");
+        return 1;
+      }
     }
     printf("✓ Competition library built\n\n");
   } else {
@@ -799,62 +829,79 @@ int main(int argc, char *argv[]) {
   // Open teams directory
   DIR *d = opendir(teams_dir);
   if (!d) {
-    fprintf(stderr, "Error: Cannot open teams directory: %s\n", teams_dir);
+    if (dry_run_mode) {
+      printf("[DRY-RUN] Would open teams directory: %s\n", teams_dir);
+      return 0;
+    }
+    fprintf(stderr, "Error opening teams directory '%s'\n", teams_dir);
     return 1;
   }
 
-  // Process each team
-  struct dirent *dir;
+  // First pass: Discover valid teams
+  struct dirent *entry;
+  char *teams[MAX_TEAMS];
   int team_count = 0;
-  int successful_teams = 0;
 
-  printf("Discovering teams...\n");
-  while ((dir = readdir(d)) != NULL) {
-    if (!is_team_dir(teams_dir, dir))
-      continue;
-
-    // Filter by single team if specified
-    if (single_team && strcmp(dir->d_name, single_team) != 0)
-      continue;
-
-    team_count++;
-    printf("\n[Team %d: %s]\n", team_count, dir->d_name);
-
-    if (dry_run) {
-      printf("  [DRY RUN] Would compile and execute %d rounds\n",
-             runner_cfg.maps_count * runner_cfg.reps_per_map);
+  printf("Scanning for teams in '%s'...\n", teams_dir);
+  while ((entry = readdir(d)) != NULL) {
+    // If single_team is specified, skip others
+    if (single_team && strcmp(entry->d_name, single_team) != 0) {
       continue;
     }
 
-    // Initialize team config
-    init_team_config(teams_dir, dir->d_name);
-
-    // Compile team code
-    if (compile_team(teams_dir, dir->d_name) != 0) {
-      printf("  Skipping due to compilation errors\n");
-      continue;
-    }
-
-    // Execute all rounds
-    int runs = execute_team_rounds(teams_dir, dir->d_name);
-
-    // Validate logs were created
-    validate_team_logs(dir->d_name,
-                       runner_cfg.maps_count * runner_cfg.reps_per_map);
-
-    if (runs > 0) {
-      successful_teams++;
-      // Consolidate team stats to central file
-      consolidate_team_stats(teams_dir, dir->d_name, stats_file);
-    } else {
-      printf("  [!] Warning: Team had 0 successful runs\n");
+    if (is_team_dir(teams_dir, entry)) {
+      teams[team_count] = strdup(entry->d_name);
+      team_count++;
+      printf("  Found team: %s\n", entry->d_name);
     }
   }
-
   closedir(d);
 
+  if (team_count == 0) {
+    printf("No teams found!\n");
+    if (single_team) {
+      printf("(Check if team folder '%s' exists and has main.c)\n",
+             single_team);
+    }
+    return 0;
+  }
+
+  printf("Found %d teams. Starting competition.\n\n", team_count);
+
+  // Execution Phase
+  int successful_teams = 0;
+  for (int i = 0; i < team_count; i++) {
+    printf("▶ Processing Team %d/%d: %s\n", i + 1, team_count, teams[i]);
+
+    // Initialize config
+    init_team_config(teams_dir, teams[i]);
+
+    // Compile
+    if (compile_team(teams_dir, teams[i]) == 0 ||
+        dry_run_mode) { // Allow continue in dry-run
+      // Run rounds
+      int runs = execute_team_rounds(teams_dir, teams[i]);
+
+      // Validate logs were created
+      validate_team_logs(teams[i],
+                         runner_cfg.maps_count * runner_cfg.reps_per_map);
+
+      if (runs > 0) {
+        successful_teams++;
+        // Consolidate stats
+        consolidate_team_stats(teams_dir, teams[i], stats_file);
+      } else {
+        printf("  [!] Warning: Team had 0 successful runs\n");
+      }
+    } else {
+      printf("  Skipping due to compilation errors\n");
+    }
+
+    free(teams[i]);
+  }
+
   printf("\n═══════════════════════════════════════════════════════════════\n");
-  if (dry_run) {
+  if (dry_run_mode) {
     printf("Dry run completed!\n");
     printf("Would process %d team(s)\n", team_count);
   } else {
@@ -865,7 +912,7 @@ int main(int argc, char *argv[]) {
   printf("═══════════════════════════════════════════════════════════════\n");
 
   // Generate and display ranking
-  if (!dry_run && successful_teams > 0) {
+  if (!dry_run_mode && successful_teams > 0) {
     display_ranking(stats_file);
   }
 
