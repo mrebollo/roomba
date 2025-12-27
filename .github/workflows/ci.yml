@@ -43,8 +43,12 @@ jobs:
           EOF
           # Compile & Run (with verbose timeout protection)
           gcc -fsanitize=address -g -O1 -fno-omit-frame-pointer -DCOMPETITION_MODE -I.. test_robot.c lib/simula.o -lm -o test_simula
-          # Use explicit map to avoid random generation hangs
-          timeout 10s ./test_simula ../maps/noobs.pgm
+          
+          # Copy explicit map to avoid random generation overhead/issues
+          cp ../maps/noobs.pgm map.pgm
+          
+          # Run (with generous timeout for ASan overhead)
+          timeout 20s ./test_simula
 
       - name: Validate Samples Compatibility
         run: |
