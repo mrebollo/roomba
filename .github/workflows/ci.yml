@@ -47,11 +47,15 @@ jobs:
       - name: Validate Samples Compatibility
         run: |
           echo "Validating sample compilation..."
-          find samples -name "*.c" -print0 | while IFS= read -r -d '' file; do
-            echo "Compiling $file..."
-            gcc -DCOMPETITION_MODE -I. "$file" competition/lib/simula.o -lm -o /dev/null
-            if [ $? -ne 0 ]; then
-              echo "::error::Failed to compile sample: $file"
+          for sample in samples/*.c; do
+            echo "Checking $sample..."
+            # Compile with Sanitizer flags because lib/simula.o was built with them
+            gcc -fsanitize=address -g -O1 -fno-omit-frame-pointer -Wall -Wextra -DCOMPETITION_MODE -I. "$sample" competition/lib/simula.o -lm -o sample_test
+            if [ $? -eq 0 ]; then
+              echo "  [OK] Compiled"
+              rm sample_test
+            else
+              echo "::error::Failed to compile sample: $sample"
               exit 1
             fi
           done
