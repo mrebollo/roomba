@@ -118,8 +118,13 @@ jobs:
       - name: Test Myscore
         working-directory: tools
         run: |
-          echo "team,map_type,..." > dummy.csv
-          echo "teamT,0,100,50,..." >> dummy.csv
+          # Create valid dummy stats with all required columns
+          echo "team,map_type,cell_total,cell_visited,dirt_total,dirt_cleaned,bat_total,bat_mean,forward,turn,bumps,clean,load" > dummy.csv
+          echo "teamTool,0,100,50,20,10,500.0,10.0,100,50,5,10,0" >> dummy.csv
+          
+          # Debug: show content
+          cat dummy.csv
+          
           ./myscore dummy.csv
 
       - name: Test Validate (Setup)
