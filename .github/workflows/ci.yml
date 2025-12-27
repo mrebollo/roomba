@@ -119,6 +119,7 @@ jobs:
         run: |
           # Validate compiles student code without sanitizers, so it needs a clean simula.o
           # Use 'make lib' to build standard simula.o without cleaning previously built tools
+          rm -f *.o simula.o
           make lib
 
       - name: Test Generate & Viewmap
