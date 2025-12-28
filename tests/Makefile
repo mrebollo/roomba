@@ -1,3 +1,6 @@
+# Carpeta para mapas temporales
+MAPS ?= maps
+
 # Makefile para tests unitarios del simulador Roomba
 
 CC = gcc
@@ -19,15 +22,12 @@ SIM_SRC = \
 UNITY_SRC = unity.c
 UNITY_HDR = unity.h unity_internals.h
 TESTS = test_simula
-
-
 MAPGEN = mapgen
 
 
-# Compila todos los tests y mini_mapgen
-
-
+# Compila y crea carpeta de mapas temporales
 all: $(TESTS) $(MAPGEN)
+	mkdir -p $(MAPS)
 # Compila el generador de mapas
 $(MAPGEN): mapgen.c
 	$(CC) $(CFLAGS) -o $@ $<
@@ -40,5 +40,17 @@ test_simula: test_simula.o $(SIM_SRC) $(UNITY_SRC)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
+
+# Limpieza de binarios y mapas temporales
 clean:
 	rm -f *.o $(TESTS) $(MAPGEN)
+	rm -rf $(MAPS)
+# Ejemplo de uso de la variable de entorno en un test o script:
+#
+#   make MAP_TMP_DIR=maps_tmp
+#   ./mapgen $(MAP_TMP_DIR)/testmap.pgm 8 1 1
+#   ./test_simula
+#
+# O en bash:
+#   export MAP_TMP_DIR=maps_tmp
+#   ./mapgen "$MAP_TMP_DIR/testmap.pgm" 8 1 1

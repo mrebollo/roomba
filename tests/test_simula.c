@@ -17,18 +17,18 @@ void tearDown(void) {}
 
 void test_load_map_base_in_wall_should_fail(void) {
     // Base at corner (0,0), which is a wall
-    int res = system("./mapgen badbase.pgm 50 0 0");
+    int res = system("./mapgen maps/badbase.pgm 50 0 0");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, res, "Map with base in wall generation failed");
-    res = load_map("badbase.pgm");
+    res = load_map("maps/badbase.pgm");
     TEST_ASSERT_NOT_EQUAL_INT_MESSAGE(0, res, "Map loading should fail"); // Should fail
 }
 
 
 void test_load_map_no_base_should_fail(void) {
     // Map without base
-    int res = system("./mapgen nobase.pgm 50");
+    int res = system("./mapgen maps/nobase.pgm 50");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, res, "Map without base generation failed");
-    res = load_map("nobase.pgm");
+    res = load_map("maps/nobase.pgm");
     TEST_ASSERT_NOT_EQUAL_INT_MESSAGE(0, res, "Map loading should fail"); // Should fail
 }
 
@@ -38,11 +38,11 @@ void test_load_map_no_base_should_fail(void) {
 
 void test_awake_on_empty_map(void) {
     // Generate a 50x50 map with base at (2,3)
-    int res = system("./mapgen empty.pgm 50 2 3");
+    int res = system("./mapgen maps/empty.pgm 50 2 3");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, res, "Empty map generation failed");
 
-        // Load the generated map
-    res = load_map("empty.pgm");
+    // Load the generated map
+    res = load_map("maps/empty.pgm");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, res, "Map loading failed");
     // Test rmb_awake
     int x = -1, y = -1;
@@ -55,9 +55,9 @@ void test_awake_on_empty_map(void) {
 
 void test_map_8x8(void) {
     // Generar el mapa 8x8 con base en (1,1)
-    int ret = system("./mapgen map8x8.pgm 8 1 1");
+    int ret = system("./mapgen maps/map8x8.pgm 8 1 1");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, ret, "Map 8x8 generation failed");
-    int res = load_map("map8x8.pgm");
+    int res = load_map("maps/map8x8.pgm");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, res, "Map 8x8 loading failed");
     // Comprobar rmb_awake
     int x = -1, y = -1;
@@ -73,9 +73,9 @@ void test_map_8x8(void) {
 
 
 void test_robot_initial_state(void) {
-    int ret = system("./mapgen map8x8.pgm 8 1 1");
+    int ret = system("./mapgen maps/map8x8.pgm 8 1 1");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, ret, "Map 8x8 generation failed");
-    int res = load_map("map8x8.pgm");
+    int res = load_map("maps/map8x8.pgm");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, res, "Map 8x8 loading failed");
     int x = -1, y = -1;
     int ok = rmb_awake(&x, &y);
@@ -93,9 +93,9 @@ void test_robot_initial_state(void) {
 
 
 void test_robot_at_north_wall(void) {
-    int ret = system("./mapgen north.pgm 8 3 1");
+    int ret = system("./mapgen maps/north.pgm 8 3 1");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, ret, "Map north generation failed");
-    int res = load_map("north.pgm");
+    int res = load_map("maps/north.pgm");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, res, "Map north loading failed");
     int x = -1, y = -1;
     int ok = rmb_awake(&x, &y);
@@ -107,9 +107,9 @@ void test_robot_at_north_wall(void) {
 
 
 void test_robot_at_south_wall(void) {
-    int ret = system("./mapgen south.pgm 8 3 6");
+    int ret = system("./mapgen maps/south.pgm 8 3 6");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, ret, "Map south generation failed");
-    int res = load_map("south.pgm");
+    int res = load_map("maps/south.pgm");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, res, "Map south loading failed");
     int x = -1, y = -1;
     int ok = rmb_awake(&x, &y);
@@ -121,9 +121,9 @@ void test_robot_at_south_wall(void) {
 
 
 void test_robot_at_east_wall(void) {
-    int ret = system("./mapgen east.pgm 8 6 3");
+    int ret = system("./mapgen maps/east.pgm 8 6 3");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, ret, "Map east generation failed");
-    int res = load_map("east.pgm");
+    int res = load_map("maps/east.pgm");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, res, "Map east loading failed");
     int x = -1, y = -1;
     int ok = rmb_awake(&x, &y);
@@ -135,9 +135,9 @@ void test_robot_at_east_wall(void) {
 
 
 void test_robot_at_west_wall(void) {
-    int ret = system("./mapgen west.pgm 8 1 3");
+    int ret = system("./mapgen maps/west.pgm 8 1 3");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, ret, "Map west generation failed");
-    int res = load_map("west.pgm");
+    int res = load_map("maps/west.pgm");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, res, "Map west loading failed");
     int x = -1, y = -1;
     int ok = rmb_awake(&x, &y);
@@ -164,7 +164,7 @@ void setup_robot_at_base(const char *mapfile, int size, int base_x, int base_y, 
 
 void test_robot_moves_north(void) {
     int x, y;
-    setup_robot_at_base("north.pgm", 8, 3, 1, &x, &y); // base en north wall (3,1)
+    setup_robot_at_base("maps/north.pgm", 8, 3, 1, &x, &y); // base en north wall (3,1)
     sensor_t s0 = rmb_state();
     rmb_forward();
     sensor_t s1 = rmb_state();
@@ -175,7 +175,7 @@ void test_robot_moves_north(void) {
 
 void test_robot_moves_south(void) {
     int x, y;
-    setup_robot_at_base("south.pgm", 8, 3, 6, &x, &y); // base en south wall (3,6)
+    setup_robot_at_base("maps/south.pgm", 8, 3, 6, &x, &y); // base en south wall (3,6)
     sensor_t s0 = rmb_state();
     rmb_forward();
     sensor_t s1 = rmb_state();
@@ -185,7 +185,7 @@ void test_robot_moves_south(void) {
 }
 void test_robot_moves_east(void) {
     int x, y;
-    setup_robot_at_base("west.pgm", 8, 1, 3, &x, &y); // base en (1,3)
+    setup_robot_at_base("maps/west.pgm", 8, 1, 3, &x, &y); // base en (1,3)
     sensor_t s0 = rmb_state();
     rmb_forward();
     sensor_t s1 = rmb_state();
@@ -196,7 +196,7 @@ void test_robot_moves_east(void) {
 
 void test_robot_moves_west(void) {
     int x, y;
-    setup_robot_at_base("east.pgm", 8, 6, 3, &x, &y); // base en (6,3)
+    setup_robot_at_base("maps/east.pgm", 8, 6, 3, &x, &y); // base en (6,3)
     sensor_t s0 = rmb_state();
     rmb_forward();
     sensor_t s1 = rmb_state();
@@ -207,7 +207,7 @@ void test_robot_moves_west(void) {
 
 void test_try_walk_on_empty_cell(void){
     int x, y;
-    setup_robot_at_base("map8x8.pgm", 8, 2, 3, &x, &y); // base en (2,3)
+    setup_robot_at_base("maps/map8x8.pgm", 8, 2, 3, &x, &y); // base en (2,3)
     sensor_t s0 = rmb_state();
     rmb_forward();
     sensor_t s1 = rmb_state();
@@ -219,7 +219,7 @@ void test_try_walk_on_empty_cell(void){
 void test_try_walk_against_wall(void){
     int x, y;
     // base at distance 2 to north wall and walk twice
-    setup_robot_at_base("map8x8.pgm", 8, 3, 2, &x, &y); // base en (3,2) -> (3,1) wall
+    setup_robot_at_base("maps/map8x8.pgm", 8, 3, 2, &x, &y); // base en (3,2) -> (3,1) wall
     rmb_forward();
     sensor_t s0 = rmb_state();
     rmb_forward(); // Second move should hit the wall
@@ -233,22 +233,22 @@ void test_try_walk_against_wall(void){
 
 void test_infrared_on_base(void) {
     int x, y;
-    setup_robot_at_base("map8x8.pgm", 8, 3, 2, &x, &y); // base en (2,3
+    setup_robot_at_base("maps/map8x8.pgm", 8, 3, 2, &x, &y); // base en (2,3
     sensor_t s = rmb_state();
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, s.infrared, "Infrared should read 0 on base");
 }
 
 void test_infrared_on_clean_cell(void) {
     int x, y;
-    setup_robot_at_base("map8x8.pgm", 8, 3, 2, &x, &y); // base en (2,3) clean cell
+    setup_robot_at_base("maps/map8x8.pgm", 8, 3, 2, &x, &y); // base en (2,3) clean cell
     rmb_forward(); // Move to (3,1) clean cell
     sensor_t s = rmb_state();
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, s.infrared, "Infrared should read 0 on clean cell");
 }
 
 void test_infrared_on_dirty_cell(void) {
-    system("./mapgen map8x8d.pgm 8 3 2 3 1"); // base at (2,3), dirt at (1,3)
-    load_map("map8x8d.pgm");
+    system("./mapgen maps/map8x8d.pgm 8 3 2 3 1"); // base at (2,3), dirt at (1,3)
+    load_map("maps/map8x8d.pgm");
     int x = -1, y = -1;
     rmb_awake(&x, &y);
     rmb_forward(); 
@@ -258,7 +258,7 @@ void test_infrared_on_dirty_cell(void) {
 
 void test_try_clean_on_clean_cell(void){
     int x, y;
-    setup_robot_at_base("map8x8.pgm", 8, 3, 2, &x, &y); // base en (2,3) clean cell
+    setup_robot_at_base("maps/map8x8.pgm", 8, 3, 2, &x, &y); // base en (2,3) clean cell
     rmb_forward(); // Move to (3,1) clean cell
     sensor_t s0 = rmb_state();
     rmb_clean();
@@ -269,8 +269,8 @@ void test_try_clean_on_clean_cell(void){
 }
 
 void test_try_clean_on_dirty_cell(void){
-    system("./mapgen map8x8d.pgm 8 3 2 3 1"); // base at (2,3), dirt at (1,3)
-    load_map("map8x8d.pgm");
+    system("./mapgen maps/map8x8d.pgm 8 3 2 3 1"); // base at (2,3), dirt at (1,3)
+    load_map("maps/map8x8d.pgm");
     int x = -1, y = -1;
     rmb_awake(&x, &y);
     rmb_forward(); // Move to dirty cell (3,1)
@@ -283,7 +283,7 @@ void test_try_clean_on_dirty_cell(void){
 
 void test_try_clean_on_base(void) {
     int x, y;
-    setup_robot_at_base("map8x8.pgm", 8, 3, 2, &x, &y); // base en (2,3) clean cell
+    setup_robot_at_base("maps/map8x8.pgm", 8, 3, 2, &x, &y); // base en (2,3) clean cell
     rmb_clean();
     sensor_t s = rmb_state();
     // Infrared should remain 0 and battery should not decreas
@@ -292,7 +292,7 @@ void test_try_clean_on_base(void) {
 
 void test_robot_at_base(void) {
     int x, y;
-    setup_robot_at_base("map8x8.pgm", 8, 3, 2, &x, &y); // base en (2,3)
+    setup_robot_at_base("maps/map8x8.pgm", 8, 3, 2, &x, &y); // base en (2,3)
     TEST_ASSERT_EQUAL_INT_MESSAGE(1, rmb_at_base(), "Robot should wake up at base");
     rmb_forward();
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, rmb_at_base(), "Robot should not be at base");
@@ -303,7 +303,7 @@ void test_robot_at_base(void) {
 
 void test_load_out_of_base_should_fail(void) {
     int x, y;
-    setup_robot_at_base("map8x8.pgm", 8, 3, 2, &x, &y); // base en (2,3)
+    setup_robot_at_base("maps/map8x8.pgm", 8, 3, 2, &x, &y); // base en (2,3)
     rmb_forward();
     int loaded = rmb_load();
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, loaded, "Load should fail when not at base");
@@ -311,7 +311,7 @@ void test_load_out_of_base_should_fail(void) {
 
 void test_load_at_base(void) {
     int x, y;
-    setup_robot_at_base("map8x8.pgm", 8, 3, 2, &x, &y); // base en (2,3)
+    setup_robot_at_base("maps/map8x8.pgm", 8, 3, 2, &x, &y); // base en (2,3)
     sensor_t s0 = rmb_state();
     for(int i = 0; i < 10   ; i++) 
         rmb_turn(M_PI); // drain battery spinning
@@ -328,37 +328,73 @@ void test_load_at_base(void) {
 // Tests de giros básicos y libres
 void test_turn_updates_heading_correctly(void);
 
-
+#define rad2grad(r) ((r) * 180.0f / M_PI)
+#define EPSILON 1e-5
 // Test parametrizable de giro y avance
-void test_turn_and_move(float angle, int expected_dx, int expected_dy) {
+void test_turn_and_move(float angle, int expected_dx, int expected_dy, int steps) {
     int x, y;
-    setup_robot_at_base("map8x8.pgm", 8, 4, 4, &x, &y); // centro del mapa
-    rmb_turn(angle);
-    rmb_forward();
+    setup_robot_at_base("maps/map8x8.pgm", 8, 4, 4, &x, &y); // centro del mapa
+    // turn south to east (0 rad)
+    rmb_turn(M_PI/2);
     sensor_t s = rmb_state();
-    TEST_ASSERT_EQUAL_INT(x + expected_dx, s.x);
-    TEST_ASSERT_EQUAL_INT(y + expected_dy, s.y);
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(EPSILON, 0.0f, s.heading, "Heading should be 0 ar beginning");
+    // Apply turn and move
+    rmb_turn(angle);
+    s = rmb_state();
+    for(int i=0; i<steps; ++i) {
+        rmb_forward();
+        s = rmb_state();
+    }
+    s = rmb_state();
+    char msg[128];
+    snprintf(msg, sizeof(msg), "[%.2f] incorrect expected position (%d,%d)", rad2grad(angle), s.x, s.y);
+    TEST_ASSERT_TRUE_MESSAGE((x+expected_dx == s.x) && (y+expected_dy == s.y), msg);
 }
 
-void test_turn_and_move_cases(void) {
+
+void test_turn_and_move_neighbors(void) {
     // Ángulos y desplazamientos esperados (dx, dy)
+    // recordatorio: N: (0,1), S: (0,-1), E: (1,0), W:(-1,0)
     struct { float angle; int dx; int dy; } cases[] = {
         {0.0f, 1, 0}, // Este
-        {M_PI/4, 1, 1}, // Sureste
-        {M_PI/2, 0, 1}, // Sur
-        {3*M_PI/4, -1, 1}, // Suroeste
+        {M_PI/2, 0, 1}, // Norte
         {M_PI, -1, 0}, // Oeste
-        {5*M_PI/4, -1, -1}, // Noroeste
-        {3*M_PI/2, 0, -1}, // Norte
-        {7*M_PI/4, 1, -1}, // Noreste
-        {M_PI/6, 1, 0}, // ~30° (redondeo)
-        {M_PI/3, 1, 1}, // ~60°
-        {2*M_PI/3, 0, 1}, // ~120°
-        {5*M_PI/6, -1, 1}, // ~150°
+        {3*M_PI/2, 0, -1} // Sur
     };
     int n = sizeof(cases)/sizeof(cases[0]);
     for(int i=0; i<n; ++i) {
-        test_turn_and_move(cases[i].angle, cases[i].dx, cases[i].dy);
+        test_turn_and_move(cases[i].angle, cases[i].dx, cases[i].dy, 1);
+    }
+}
+
+void test_turn_and_move_diags(void) {
+    // Ángulos y desplazamientos esperados (dx, dy)
+    // recordatorio: N: (0,1), S: (0,-1), E: (1,0), W:(-1,0)
+    struct { float angle; int dx; int dy; } cases[] = {
+        {M_PI/4, 1, 1}, // Noreste (45)
+        {3*M_PI/4, -1, 1}, // Noroeste (135)
+        {5*M_PI/4, -1, -1}, // Suroeste (225)
+        {7*M_PI/4, 1, -1} // Sureste (315)
+    };
+    int n = sizeof(cases)/sizeof(cases[0]);
+    for(int i=0; i<n; ++i) {
+        // Diagonales requieren 2 pasos
+        test_turn_and_move(cases[i].angle, cases[i].dx, cases[i].dy,1);
+    }
+}
+
+void test_turn_and_move_free_angles (void) {
+       // Ángulos y desplazamientos esperados (dx, dy)
+    // recordatorio: N: (0,1), S: (0,-1), E: (1,0), W:(-1,0)
+    struct { float angle; int dx; int dy; } cases[] = {
+        {M_PI/6, 1, 1}, // ~30° (redondeo)
+        {M_PI/3, 1, 1}, // ~60°
+        {2*M_PI/3, 0, 1}, // ~120°
+        {5*M_PI/6, -1, 1} // ~150°
+    };
+    int n = sizeof(cases)/sizeof(cases[0]);
+    for(int i=0; i<n; ++i) {
+        test_turn_and_move(cases[i].angle, cases[i].dx, cases[i].dy, 1);
     }
 }
 
@@ -372,6 +408,8 @@ void test_turn_and_move_cases(void) {
 
 int main(void) {
     UNITY_BEGIN();
+
+    // Maps and initial state
     RUN_TEST(test_load_map_base_in_wall_should_fail);
     RUN_TEST(test_load_map_no_base_should_fail);
     
@@ -406,7 +444,10 @@ int main(void) {
     RUN_TEST(test_load_at_base);
 
     // Turn and move tests
-    RUN_TEST(test_turn_and_move_cases);
+    RUN_TEST(test_turn_and_move_neighbors);
+    RUN_TEST(test_turn_and_move_diags);
+    RUN_TEST(test_turn_and_move_free_angles);
+
     return UNITY_END();
 }
 

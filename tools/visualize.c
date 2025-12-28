@@ -29,9 +29,9 @@ int main(int argc, char *argv[]) {
         mapfile = argv[2];
     }
     // Cargar el mapa antes de visualizar
-    extern int sim_world_load(map_t *m, char *filename);
+    extern int sim_world_load(map_t *m, const char *filename);
     extern float sim_world_put_base(map_t *m, int x, int y);
-    if (sim_world_load(&map, (char *)mapfile) != 0) {
+    if (sim_world_load(&map, mapfile) != 0) {
         fprintf(stderr, "No se pudo abrir o procesar el mapa: %s\n", mapfile);
         return 2;
     }

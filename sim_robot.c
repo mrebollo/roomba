@@ -64,11 +64,15 @@ static void update_ifr_at_cell(){
  * @param dx Puntero para almacenar desplazamiento x continuo
  * @param dy Puntero para almacenar desplazamiento y continuo
  */
+static inline int roundi(float x) {
+    return (int)(x >= 0.0f ? x + 0.5f : x - 0.5f);
+}
+
 static void step_vectors(float heading, int *rx, int *ry, float *dx, float *dy){
   *dy = rounda(sin(heading));
   *dx = rounda(cos(heading));
-  *rx = (int)(r.precise_x + *dx);
-  *ry = (int)(r.precise_y + *dy);
+  *rx = roundi(r.precise_x + *dx);
+  *ry = roundi(r.precise_y + *dy);
 }
 
 /**
