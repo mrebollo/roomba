@@ -253,7 +253,7 @@ void run() {
  * Wrapper de la API pública que carga un mapa y reconstruye
  * las estadísticas basándose en su contenido.
  */
-int load_map(char *filename) {
+int load_map(const char *filename) {
   int rc = sim_world_load(&map, filename);
   if (rc == 0)
     stats_rebuild_from_map(&map);

@@ -18,16 +18,27 @@
  * ============================================================================ */
 
 
+
 #ifndef COMPETITION_MODE
 #define COMPETITION_MODE 0
 #endif
 #ifndef COMPETITION_EXEC_TIME
 #define COMPETITION_EXEC_TIME 2000 // Valor por defecto para la competición
 #endif
+
 #if COMPETITION_MODE
-#define DEBUG_PRINT(...)
-#else
+  #undef SIM_DEBUG
+  #define SIM_DEBUG 0
+#endif
+
+#ifndef SIM_DEBUG
+#define SIM_DEBUG 0
+#endif
+
+#if SIM_DEBUG
 #define DEBUG_PRINT(...) printf(__VA_ARGS__)
+#else
+#define DEBUG_PRINT(...)
 #endif
 
 /* ============================================================================
@@ -242,7 +253,7 @@ int sim_world_generate(map_t* m, int nrow, int ncol, int num_dirty, float nobs);
  * @param filename Ruta del archivo
  * @return 0 si OK, -1 si error
  */
-int sim_world_load(map_t* m, char *filename);
+int sim_world_load(map_t* m, const char *filename);
 
 /**
  * @brief Guarda el mapa actual en formato PGM
@@ -360,7 +371,7 @@ extern struct _stat stats;
  * @param filename Path to PGM map file
  * @return 0 if OK, -1 if error
  */
-int load_map(char* filename);
+int load_map(const char* filename);
 
 #ifdef __cplusplus
 }

@@ -35,14 +35,14 @@ static void place_base_randomly(map_t* m);
  */
 static float base_heading(const map_t* m, int x, int y){
   // En sistema de coordenadas donde y crece hacia abajo:
-  // - y=1 (arriba) debe apuntar hacia abajo (3π/2 = 270°)
-  // - y=nrow-2 (abajo) debe apuntar hacia arriba (π/2 = 90°)
+  // - y=1 (arriba) debe apuntar hacia abajo (π/2 = 90°)
+  // - y=nrow-2 (abajo) debe apuntar hacia arriba (3π/2 = 270°)
   // - x=1 (izquierda) debe apuntar hacia derecha (0 = 0°)
   // - x=ncol-2 (derecha) debe apuntar hacia izquierda (π = 180°)
   if(x == 1) return 0;              // Pared Oeste → apunta al Este
   else if(x == m->ncol-2) return M_PI;   // Pared Este → apunta al Oeste
-  else if(y == 1) return 3 * M_PI / 2;   // Pared Norte → apunta al Sur
-  else return M_PI / 2;                   // Pared Sur → apunta al Norte
+  else if(y == 1) return M_PI / 2;       // Pared Norte → apunta al Sur (y creciente)
+  else return 3 * M_PI / 2;              // Pared Sur → apunta al Norte (y decreciente)
 }
 
 /* ============================================================================
@@ -444,13 +444,31 @@ static int parse_map_cells(FILE *fd, map_t *m){
 /**
  * @brief Carga un mapa desde un archivo PGM
  * @param m Puntero al mapa
+ * @return 1 si OK, 0 si error
+ * 
+ * Verifica si el mapa m tiene una base válida
+ */
+static int sim_world_is_valid(map_t* m){
+  // Comprobar que la base no está sobre un muro
+  if(m->base_x <= 0 || m->base_x >= m->ncol-1 ||
+     m->base_y <= 0 || m->base_y >= m->nrow-1)
+    return 0;
+  // Base no definida x = y = -1 (sirve la misma comprobación)
+  // TODO: Comprobar que la base sea única
+  return 1;
+}
+
+
+/**
+ * @brief Carga un mapa desde un archivo PGM
+ * @param m Puntero al mapa
  * @param filename Ruta del archivo PGM
  * @return 0 si OK, -1 si error
  * 
  * Lee un archivo en formato PGM (P2) con el mapa de obstáculos,
  * suciedad y base. Actualiza la estructura del mapa con los datos.
  */
-int sim_world_load(map_t* m, char *filename){
+int sim_world_load(map_t* m, const char *filename){
   int nrow, ncol;
   
   DEBUG_PRINT("Loading map %s\n", filename);
@@ -475,5 +493,5 @@ int sim_world_load(map_t* m, char *filename){
     snprintf(m->name, sizeof(m->name), "%s", filename);
   else
     m->name[0] = '\0';
-  return 0;
+  return sim_world_is_valid(m) ? 0 : -1;
 }

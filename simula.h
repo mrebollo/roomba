@@ -43,7 +43,7 @@ void configure(void (*start)(), void (*beh)(), void (*stop)(), int exec_time);
  * @param filename Ruta del archivo PGM con el mapa
  * @return 0 si se cargó correctamente, -1 en caso de error
  */
-int load_map(char *filename);
+int load_map(const char *filename);
 
 /**
  * @brief Visualiza la simulación

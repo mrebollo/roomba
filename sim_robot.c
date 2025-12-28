@@ -79,8 +79,8 @@ static void step_vectors(float heading, int *rx, int *ry, float *dx, float *dy){
 static void handle_collision(){
   rob->bumper = 1;
   stats_bump();
-  tick(-1);
   apply_battery(COST_BUMP);
+  tick(-1);
 }
 
 /**
@@ -137,7 +137,7 @@ int rmb_awake(int *x, int *y){
       sim_world_set_base_origin(&map, x, y, &rob->heading);
     }
   } else {
-    DEBUG_PRINT("No map loaded\n");
+    DEBUG_PRINT("Random map generated\n");
     sim_world_set_base_origin(&map, x, y, &rob->heading);
     sim_world_save(&map);
   }
@@ -194,10 +194,10 @@ void rmb_forward(){
   // Update stats
   stats_move(FWD);
   stats_visit_cell();
-  tick(rob->infrared);
   // Apply battery cost (diagonal moves cost more)
   float cost = is_diagonal_move(dy, dx) ? COST_MOVE_DIAG : COST_MOVE;
   apply_battery(cost);
+  tick(rob->infrared);
 }
 
 /**

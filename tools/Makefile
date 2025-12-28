@@ -11,6 +11,7 @@ LDFLAGS = -lm
 SIM_WORLD = ../sim_world.c ../sim_world_api.c
 
 
+
 # Executables: one per .c file
 
 GENERATE = generate
@@ -18,12 +19,20 @@ VIEWMAP = viewmap
 VALIDATE = validate
 MYSCORE = myscore
 VISUALIZE = visualize
-
-
+MINIMAPGEN = mini_mapgen
 
 .PHONY: all clean help visualize
 
-all: $(GENERATE) $(VIEWMAP) $(VALIDATE) $(MYSCORE) $(VISUALIZE)
+all: $(GENERATE) $(VIEWMAP) $(VALIDATE) $(MYSCORE) $(VISUALIZE) $(MINIMAPGEN)
+	# Custom scoring system
+	$(MYSCORE): myscore.c libscore.c
+		$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+		@echo "Custom score system compiled: $(MYSCORE)"
+
+	# Mini map generator for tests
+	$(MINIMAPGEN): mini_mapgen.c
+		$(CC) $(CFLAGS) -o $@ $<
+		@echo "Mini map generator compiled: $(MINIMAPGEN)"
 	@echo ""
 	@echo "=== Tools compiled successfully ==="
 	@echo ""
