@@ -46,6 +46,9 @@ static void tick(int action){
  */
 static void apply_battery(float amount){
   rob->battery -= amount;
+  // Guarantees battery does not go below zero
+  if(rob->battery < 0.0f)
+    rob->battery = 0.0f;
   stats_battery_consume(amount);
 }
 
@@ -115,6 +118,13 @@ static void update_position(float dx, float dy, int rx, int ry){
  * API PÚBLICA DEL ROBOT
  * ============================================================================ */
 
+// TODO (#2): Unificar el valor de retorno en todas las funciones del API (rmb_forward, rmb_turn, rmb_clean, etc.) para indicar éxito o fallo, igual que rmb_load.
+
+/**
+ * @brief Variable de estado para controlar la inicialización del robot
+ */
+static int robot_awake = 0;
+
 /**
  * @brief Despierta al robot y lo coloca en la base
  * @param x Puntero donde devolver la coordenada x inicial
@@ -129,7 +139,13 @@ int rmb_awake(int *x, int *y){
     fprintf(stderr, "Error: Invalid parameters for rmb_awake\n");
     return 0;
   }
-  
+  // Avoid multiple awakenings
+  if(robot_awake) {
+    fprintf(stderr, "Warning: rmb_awake() called more than once. Ignorando llamada.\n");
+    return 0;
+  }
+  robot_awake = 1;
+
   DEBUG_PRINT("Awaking...\n");
   DEBUG_PRINT("Map: %s\n", map.name);
   if(map.name[0] != '\0'){
@@ -145,7 +161,7 @@ int rmb_awake(int *x, int *y){
     sim_world_set_base_origin(&map, x, y, &rob->heading);
     sim_world_save(&map);
   }
-  
+
   // Initialize robot position and battery
   r.precise_x = *x;
   r.precise_y = *y;
@@ -158,6 +174,13 @@ int rmb_awake(int *x, int *y){
 }
 
 /**
+ * @brief Resetea el estado de inicialización del robot (solo para tests)
+ */
+void rmb_reset_awake(void){
+  robot_awake = 0;
+}
+
+/**
  * @brief Gira el robot
  * @param alpha Ángulo de giro en radianes (positivo = antihorario)
  * 
@@ -165,6 +188,8 @@ int rmb_awake(int *x, int *y){
  * Consume batería y desactiva el bumper.
  */
 void rmb_turn(float alpha){
+  if (rob->battery <= 0.0f)
+    return;
   rob->heading += alpha;
   if(rob->heading < 0)
     rob->heading += 2 * M_PI;
@@ -183,6 +208,8 @@ void rmb_turn(float alpha){
  * diagonales consumen más batería que los ortogonales.
  */
 void rmb_forward(){
+  if (rob->battery <= 0.0f)
+    return;
   float dy, dx;
   int rx, ry;
   step_vectors(rob->heading, &rx, &ry, &dx, &dy);
@@ -211,6 +238,8 @@ void rmb_forward(){
  * el sensor infrarrojo. Consume batería solo si había suciedad.
  */
 void rmb_clean(){
+  if (rob->battery <= 0.0f)
+    return;
   int dirt = sim_world_cell_dirt(&map, rob->y, rob->x);
   if(dirt > 0){
     int before = dirt;

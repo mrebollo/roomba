@@ -21,7 +21,7 @@ SIM_SRC = \
 # Archivos de test y Unity
 UNITY_SRC = unity.c
 UNITY_HDR = unity.h unity_internals.h
-TESTS = test_simula
+TESTS = test_api
 MAPGEN = mapgen
 
 
@@ -33,7 +33,7 @@ $(MAPGEN): mapgen.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 # Ejemplo de test unitario
-test_simula: test_simula.o $(SIM_SRC) $(UNITY_SRC)
+test_api: test_api.o $(SIM_SRC) $(UNITY_SRC)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: %.c
@@ -45,12 +45,3 @@ test_simula: test_simula.o $(SIM_SRC) $(UNITY_SRC)
 clean:
 	rm -f *.o $(TESTS) $(MAPGEN)
 	rm -rf $(MAPS)
-# Ejemplo de uso de la variable de entorno en un test o script:
-#
-#   make MAP_TMP_DIR=maps_tmp
-#   ./mapgen $(MAP_TMP_DIR)/testmap.pgm 8 1 1
-#   ./test_simula
-#
-# O en bash:
-#   export MAP_TMP_DIR=maps_tmp
-#   ./mapgen "$MAP_TMP_DIR/testmap.pgm" 8 1 1

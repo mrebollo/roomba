@@ -1,3 +1,4 @@
+
 #pragma once
 
 /**
@@ -158,6 +159,11 @@ extern int sim_should_stop;
  * @param action Tipo de acción realizada (enum movement)
  */
 void sim_log_tick(int action);
+
+/**
+ * @brief Resetea el estado de inicialización del robot (solo para tests)
+ */
+void rmb_reset_awake(void);
 
 /* ============================================================================
  * MÓDULO: ESTADÍSTICAS (sim_stats.c)
