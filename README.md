@@ -190,7 +190,9 @@ roomba/
 │   ├── viewmap             # Map visualizer
 │   ├── validate.c          # Code validator
 │   ├── myscore.c           # Self-assessment tool
+│   ├── myscore.c           # Self-assessment tool
 │   └── Makefile            # Tools build system
+├── tests/                  # Unit tests (Unity framework)
 ├── maps/                   # Map storage
 │   └── *.pgm               # Test maps
 └── docs/                   # Documentation

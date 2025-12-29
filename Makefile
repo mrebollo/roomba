@@ -71,6 +71,10 @@ lib-competition:
 tools:
 	@$(MAKE) -C tools
 
+# Unit tests
+tests:
+	@$(MAKE) -C tests
+
 # Clean generated files
 clean:
 	rm -f $(TARGET) $(TARGET)_comp
@@ -78,6 +82,7 @@ clean:
 	rm -f log.csv stats.csv map.pgm
 	@$(MAKE) -C tools clean
 	@$(MAKE) -C competition clean
+	@$(MAKE) -C tests clean
 	@echo "Cleaned build artifacts"
 
 # Clean everything including generated maps
@@ -147,6 +152,7 @@ help:
 	@echo "  make single  - Build standalone competition version (no GUI, fast)"
 	@echo "  make arena   - Build organizer tools (runner, score, etc.)"
 	@echo "  make tools   - Build utilities (generate, viewmap, validate)"
+	@echo "  make tests   - Run unit tests"
 	@echo "  make clean   - Remove all generated files (binaries, logs, docs)"
 	@echo "  make clean-all - Remove EVERYTHING (including generated maps)"
 	@echo ""

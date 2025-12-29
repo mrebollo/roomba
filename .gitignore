@@ -114,4 +114,6 @@ tools/myscore
 tools/validate
 tools/viewmap
 tools/visualize
+tests/mapgen
+tests/test_api
 #dist/
