@@ -22,11 +22,7 @@ VISUALIZE = visualize
 
 .PHONY: all clean help visualize
 
-all: $(GENERATE) $(VIEWMAP) $(VALIDATE) $(MYSCORE) $(VISUALIZE) $(MINIMAPGEN)
-	# Custom scoring system
-	$(MYSCORE): myscore.c libscore.c
-		$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-		@echo "Custom score system compiled: $(MYSCORE)"
+all: $(GENERATE) $(VIEWMAP) $(VALIDATE) $(MYSCORE) $(VISUALIZE)
 
 	@echo ""
 	@echo "=== Tools compiled successfully ==="
