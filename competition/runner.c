@@ -261,7 +261,10 @@ int compile_team(const char *teams_dir, const char *team_name) {
   char main_file[256] = "main.c";
 
   // Get absolute path to competition directory
-  getcwd(comp_path, sizeof(comp_path));
+  if (getcwd(comp_path, sizeof(comp_path)) == NULL) {
+    perror("getcwd");
+    exit(1);
+  }
 
   // Check if main.c exists, otherwise look for any .c file
   char test_path[512];
@@ -407,8 +410,9 @@ int get_official_maps(const char *maps_dir, char map_files[][256],
  */
 int execute_team_rounds(const char *teams_dir, const char *team_name) {
   char cmd[1024];
-  char log_stdout[256];
-  char log_stderr[256];
+  // Buffers increased to 512 to prevent truncation warnings
+  char log_stdout[512];
+  char log_stderr[512];
   char team_stats[512];
 
 // Allocate map files dynamically or use a max constant
@@ -468,6 +472,8 @@ int execute_team_rounds(const char *teams_dir, const char *team_name) {
     }
 
     // Create log file paths
+    char log_stdout[512];
+    char log_stderr[512];
     snprintf(log_stdout, sizeof(log_stdout), "%s/%s_map%d_run%d.stdout",
              runner_cfg.logs_dir, team_name, map_idx, rep);
     snprintf(log_stderr, sizeof(log_stderr), "%s/%s_map%d_run%d.stderr",
@@ -621,7 +627,10 @@ void calculate_rankings(const char *stats_file, team_result_t results[],
   }
 
   char line[512];
-  fgets(line, sizeof(line), fd); // Skip header
+  if (fgets(line, sizeof(line), fd) == NULL) {
+    // Handle empty file or error if necessary, though unlikely for a valid
+    // stats file
+  } // Skip header
 
   *team_count = 0;
 

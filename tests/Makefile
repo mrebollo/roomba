@@ -4,7 +4,7 @@ MAPS ?= maps
 # Makefile para tests unitarios del simulador Roomba
 
 CC = gcc
-CFLAGS = -Wall -Wextra -I../ -I../tools -g
+CFLAGS = -Wall -Wextra -Wno-unused-result -I../ -I../tools -g
 LDFLAGS = -lm
 
 # Archivos fuente del simulador necesarios para los tests

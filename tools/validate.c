@@ -417,7 +417,7 @@ int run_execution_tests(const char *team_dir, const char *maps_dir, int timeout,
     else
       map_name = maps[i];
 
-    char msg[256];
+    char msg[1024]; // Increased buffer size
     snprintf(msg, sizeof(msg), "  Testing with %s...", map_name);
     log_info(msg);
 

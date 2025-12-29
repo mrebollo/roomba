@@ -18,6 +18,10 @@ $(RUNNER): runner.c competition_ext.c simula_comp.c
 	$(CC) runner.c $(CFLAGS) -o $(RUNNER)
 	@echo "[OK] Competition runner compiled successfully"
 
+# Debug build for Runner with AddressSanitizer
+debug-asan: CFLAGS += -fsanitize=address -g -O1 -fno-omit-frame-pointer
+debug-asan: clean $(RUNNER)
+
 # Build scoring calculator (organizer tool)
 score: score.c ../tools/libscore.o
 	$(CC) score.c ../tools/libscore.o $(CFLAGS) -o score
