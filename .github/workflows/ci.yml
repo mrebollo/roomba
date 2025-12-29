@@ -157,3 +157,23 @@ jobs:
         run: |
           # Validate expects maps directory
           ./validate ../competition/teams/ci_test --maps maps --timeout 5
+
+  # ------------------------------------------------------------------
+  # JOB 4: Unit Tests
+  # ------------------------------------------------------------------
+  unit-tests:
+    name: 🧪 Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential
+
+      - name: Build & Run Tests
+        working-directory: tests
+        run: |
+          # Compilamos con Flags de Sanitizer para detectar errores de memoria
+          make CFLAGS="-fsanitize=address -g -O1 -fno-omit-frame-pointer -Wall -Wextra -I../ -I../tools"
+          
+          # Ejecutamos los tests
+          ./test_api
