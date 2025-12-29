@@ -2,9 +2,9 @@ name: Roomba Competition CI
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
 
 jobs:
   # ------------------------------------------------------------------
@@ -19,7 +19,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y build-essential
 
       - name: Build Library (Sanitizer)
-        run: make -C . lib-competition CFLAGS="-fsanitize=address -g -O1 -fno-omit-frame-pointer"
+        run: make -C . lib-competition CFLAGS="-fsanitize=address -g -O1 -fno-omit-frame-pointer -Wall -Wextra -Wno-unused-result -lm"
 
       - name: Smoke Test - Physics Engine
         working-directory: competition
@@ -37,10 +37,10 @@ jobs:
              return 0;
           }
           EOF
-          
+
           # Compile & Run (with timeout protection)
           gcc -fsanitize=address -g -O1 -fno-omit-frame-pointer -DCOMPETITION_MODE -I.. test_robot.c lib/simula.o -lm -o test_simula
-          
+
           # Use default random map
           timeout 20s ./test_simula
 
@@ -76,15 +76,15 @@ jobs:
         run: |
           # Build Runner Sanitized
           make debug-asan || gcc runner.c -fsanitize=address -g -O1 -fno-omit-frame-pointer -Wall -Wextra -lm -I../tools -o runner
-          
+
           # Setup dummy team
           mkdir -p teams/ci_test
           cp ../templates/main.c teams/ci_test/main.c
           echo "0 0" > teams/ci_test/config.txt
-          
+
           # Run Fast Test
           ./runner --team=ci_test --test
-          
+
           # Verify
           if [ ! -f ranking.txt ]; then
             echo "Error: runner ranking.txt not generated"
@@ -97,9 +97,9 @@ jobs:
           make score-asan
           echo "team,map_type,cell_total,cell_visited,dirt_total,dirt_cleaned,bat_total,bat_mean,forward,turn,bumps,clean,load" > ci_stats.dat
           echo "teamCI,0,100,50,20,10,500.0,10.0,100,50,5,10,0" >> ci_stats.dat
-          
+
           ./score --stats ci_stats.dat
-          
+
           if [ ! -f results/ranking.txt ]; then
             echo "Error: Scoring system failed"
             exit 1
@@ -139,10 +139,10 @@ jobs:
           # Create valid dummy stats with all required columns
           echo "team,map_type,cell_total,cell_visited,dirt_total,dirt_cleaned,bat_total,bat_mean,forward,turn,bumps,clean,load" > dummy.csv
           echo "teamTool,0,100,50,20,10,500.0,10.0,100,50,5,10,0" >> dummy.csv
-          
+
           # Debug: show content
           cat dummy.csv
-          
+
           ./myscore dummy.csv
 
       - name: Test Validate (Setup)
@@ -173,7 +173,7 @@ jobs:
         working-directory: tests
         run: |
           # Compilamos con Flags de Sanitizer para detectar errores de memoria
-          make CFLAGS="-fsanitize=address -g -O1 -fno-omit-frame-pointer -Wall -Wextra -I../ -I../tools"
-          
+          make CFLAGS="-fsanitize=address -g -O1 -fno-omit-frame-pointer -Wall -Wextra -Wno-unused-result -I../ -I../tools"
+
           # Ejecutamos los tests
           ./test_api
